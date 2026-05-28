@@ -1,7 +1,8 @@
 import pandas as pd
 import streamlit as st
 
-from ui.utils import load_dataset_mappings, data_type_from_filename, plot_dataset_chart, highlight_turtle_clinical
+from ui.utils import load_dataset_mappings, plot_dataset_chart, highlight_turtle_clinical
+from src.utils import data_type_from_filename
 from src.exporters import load_sync_state, export_to_solid, export_combined, update_sync_state_for_dtype, graph_to_turtle_string
 from src.rdf_transformer import transform_export, load_template, count_clinical_triples, graph_to_jsonld, merge_graphs, TransformOptions
 

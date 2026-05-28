@@ -9,7 +9,7 @@ from src.phr_models.cases import CaseCategory, CaseFile, CaseStatus, CaseTask
 from src.phr_models.life_events import (
     DocumentCategory,
     LifeEventCategory,
-    LifeDataQualityTag,
+    DataQualityTag,
     MaslowLayer,
     RecoveryStatus,
     SeverityLevel,
