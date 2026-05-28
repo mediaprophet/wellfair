@@ -529,6 +529,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 sysSkel.add(rib);
             }}
 
+            // MUSCULAR
+            const sysMuscular = createLayer('muscular');
+            // Optional: attach a dummy mesh if desired, but just defining the layer prevents the crash
+            
             // CARDIOVASCULAR
             const sysCardio = createLayer('cardio');
             const heart = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 2), matHeart);
