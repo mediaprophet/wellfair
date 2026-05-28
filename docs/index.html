@@ -6,40 +6,50 @@
   <title>wellfair — Documentation & Demo</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="landing-body">
   <main class="landing">
-    <header class="landing-hero">
-      <h1>wellfair — wellbeing vault</h1>
-      <p class="lede">An independent, privacy-first personal wellbeing informatics vault by Timothy Charles Holborn. Explore the live browser experience powered by WebAssembly (Rust core) and Pyodide (Python analytics).</p>
-      <a class="primary-btn" href="app.html">Open the browser demo</a>
-    </header>
+    <section class="landing-hero">
+      <h1>wellfair — personal welfare informatics vault</h1>
+      <p class="lede">Own your wellbeing story across clinical, social, legal, and lived-context dimensions. wellfair harmonises Rust, Python, and semantic standards into a human-first vault that travels with you — across services, across crises, across victories.</p>
+      <a class="btn-primary" href="app.html">
+        Launch the in-browser experience
+      </a>
+    </section>
 
     <section class="landing-grid">
-      <article>
-        <h2>What runs in the browser?</h2>
+      <article class="landing-card">
+        <h2>Layered human context</h2>
         <ul>
-          <li>Analytics and dashboards powered by Python running in Pyodide.</li>
-          <li>Samsung Health CSV → RDF conversion via the Rust core compiled to WASM.</li>
-          <li>Synthetic demo profile mirroring the Streamlit experience.</li>
+          <li>Maslow-informed lenses surface physiological, safety, belonging, esteem, and growth signals instantly.</li>
+          <li>Persona packs (housing, disability, mental health, elder advocacy) arrive pre-curated for demonstrations.</li>
+          <li>Delegation rules ensure the right advocate receives the right slice of context with explicit consent.</li>
         </ul>
       </article>
-      <article>
-        <h2>Going further</h2>
+      <article class="landing-card">
+        <h2>Powerful local analytics</h2>
         <ul>
-          <li>Run the full Streamlit UI locally: <code>streamlit run ui/app.py</code></li>
-          <li>Upcoming native shells — Electron/Tauri desktop & Capacitor mobile.</li>
-          <li>All source code: <a href="README.md">README</a> · <a href="COPYRIGHT.md">License</a></li>
+          <li>Rust core compiled to WebAssembly processes Samsung Health exports entirely client-side — no cloud hop.</li>
+          <li>Pyodide drives advanced wellbeing analytics and storytelling dashboards directly in the browser.</li>
+          <li>Streamlit desktop experience unlocks sanctuary mode, case orchestration, and rich ontology authoring.</li>
+        </ul>
+      </article>
+      <article class="landing-card">
+        <h2>Build beyond the demo</h2>
+        <ul>
+          <li>Run locally: <code>pip install -r requirements.txt && streamlit run ui/app.py</code></li>
+          <li>Compile the Rust core: <code>wasm-pack build --target web --out-dir docs/pkg</code></li>
+          <li>Dive into the architecture: <a href="README.md">README</a> · <a href="instructions/broader_structure_grok.md">philosophy</a> · <a href="instructions/sanctuaryMode.md">Sanctuary mode</a></li>
         </ul>
       </article>
     </section>
 
     <section class="install-note">
-      <h2>Install as a PWA</h2>
-      <p>On supported browsers, use “Add to Home Screen” to pin the demo. Everything runs client-side; no data leaves your device.</p>
+      <h2>Install as a trusted companion</h2>
+      <p>On supported browsers, tap “Add to Home Screen” to keep wellfair one gesture away. Every calculation, every RDF export, every analytics pulse stays on your device.</p>
     </section>
 
     <footer class="landing-footer">
-      <p>Need the full vault with your own data? Clone the repo, run the Streamlit app, and plug in your Samsung Health export.</p>
+      <p>wellfair is developed independently by Timothy Charles Holborn. Contribute ideas, personas, or policy requirements via issues and conversations in the repository.</p>
     </footer>
   </main>
 </body>
