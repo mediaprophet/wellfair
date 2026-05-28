@@ -543,12 +543,15 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const maslowColors = [0xff1e56, 0xffaa00, 0xffff00, 0x00ff88, 0x00f0ff];
             const rings = [];
             
+            // Vertical placement mapping: Waist, Chest, Shoulders, Head, Halo
+            const heights = [0.2, 1.2, 2.2, 3.2, 4.2];
+            const radii = [1.2, 1.4, 1.6, 1.0, 0.8]; 
+            
             for(let i=0; i<5; i++) {{
                 const score = bioData.maslow[i];
-                // If score is low, ring is broken (dashed or low opacity/red glow)
                 const ringColor = score < 50 ? 0xff0000 : maslowColors[i];
-                const ringOpac = score < 50 ? 0.2 : 0.8;
-                const ringEmisInt = score < 50 ? 0.5 : 2.0;
+                const ringOpac = score < 50 ? 0.3 : 1.0;
+                const ringEmisInt = score < 50 ? 1.0 : 3.0; // High emissive for neon tube
                 
                 const rMat = new THREE.MeshStandardMaterial({{
                     color: ringColor,
@@ -559,10 +562,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     wireframe: score < 50
                 }});
                 
-                const rGeo = new THREE.TorusGeometry(1.5 + (i * 0.3), 0.02, 8, 64);
+                const rGeo = new THREE.TorusGeometry(radii[i], 0.04, 16, 100);
                 const ring = new THREE.Mesh(rGeo, rMat);
                 ring.rotation.x = Math.PI / 2;
-                ring.position.y = -0.5 - (i * 0.1);
+                ring.position.y = heights[i];
                 
                 ring.userData = {{ 
                     name: `Maslow: ${{maslowLabels[i]}}`, 
@@ -574,21 +577,32 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 rings.push({{ mesh: ring, speed: (i+1)*0.2, dir: i%2===0?1:-1 }});
             }}
 
-            // PARTICLES
+            // PARTICLES (Stress/Trauma Clouds)
             const pGeo = new THREE.BufferGeometry();
-            const pCount = 500;
+            const pCount = 800; // Dense cloud
             const pPositions = new Float32Array(pCount * 3);
+            const pVelocities = []; 
+            
             for(let i=0; i<pCount*3; i+=3) {{
-                const r = 1.0 + Math.random() * 2.0;
+                // Cluster around chest (y=1.5) and head (y=3.2)
+                const isHead = Math.random() > 0.5;
+                const r = Math.random() * (isHead ? 0.8 : 1.5);
                 const theta = Math.random() * Math.PI * 2;
-                const y = Math.random() * 5 - 1;
+                const baseY = isHead ? 3.2 : 1.5;
+                const y = baseY + (Math.random() * 1.5 - 0.75);
+                
                 pPositions[i] = r * Math.cos(theta);
                 pPositions[i+1] = y;
                 pPositions[i+2] = r * Math.sin(theta);
+                
+                // Upward drift velocity (faster for trauma/stress)
+                const drift = bioData.stress > 70 ? 0.02 + Math.random()*0.03 : 0.005 + Math.random()*0.01;
+                pVelocities.push({{ y: drift, r: r, theta: theta, speed: 0.2 + Math.random()*0.5 }});
             }}
             pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
             const particleSystem = new THREE.Points(pGeo, matParticles);
-            sysMaslow.add(particleSystem); // Group particles with maslow for now or separate layer
+            particleSystem.userData = {{ velocities: pVelocities, pCount: pCount }};
+            sysMaslow.add(particleSystem);
 
 
             // SKELETAL
@@ -934,8 +948,24 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     rings.forEach(r => {{
                         r.mesh.rotation.z += (delta * r.speed * r.dir);
                     }});
-                    // Particle Orbit
-                    particleSystem.rotation.y += delta * 0.5;
+                    
+                    // Particle Animation (Drift upwards and reset)
+                    const positions = particleSystem.geometry.attributes.position.array;
+                    const vels = particleSystem.userData.velocities;
+                    const pCnt = particleSystem.userData.pCount;
+                    for(let i=0; i<pCnt; i++) {{
+                        positions[i*3 + 1] += vels[i].y * delta * 60; // Drift up
+                        
+                        // Slowly spiral
+                        vels[i].theta += delta * vels[i].speed;
+                        positions[i*3] = vels[i].r * Math.cos(vels[i].theta);
+                        positions[i*3 + 2] = vels[i].r * Math.sin(vels[i].theta);
+                        
+                        if (positions[i*3 + 1] > 4.8) {{ // Reset if too high
+                            positions[i*3 + 1] = Math.random() > 0.5 ? 1.0 : 2.5; // Reset to chest or neck
+                        }}
+                    }}
+                    particleSystem.geometry.attributes.position.needsUpdate = true;
                 }}
 
                 // Render via Composer for Post-Processing
