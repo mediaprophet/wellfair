@@ -7,6 +7,7 @@ from src.phr_models.claims import (
 )
 from src.phr_models.pathology import DiagnosticReport, PathologyObservation, DiagnosticReportStatus
 from src.phr_models.proxy_consent import PrivacyMode
+from src.phr_models.psychiatric import DASS21Assessment, K10Assessment
 
 def render_document_ingestion(dark_mode: bool):
     st.markdown("## 📥 Document Ingestion & Semantic Claims")
@@ -35,7 +36,7 @@ def render_document_ingestion(dark_mode: bool):
         
         doc_type = st.selectbox(
             "Document Type",
-            options=["Pathology Report", "Clinical Discharge Summary", "Prescription", "Self-Report Notes"]
+            options=["Pathology Report", "Clinical Discharge Summary", "Prescription", "Self-Report Notes", "Psychiatric Questionnaire"]
         )
         
         st.caption("Metadata (Usually auto-extracted, manual override here)")
@@ -110,6 +111,49 @@ def render_document_ingestion(dark_mode: bool):
                         package.evaluate_claims()
                         st.session_state.pending_packages.append(package)
                         st.success("Extraction complete! See pending packages to review and commit.")
+                        st.rerun()
+
+                    elif "Questionnaire" in doc_type:
+                        mock_source = InformationSource(
+                            id=f"src-{int(time.time())}",
+                            author_type=AuthorType.PATIENT,
+                            author_name="Patient Self-Report",
+                            organization="Self",
+                            credentials="N/A",
+                            date_recorded=datetime.now()
+                        )
+                        
+                        # Mock DASS-21 Extraction
+                        mock_claims = [
+                            ClinicalClaim(
+                                id=f"claim-{int(time.time())}-q1",
+                                source_document_id=mock_source.id,
+                                domain="Psychiatry",
+                                claim_text="DASS-21 Questionnaire Completed",
+                                extracted_data={
+                                    "type": "DASS21",
+                                    "scores": {f"Q{i}": (i % 4) for i in range(1, 22)},
+                                    "total_depression": 14,
+                                    "total_anxiety": 10,
+                                    "total_stress": 18
+                                },
+                                privacy_mode=PrivacyMode.MODE_B_PRIVILEGED,
+                                trust_level=TrustLevel.UNVERIFIED_SELF
+                            )
+                        ]
+                        
+                        package = ContentPackage(
+                            id=f"pkg-{int(time.time())}",
+                            original_file_name=uploaded_file.name,
+                            upload_date=datetime.now(),
+                            source=mock_source,
+                            raw_extracted_text="MOCK RAW DASS-21 DATA: Q1: 1, Q2: 2, Q3: 3...",
+                            claims=mock_claims
+                        )
+                        
+                        package.evaluate_claims()
+                        st.session_state.pending_packages.append(package)
+                        st.success("Psychiatric Questionnaire extracted successfully! Please review.")
                         st.rerun()
 
     with c2:
@@ -187,8 +231,21 @@ def render_document_ingestion(dark_mode: bool):
                                 st.session_state.diagnostic_reports = []
                             st.session_state.diagnostic_reports.append(report)
                             
+                            # Also check for psychiatric questionnaire data
+                            for claim in pkg.claims:
+                                if claim.domain == "Psychiatry" and claim.extracted_data.get("type") == "DASS21":
+                                    dass = DASS21Assessment(
+                                        id=f"dass-{pkg.id}",
+                                        date_taken=pkg.upload_date.date(),
+                                        pdf_uri=f"vault://docs/{pkg.original_file_name}.enc",
+                                        scores=claim.extracted_data.get("scores", {})
+                                    )
+                                    if "psychiatric_assessments" not in st.session_state:
+                                        st.session_state.psychiatric_assessments = []
+                                    st.session_state.psychiatric_assessments.append(dass)
+
                             pkg.status = "Approved"
-                            st.success("Committed structured pathology data to Vault!")
+                            st.success("Committed structured data to Vault!")
                             st.rerun()
                             
                         if col_r.button("🗑️ Reject & Discard", key=f"rej_{idx}"):

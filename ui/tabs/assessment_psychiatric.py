@@ -197,30 +197,43 @@ def render_psychiatric_assessments(dark_mode: bool):
             )
 
             for idx, rec in enumerate(assessments):
-                accent = "#6366f1" if rec.get("rdf_status") == "pending" else "#10b981"
+                is_pydantic = not isinstance(rec, dict)
+                rec_dict = rec.model_dump() if is_pydantic else rec
+                
+                # Normalize missing fields for pydantic models
+                if is_pydantic:
+                    rec_dict['category'] = "Auto-Extracted"
+                    rec_dict['rdf_status'] = "pending"
+                    rec_dict['code'] = rec_dict.get('name', 'Unknown')
+                    rec_dict['notes'] = "Extracted via AI Document Ingestion"
+                    
+                accent = "#6366f1" if rec_dict.get("rdf_status") == "pending" else "#10b981"
                 rdf_badge = (
-                    "🟡 RDF Pending" if rec.get("rdf_status") == "pending"
+                    "🟡 RDF Pending" if rec_dict.get("rdf_status") == "pending"
                     else "🟢 RDF Generated"
                 )
+                
+                header_badge = "🤖 AI Extracted" if is_pydantic else "📝 Manual Entry"
+                
                 with st.expander(
-                    f"{rec['code']} – {rec['name']}  |  {rec['date_taken']}  |  {rdf_badge}",
+                    f"{rec_dict.get('code')} – {rec_dict.get('name')}  |  {rec_dict.get('date_taken')}  |  {header_badge}  |  {rdf_badge}",
                     expanded=False,
                 ):
                     c1, c2 = st.columns([2, 1])
                     with c1:
-                        st.markdown(f"**Category:** {rec.get('category', '—')}")
-                        st.markdown(f"**Date Taken:** {rec['date_taken']}")
-                        if rec.get("notes"):
-                            st.markdown(f"**Notes:** {rec['notes']}")
+                        st.markdown(f"**Category:** {rec_dict.get('category', '—')}")
+                        st.markdown(f"**Date Taken:** {rec_dict.get('date_taken')}")
+                        if rec_dict.get("notes"):
+                            st.markdown(f"**Notes:** {rec_dict.get('notes')}")
                     with c2:
                         st.markdown(f"**RDF Status:** {rdf_badge}")
-                        st.markdown(f"**Record ID:** `{rec['id'][:8]}…`")
+                        st.markdown(f"**Record ID:** `{str(rec_dict.get('id', ''))[:8]}…`")
 
                     st.divider()
 
                     # Score entry
                     st.markdown("#### Scores / Responses")
-                    scores = rec.get("scores", {})
+                    scores = rec_dict.get("scores", {})
                     if scores:
                         st.table([{"Item": k, "Value": v} for k, v in scores.items()])
 
@@ -235,7 +248,12 @@ def render_psychiatric_assessments(dark_mode: bool):
                                 scores[new_key] = float(new_val) if new_val else None
                             except ValueError:
                                 scores[new_key] = new_val
-                            rec["scores"] = scores
+                            
+                            if is_pydantic:
+                                rec.scores = scores
+                            else:
+                                rec["scores"] = scores
+                                
                             st.success(f"Updated **{new_key}**")
                             st.rerun()
 
@@ -246,10 +264,29 @@ def render_psychiatric_assessments(dark_mode: bool):
                             del st.session_state.psychiatric_assessments[idx]
                             st.rerun()
                     with ac2:
-                        if rec.get("rdf_status") == "pending":
+                        if rec_dict.get("rdf_status") == "pending":
                             if st.button("🔄 Generate RDF", key=f"rdf_{idx}"):
-                                rec["rdf_status"] = "generated"
+                                if is_pydantic:
+                                    # Pydantic to RDF stub
+                                    from rdflib import Graph, URIRef, Literal, Namespace
+                                    from rdflib.namespace import RDF, XSD
+                                    HEALTH = Namespace("urn:health:schema:")
+                                    g = Graph()
+                                    subj = URIRef(f"urn:health:psychiatric:{rec_dict.get('id')}")
+                                    g.add((subj, RDF.type, HEALTH.PsychiatricAssessment))
+                                    g.add((subj, HEALTH.name, Literal(rec_dict.get('name'), datatype=XSD.string)))
+                                    g.add((subj, HEALTH.dateTaken, Literal(str(rec_dict.get('date_taken')), datatype=XSD.date)))
+                                    
+                                    for q, val in rec_dict.get('scores', {}).items():
+                                        if val is not None:
+                                            g.add((subj, URIRef(f"{HEALTH}{q}"), Literal(val)))
+                                            
+                                    rec.rdf_status = "generated"
+                                    # Storing the generated RDF graph into the pydantic model as a custom field for demo purposes
+                                    rec_dict['rdf_graph'] = g.serialize(format='turtle')
+                                else:
+                                    rec["rdf_status"] = "generated"
                                 st.success("RDF stub generated (placeholder)")
                                 st.rerun()
                     with ac3:
-                        st.markdown(f"[📄 Open PDF]({rec.get('pdf_uri', '#')})")
+                        st.markdown(f"[📄 Open PDF]({rec_dict.get('pdf_uri', '#')})")

@@ -29,6 +29,7 @@ class PsychiatricAssessmentBase(BaseModel):
     date_taken: date = Field(default_factory=date.today, description="Date of assessment")
     pdf_uri: Optional[str] = Field(None, description="Path/URI to the stored PDF file")
     scores: Dict[str, Optional[float]] = Field(default_factory=dict, description="Item scores")
+    rdf_status: str = Field("pending", description="RDF generation status")
 
     class Config:
         # Allow population by field name for future extensions
@@ -42,4 +43,12 @@ class BDI2Assessment(PsychiatricAssessmentBase):
 
 class AQ10Assessment(PsychiatricAssessmentBase):
     name: str = "AQ‑10"
+    scores: Dict[str, Optional[int]] = Field(default_factory=lambda: {f"Q{i}": None for i in range(1, 11)})
+
+class DASS21Assessment(PsychiatricAssessmentBase):
+    name: str = "DASS‑21"
+    scores: Dict[str, Optional[int]] = Field(default_factory=lambda: {f"Q{i}": None for i in range(1, 22)})
+
+class K10Assessment(PsychiatricAssessmentBase):
+    name: str = "K10"
     scores: Dict[str, Optional[int]] = Field(default_factory=lambda: {f"Q{i}": None for i in range(1, 11)})
