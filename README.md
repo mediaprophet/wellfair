@@ -1,10 +1,10 @@
 # health-to-solid
 
-**Copyright:** new work and changes © 2025–2026 **Timothy Charles Holborn** ([email](mailto:timothy.holborn@gmail.com), [LinkedIn](https://www.linkedin.com/in/ubiquitous/)). Original **HealthPod** app © [anusii/healthpod](https://github.com/anusii/healthpod) / ANU — see [COPYRIGHT.md](COPYRIGHT.md).
+**Copyright:** © 2025–2026 **Timothy Charles Holborn** ([email](mailto:timothy.holborn@gmail.com), [LinkedIn](https://www.linkedin.com/in/ubiquitous/)). 
 
 Desktop-first Python pipeline: **Samsung Health export** → **YAML-driven ontology** → **Solid-ready RDF** (Turtle + JSON-LD).
 
-This app serves as a Personal Wellbeing Informatics Vault (Episteme) for local RDF prototyping, analysis, and visualization.
+This app serves as a Personal Wellbeing Informatics Vault for local RDF prototyping, analysis, and visualization.
 
 ## Features
 
