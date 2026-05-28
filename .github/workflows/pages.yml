@@ -29,12 +29,9 @@ jobs:
           cd wellfare-core
           wasm-pack build --release --target web --out-dir ../docs/pkg
 
-      - name: Copy web frontend to docs
+      - name: Build Stlite Demo
         run: |
-          cp -rn web/* docs/ || true
-
-      - name: Copy repository docs assets into docs site
-        run: |
+          python scripts/build_stlite.py
           cp README.md docs/README.md || true
           cp COPYRIGHT.md docs/COPYRIGHT.md || true
 

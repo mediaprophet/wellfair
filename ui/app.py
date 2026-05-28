@@ -53,18 +53,27 @@ def main():
     # Profile selection
     profile = st.sidebar.selectbox(
         "Environment Profile",
-        options=["gemini", "developer_real", "production"],
+        options=["gemini", "developer_real", "production", "michael", "elena", "rebecca", "margaret", "robert", "jordan"],
         index=0,
         format_func=lambda x: {
             "gemini": "♊ gemini (Demo Dev Profile)",
             "developer_real": "🛠️ developer_real (Real Data)",
-            "production": "🔒 production (Production)"
+            "production": "🔒 production (Production)",
+            "michael": "👤 Michael R. (Demo)",
+            "elena": "👤 Elena V. (Demo)",
+            "rebecca": "👤 Rebecca L. (Demo)",
+            "margaret": "👤 Margaret T. (Demo)",
+            "robert": "👤 Robert K. (Demo)",
+            "jordan": "👤 Jordan M. (Demo)"
         }[x]
     )
     
     if profile == "gemini":
         export_path = str(PROJECT_ROOT / "data" / "demo" / "gemini" / "samsung_export")
         output_path = str(PROJECT_ROOT / "data" / "demo" / "gemini" / "solid_pod")
+    elif profile in ["michael", "elena", "rebecca", "margaret", "robert", "jordan"]:
+        export_path = str(PROJECT_ROOT / "data" / "demo" / profile / "samsung_export")
+        output_path = str(PROJECT_ROOT / "data" / "demo" / profile / "solid_pod")
     else:
         export_path = args.export_path
         output_path = args.output
@@ -72,7 +81,7 @@ def main():
     template_path = args.template
     
     # Sync status controls in sidebar for real data and production
-    if profile != "gemini":
+    if profile not in ["gemini", "michael", "elena", "rebecca", "margaret", "robert", "jordan"]:
         is_stale, reason = check_cache_status(export_path, output_path)
         if is_stale:
             st.sidebar.warning(f"🔄 Sync Needed: {reason}")
