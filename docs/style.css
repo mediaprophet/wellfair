@@ -1,0 +1,4 @@
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+input, select, button { margin: 8px 4px; }
+main { padding-bottom: 40px; }
