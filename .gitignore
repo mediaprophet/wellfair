@@ -1,0 +1,22 @@
+# Private Health Data Exports (Do not commit)
+20250221_SamsungHealth/
+data/samsung_export/
+
+# Local Python Caching and Outputs
+output/
+local_cache.pkl
+*.pkl
+
+# Python virtual environment & runtime caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Rust build output
+wellfare-core/target/
+
+# OS metadata
+.DS_Store
+Thumbs.db

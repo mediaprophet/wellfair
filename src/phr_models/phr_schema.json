@@ -1,0 +1,550 @@
+{
+  "RelatedPerson": {
+    "$defs": {
+      "ProxyRelationship": {
+        "enum": [
+          "PRN",
+          "DEP",
+          "GUARD",
+          "PART",
+          "CARE"
+        ],
+        "title": "ProxyRelationship",
+        "type": "string"
+      }
+    },
+    "description": "FHIR AU Core mapped RelatedPerson for proxy contexts.",
+    "properties": {
+      "id": {
+        "description": "Unique ID for the proxy/related person",
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "description": "The primary subject of the record",
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "relationship": {
+        "$ref": "#/$defs/ProxyRelationship",
+        "description": "SNOMED/HL7 relationship code"
+      },
+      "is_anonymous": {
+        "default": false,
+        "description": "True if the proxy must remain de-identified for safety",
+        "title": "Is Anonymous",
+        "type": "boolean"
+      },
+      "description": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Minimally identifying description of the proxy",
+        "title": "Description"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "relationship"
+    ],
+    "title": "RelatedPerson",
+    "type": "object"
+  },
+  "ProxyConsent": {
+    "$defs": {
+      "LegalBasis": {
+        "enum": [
+          "explicit-consent",
+          "guardian-authority",
+          "mha-nominated",
+          "safety-override"
+        ],
+        "title": "LegalBasis",
+        "type": "string"
+      },
+      "PrivacyMode": {
+        "enum": [
+          "V",
+          "R",
+          "N"
+        ],
+        "title": "PrivacyMode",
+        "type": "string"
+      }
+    },
+    "description": "FHIR Consent resource mapping bridging the Patient and the Proxy.",
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "proxy_id": {
+        "description": "References the RelatedPerson.id acting as the proxy",
+        "title": "Proxy Id",
+        "type": "string"
+      },
+      "legal_basis": {
+        "$ref": "#/$defs/LegalBasis"
+      },
+      "privacy_mode": {
+        "$ref": "#/$defs/PrivacyMode",
+        "default": "V"
+      },
+      "audit_silenced": {
+        "default": false,
+        "description": "If True, suppresses standard audit trails for safety-override reasons.",
+        "title": "Audit Silenced",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "proxy_id",
+      "legal_basis"
+    ],
+    "title": "ProxyConsent",
+    "type": "object"
+  },
+  "PsychiatryObservation": {
+    "$defs": {
+      "DataQualityTag": {
+        "enum": [
+          "exact",
+          "estimate"
+        ],
+        "title": "DataQualityTag",
+        "type": "string"
+      },
+      "ObservationContext": {
+        "enum": [
+          "self-reported",
+          "carer-observed",
+          "clinician-observed"
+        ],
+        "title": "ObservationContext",
+        "type": "string"
+      },
+      "PrivacyMode": {
+        "enum": [
+          "V",
+          "R",
+          "N"
+        ],
+        "title": "PrivacyMode",
+        "type": "string"
+      }
+    },
+    "description": "FHIR Observation mapped for trauma-informed psych tracking.",
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "date_recorded": {
+        "format": "date-time",
+        "title": "Date Recorded",
+        "type": "string"
+      },
+      "context": {
+        "$ref": "#/$defs/ObservationContext"
+      },
+      "quality_tag": {
+        "$ref": "#/$defs/DataQualityTag",
+        "default": "estimate"
+      },
+      "recorded_by_proxy_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "If carer-observed, links to RelatedPerson ID",
+        "title": "Recorded By Proxy Id"
+      },
+      "privacy_mode": {
+        "$ref": "#/$defs/PrivacyMode",
+        "default": "V",
+        "description": "Defaults to strict for mental health"
+      },
+      "symptom_code": {
+        "description": "SNOMED CT code for the observed symptom/mood",
+        "title": "Symptom Code",
+        "type": "string"
+      },
+      "notes": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Free text therapy notes or carer observations",
+        "title": "Notes"
+      },
+      "linked_medication_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Link to psychotropic MedicationStatement",
+        "title": "Linked Medication Id"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "date_recorded",
+      "context",
+      "symptom_code"
+    ],
+    "title": "PsychiatryObservation",
+    "type": "object"
+  },
+  "MedicationAdministration": {
+    "$defs": {
+      "AdherenceStatus": {
+        "enum": [
+          "completed",
+          "not-done",
+          "stopped",
+          "on-hold",
+          "unknown"
+        ],
+        "title": "AdherenceStatus",
+        "type": "string"
+      },
+      "DataQualityTag": {
+        "enum": [
+          "exact",
+          "estimate",
+          "device-imported",
+          "self-report"
+        ],
+        "title": "DataQualityTag",
+        "type": "string"
+      },
+      "PrivacyMode": {
+        "enum": [
+          "V",
+          "R",
+          "N"
+        ],
+        "title": "PrivacyMode",
+        "type": "string"
+      }
+    },
+    "description": "FHIR MedicationAdministration mapped for adherence tracking.",
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "medication_name": {
+        "title": "Medication Name",
+        "type": "string"
+      },
+      "status": {
+        "$ref": "#/$defs/AdherenceStatus",
+        "description": "Adherence status"
+      },
+      "effective_time": {
+        "description": "When the dose was taken or missed",
+        "format": "date-time",
+        "title": "Effective Time",
+        "type": "string"
+      },
+      "quality_tag": {
+        "$ref": "#/$defs/DataQualityTag",
+        "default": "exact"
+      },
+      "privacy_mode": {
+        "$ref": "#/$defs/PrivacyMode",
+        "default": "R"
+      },
+      "recorded_by_proxy_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "If carer-logged, links to RelatedPerson ID",
+        "title": "Recorded By Proxy Id"
+      },
+      "notes": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Reason for missing/stopping or general notes",
+        "title": "Notes"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "medication_name",
+      "status",
+      "effective_time"
+    ],
+    "title": "MedicationAdministration",
+    "type": "object"
+  },
+  "DiagnosticReport": {
+    "$defs": {
+      "DiagnosticReportStatus": {
+        "enum": [
+          "preliminary",
+          "final",
+          "amended"
+        ],
+        "title": "DiagnosticReportStatus",
+        "type": "string"
+      },
+      "PathologyObservation": {
+        "description": "FHIR Observation mapped for individual lab results.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "test_name": {
+            "description": "e.g. Blood Glucose",
+            "title": "Test Name",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "reference_range_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference Range Low"
+          },
+          "reference_range_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference Range High"
+          },
+          "privacy_mode": {
+            "$ref": "#/$defs/PrivacyMode",
+            "default": "R",
+            "description": "Can be set to Mode A for sensitive tests"
+          }
+        },
+        "required": [
+          "id",
+          "test_name",
+          "value",
+          "unit"
+        ],
+        "title": "PathologyObservation",
+        "type": "object"
+      },
+      "PrivacyMode": {
+        "enum": [
+          "V",
+          "R",
+          "N"
+        ],
+        "title": "PrivacyMode",
+        "type": "string"
+      }
+    },
+    "description": "FHIR DiagnosticReport representing the full pathology PDF.",
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "date_issued": {
+        "format": "date-time",
+        "title": "Date Issued",
+        "type": "string"
+      },
+      "status": {
+        "$ref": "#/$defs/DiagnosticReportStatus",
+        "default": "preliminary"
+      },
+      "pdf_attachment_uri": {
+        "description": "Secure URI to the encrypted original PDF",
+        "title": "Pdf Attachment Uri",
+        "type": "string"
+      },
+      "observations": {
+        "items": {
+          "$ref": "#/$defs/PathologyObservation"
+        },
+        "title": "Observations",
+        "type": "array"
+      },
+      "privacy_mode": {
+        "$ref": "#/$defs/PrivacyMode",
+        "default": "R"
+      },
+      "recorded_by_proxy_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "If imported by carer",
+        "title": "Recorded By Proxy Id"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "date_issued",
+      "pdf_attachment_uri"
+    ],
+    "title": "DiagnosticReport",
+    "type": "object"
+  },
+  "GeoEvent": {
+    "$defs": {
+      "PrivacyMode": {
+        "enum": [
+          "V",
+          "R",
+          "N"
+        ],
+        "title": "PrivacyMode",
+        "type": "string"
+      },
+      "SemanticCategory": {
+        "enum": [
+          "home",
+          "work",
+          "medical-facility",
+          "travel",
+          "other"
+        ],
+        "title": "SemanticCategory",
+        "type": "string"
+      }
+    },
+    "description": "Custom high-volume time-series geospatial event.",
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "patient_id": {
+        "title": "Patient Id",
+        "type": "string"
+      },
+      "timestamp": {
+        "format": "date-time",
+        "title": "Timestamp",
+        "type": "string"
+      },
+      "latitude": {
+        "title": "Latitude",
+        "type": "number"
+      },
+      "longitude": {
+        "title": "Longitude",
+        "type": "number"
+      },
+      "category": {
+        "$ref": "#/$defs/SemanticCategory",
+        "default": "other"
+      },
+      "privacy_mode": {
+        "$ref": "#/$defs/PrivacyMode",
+        "default": "N",
+        "description": "Locations default to lower sensitivity unless tagged"
+      },
+      "linked_symptom_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Link to PsychiatryObservation to correlate environment with mood/symptoms",
+        "title": "Linked Symptom Id"
+      }
+    },
+    "required": [
+      "id",
+      "patient_id",
+      "timestamp",
+      "latitude",
+      "longitude"
+    ],
+    "title": "GeoEvent",
+    "type": "object"
+  }
+}

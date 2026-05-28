@@ -1,0 +1,2626 @@
+@prefix ns1: <http://schema.org/> .
+@prefix ns2: <https://health.example.org/ns#> .
+@prefix ns3: <http://hl7.org/fhir/> .
+@prefix ns4: <http://qudt.org/schema/qudt/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:health:exercise:uuid-exercise-0> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-02T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 150.0 ;
+    ns2:distance 3000.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-1> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-04T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 160.0 ;
+    ns2:distance 3200.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-10> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-22T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 250.0 ;
+    ns2:distance 5000.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-11> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-24T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 260.0 ;
+    ns2:distance 5200.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-2> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-06T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 170.0 ;
+    ns2:distance 3400.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-3> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-08T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 180.0 ;
+    ns2:distance 3600.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-4> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-10T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 190.0 ;
+    ns2:distance 3800.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-5> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-12T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 200.0 ;
+    ns2:distance 4000.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-6> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-14T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 210.0 ;
+    ns2:distance 4200.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-7> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-16T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 220.0 ;
+    ns2:distance 4400.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-8> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-18T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 230.0 ;
+    ns2:distance 4600.0 ;
+    ns2:exerciseType 1001 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:exercise:uuid-exercise-9> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.start "2026-05-20T09:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT1800000M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Kilocalorie>,
+        <http://qudt.org/vocab/unit/Meter>,
+        <http://qudt.org/vocab/unit/Minute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Exercise session" ;
+    ns1:unitCode "Kilocalorie",
+        "Meter",
+        "Minute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:caloriesBurned 240.0 ;
+    ns2:distance 4800.0 ;
+    ns2:exerciseType 1002 ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:snomedConcept <http://snomed.info/id/256235009> .
+
+<urn:health:heart_rate:uuid-hr-0> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-04-30T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-1> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-04-30T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-10> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-03T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-100> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-25T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-101> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-25T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-102> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-26T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-103> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-26T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-104> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-26T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-105> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-26T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-106> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-27T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-107> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-27T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-108> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-27T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-109> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-27T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-11> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-03T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-110> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-28T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-111> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-28T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-12> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-03T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-13> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-03T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-14> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-04T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-15> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-04T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-16> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-04T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-17> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-04T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-18> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-05T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-19> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-05T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-2> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-01T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-20> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-05T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-21> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-05T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-22> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-06T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-23> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-06T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-24> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-06T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-25> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-06T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-26> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-07T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-27> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-07T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-28> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-07T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-29> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-07T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-3> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-01T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-30> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-08T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-31> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-08T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-32> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-08T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-33> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-08T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-34> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-09T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-35> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-09T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-36> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-09T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-37> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-09T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-38> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-10T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-39> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-10T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-4> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-01T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-40> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-10T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-41> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-10T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-42> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-11T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-43> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-11T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-44> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-11T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-45> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-11T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-46> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-12T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-47> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-12T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-48> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-12T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-49> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-12T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-5> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-01T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-50> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-13T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-51> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-13T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-52> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-13T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-53> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-13T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-54> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-14T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-55> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-14T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-56> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-14T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-57> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-14T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-58> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-15T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-59> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-15T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-6> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-02T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-60> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-15T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-61> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-15T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-62> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-16T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-63> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-16T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-64> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-16T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-65> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-16T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-66> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-17T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-67> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-17T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-68> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-17T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-69> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-17T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-7> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-02T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-70> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-18T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-71> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-18T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-72> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-18T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-73> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-18T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-74> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-19T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-75> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-19T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-76> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-19T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-77> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-19T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-78> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-20T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-79> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-20T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-8> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-02T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-80> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-20T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-81> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-20T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-82> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-21T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-83> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-21T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-84> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-21T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-85> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-21T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-86> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-22T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 71 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-87> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-22T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 72 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-88> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-22T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 77 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-89> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-22T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 78 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-9> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-02T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-90> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-23T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 83 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-91> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-23T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 63 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-92> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-23T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 68 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-93> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-23T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 69 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-94> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-24T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-95> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-24T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-96> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-24T16:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 80 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-97> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-24T22:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 81 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-98> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-25T04:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 65 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:heart_rate:uuid-hr-99> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-25T10:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 66 ;
+    ns4:unit <http://qudt.org/vocab/unit/BeatsPerMinute> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Heart rate" ;
+    ns1:unitCode "BeatsPerMinute" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:loincConcept <https://loinc.org/rdf/8867-4> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/364075005>,
+        <https://loinc.org/rdf/8867-4> ;
+    ns2:snomedConcept <http://snomed.info/id/364075005> .
+
+<urn:health:sleep:uuid-sleep-0> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-04-30T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-04-30T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT460M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 90.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-1> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-01T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-01T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT475M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 91.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-10> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-10T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-10T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT490M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 93.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-11> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-11T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-11T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT505M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 94.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-12> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-12T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-12T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT430M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 90.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-13> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-13T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-13T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT445M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 91.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-14> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-14T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-14T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT460M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 92.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-15> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-15T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-15T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT460M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 96.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-16> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-16T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-16T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT475M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 89.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-17> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-17T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-17T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT490M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 90.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-18> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-18T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-18T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT415M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 94.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-19> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-19T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-19T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT430M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 95.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-2> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-02T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-02T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT490M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 92.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-20> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-20T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-20T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT520M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 88.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-21> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-21T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-21T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT445M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 92.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-22> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-22T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-22T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT460M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 93.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-23> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-23T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-23T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT475M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 94.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-24> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-24T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-24T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT400M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 90.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-25> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-25T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-25T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT490M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 91.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-26> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-26T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-26T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT505M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 92.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-27> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-27T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-27T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT430M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 96.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-3> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-03T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-03T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT415M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 96.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-4> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-04T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-04T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT430M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 89.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-5> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-05T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-05T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT520M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 90.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-6> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-06T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-06T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT445M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 94.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-7> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-07T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-07T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT460M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 95.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-8> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-08T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-08T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT475M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 88.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:sleep:uuid-sleep-9> a ns3:Observation ;
+    ns3:Observation.effectivePeriod.end "2026-05-09T23:25:16.750000+10:00" ;
+    ns3:Observation.effectivePeriod.start "2026-05-09T15:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity "PT400M" ;
+    ns4:unit <http://qudt.org/vocab/unit/Minute>,
+        <http://qudt.org/vocab/unit/Percent> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Sleep session" ;
+    ns1:unitCode "Minute",
+        "Percent" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:semanticReference ns3:Observation.valueQuantity ;
+    ns2:sleepEfficiency 92.0 ;
+    ns2:snomedConcept <http://snomed.info/id/248263006> .
+
+<urn:health:weight:uuid-weight-0> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-01T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 76.5 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.8 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-1> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-03T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 76.44999999999999 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.75 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-10> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-21T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.1 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.3 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-11> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-23T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.05 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.25 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-12> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-25T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74.7 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.2 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-13> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-27T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74.64999999999999 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.150000000000002 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-14> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-29T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 74.60000000000001 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.1 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-2> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-05T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 76.4 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.7 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-3> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-07T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 76.05 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.650000000000002 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-4> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-09T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 76.0 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.6 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-5> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-11T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.95 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.55 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-6> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-13T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.6 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.5 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-7> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-15T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.55 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.45 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-8> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-17T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.5 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.400000000000002 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<urn:health:weight:uuid-weight-9> a ns3:Observation ;
+    ns3:Observation.effectiveDateTime "2026-05-19T00:25:16.750000+10:00" ;
+    ns3:Observation.valueQuantity 75.15 ;
+    ns4:unit <http://qudt.org/vocab/unit/Pound_Lb>,
+        <http://qudt.org/vocab/unit/Unitless> ;
+    ns1:description "Samsung Health CSV export" ;
+    ns1:name "Body weight" ;
+    ns1:unitCode "Pound_Lb",
+        "Unitless" ;
+    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;
+    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;
+    ns2:bmi 23.35 ;
+    ns2:loincConcept <https://loinc.org/rdf/29463-7> ;
+    ns2:semanticReference ns3:Observation.valueQuantity,
+        <http://snomed.info/id/27113001> ;
+    ns2:snomedConcept <http://snomed.info/id/27113001> .
+
+<http://snomed.info/id/27113001> a ns2:InteroperabilityLink .
+
+ns3:Observation.valueQuantity a ns2:InteroperabilityLink .
+
+<http://snomed.info/id/364075005> a ns2:InteroperabilityLink .
+
+<https://loinc.org/rdf/8867-4> a ns2:InteroperabilityLink .
+

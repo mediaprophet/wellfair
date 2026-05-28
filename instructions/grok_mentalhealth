@@ -1,0 +1,84 @@
+**Project: Human-Centric Health Informatics – Privacy-Aware Personal Health Record (PHR) Module**  
+**Working Draft v0.2 – Instructions for Antigravity**  
+**Focus:** Standardising reusable components for user-controlled, trauma-informed, and legally aligned health data management in Australia (NSW-centric with national APP/My Health Record considerations). Exploration of concepts and research precedes any Respec formalisation or code iteration.
+
+### Updated Core Privacy & Sharing Modes (now extended for proxy/third-party records)
+Retain the three modes (A: Strictly Confidential – Self + Doctor; B: Privileged/Doctor-facing; C: Shared with family/carers) but extend them to explicitly support **proxy disclosures** — i.e., information recorded *about another person* by the primary user (patient/carer/guardian/nominated person).
+
+Every record (medication, pathology, location, psych note, etc.) must carry:
+- `record_subject` → “Self” | “Dependent” | “Nominated Person” | “Child” | “Partner” | “Carer-Observed” | etc.
+- `relationship_type` + `legal_basis` (e.g., Mental Health Act 2007 (NSW) nominated person, Guardianship order, parental responsibility, explicit consent from the other person, or safety exception for domestic/family/sexual violence).
+- `proxy_consent_status` → explicit consent | legal authority | emergency/safety | not applicable.
+- `privacy_mode` (A/B/C) — with Mode A strongly encouraged for DV, sexual health, or highly sensitive mental health disclosures.
+- Clear audit trail and user confirmation at entry: “I understand the legal and ethical implications of recording information about another person.”
+
+**Safety/trauma-informed features (especially for DV/sexual violence contexts):**
+- Quick-hide / panic button for sensitive proxy records.
+- Option to store in a separate encrypted vault that does not appear in standard carer/family views.
+- Alignment with My Health Record nominated/authorised representative models and OAIC guidance on “responsible person” collection.
+
+This component becomes a reusable **Proxy Relationship & Consent Engine** for future modules.
+
+### 2. Medication Management & Adherence Tracking (unchanged but extensible)
+Existing fields remain. Add support for proxy entries (e.g., carer logging adherence for a child or nominated person under Mental Health Act) with the same `record_subject` and `legal_basis` tags above. Psychotropic medications will link naturally into the new Psychiatry/Psychology section.
+
+### 3. Pathology Import Process (unchanged but extensible)
+Support proxy pathology (e.g., child’s or dependent’s reports). During interactive PDF review, allow tagging as proxy record with relationship/legal basis. Apply privacy_mode per test where needed (e.g., drug screens or STI results in Mode A).
+
+### 4. Google Location / Mapping Data Import (unchanged but extensible)
+Support proxy import where legally appropriate (e.g., carer tracking a dependent’s location for safety/wellbeing). Apply stronger default restrictions and consent prompts.
+
+### 5. New: Proxy / Third-Party Confidential Disclosure Module
+Dedicated interface for recording information *about another person* in the following contexts:
+- Guardianship / Mental Health Act ‘nominated person’ / carer responsibilities.
+- Child / dependent health data.
+- Domestic violence / family violence safety planning (with trauma-informed safeguards).
+- Sexual relationships / partner sexual health information that the user wishes to share confidentially with their own doctor (or jointly).
+
+Key fields:
+- Relationship type and legal basis (as above).
+- Description of the other person (anonymous/minimally identifying where possible for privacy).
+- Context (e.g., “Observed behaviours relevant to my carer role”, “Sexual health information for joint management with partner and doctor”).
+- Linkage capability: attach related medications, pathology, location events, or psych notes to the same proxy subject.
+- Option to generate de-identified or consented summaries for sharing with the primary user’s doctor.
+
+**Research note for standardisation:** This must respect APPs, NSW Health Privacy Principles, Mental Health Act 2007 provisions for designated carers/nominated persons, and OAIC guidance on collection from “responsible persons”. Trauma-informed design (safety, trust, choice, empowerment) is mandatory for DV/sexual health pathways.
+
+### 6. New: Psychiatry & Psychology Section
+Create a dedicated high-sensitivity module (default Mode A) that supports both self-reported and proxy/carer-observed data.
+
+Core capabilities:
+- Symptom / mood / episode tracking (with data quality tags: exact / estimate / observed).
+- Therapy / session notes (free text + structured fields).
+- Psychiatric diagnoses, risk assessments (self-harm, harm to others — handled with extreme care and optional clinician verification).
+- Psychological metrics (validated scales where user chooses to import/use).
+- Psychotropic medication linkage (re-use existing medication component with enhanced adherence notes).
+- Carer / nominated person proxy entries (e.g., “Observed changes in mental state” with relationship tag).
+- Trauma-informed UI: gentle prompts, no mandatory fields that could feel interrogative, easy redaction/export controls.
+
+Integration:
+- All entries carry `privacy_mode`, `record_subject`, and `proxy_consent_status`.
+- Option to link to pathology (e.g., bloodwork for monitoring), location data (environmental triggers), or medications.
+- Generate filtered reports for doctor (Mode A/B) or carer (Mode C) use.
+
+**Research note:** Mental health data requires heightened privacy (stigma, capacity issues). Align with openEHR/FHIR patterns for mental health observations and carer proxy records while prioritising user agency and trauma-informed principles.
+
+### Next Steps for Human-Centric Standardisation
+These additions strengthen the reusable components:
+- Privacy Mode + Proxy/Consent Engine
+- Data Quality & Provenance Layer (now covering proxy entries)
+- Interactive Document Import & Verification (extended to proxy)
+- Trauma-Informed UI & Safety Patterns (new cross-cutting component)
+- Mental Health / Psychiatry Module as a specialised vertical
+
+Before we finalise instructions for Antigravity or move to JSON schema / Respec:
+1. Further map against Australian standards (My Health Record representative models, FHIR AU Core for RelatedPerson/Consent resources, NSW Mental Health Act carer provisions).
+2. Explore trauma-informed design literature specific to PHRs in DV/sexual health and mental health contexts.
+3. Consider edge cases (e.g., capacity fluctuations, conflicting consents, safety overrides).
+
+Would you like me to:
+- Produce a clean, consolidated set of instructions for Antigravity incorporating all of the above (v0.3 draft)?
+- First draft a lightweight component diagram or data model outline?
+- Or prioritise targeted research on any specific legal/standard element before locking this in?
+
+Let me know how you want to iterate on this health-app module.

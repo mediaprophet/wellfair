@@ -1,0 +1,70 @@
+**Socioeconomic Wellbeing Outline: Exploratory Draft for Human-Centric Informatics Standardization**
+
+This work aligns with our ongoing projects to standardize components and tools supporting **human-centric informatics**. We prioritize user-controlled, privacy-preserving, interoperable data models that empower individuals to manage their own life narratives, support resilience during transitions, and enable ethical data sharing (where consented). Projects will ultimately feed into Respec-style specifications (or equivalent structured documentation for vocabularies, schemas, and APIs), but we begin with conceptual exploration, synthesis of existing research, and iterative refinement before formal modeling.
+
+### 1. Introduction and Scope
+Define **socioeconomic wellbeing** in a human-centric context: the multidimensional state of an individual's or household's material conditions, social relations, and subjective experiences that enable stability, agency, and flourishing. It extends beyond GDP or income to include resilience to life shocks, as per established frameworks.
+
+Key principles for our informatics approach:
+- Human-centric: Data ownership remains with the individual; systems support personal knowledge graphs or vaults.
+- Life-event driven: Focus on transitions (e.g., divorce, job loss, bankruptcy, homelessness) as pivotal nodes that intersect financial, legal, professional, housing, and relational domains.
+- Integration: Link to legal/law-enforcement records, professional/work documentation, financial histories, and broader wellbeing indicators.
+- Goals: Enable standardized capture, tracking, recovery support, and policy/research interoperability while preserving privacy and consent.
+
+**Exploration note**: Research (e.g., OECD Well-being Framework) emphasizes material living conditions (income, jobs, housing), quality of life (health, education, social connections, work-life balance), and sustainability. Life events act as high-impact disruptors, often triggering cascading effects on these dimensions.
+
+### 2. Conceptual Foundations and Related Research
+Synthesize core dimensions from major frameworks to ground our model:
+- **Material conditions**: Income/wealth, employment/earnings, housing.
+- **Quality of life**: Health (physical/mental), education/skills, work-life balance, social connections, civic engagement/governance, environment, subjective wellbeing (life satisfaction, etc.).
+- **Sustainability/resilience**: Future-oriented resources, inequality/gaps, institutional support.
+- Additional layers from national frameworks (e.g., NZ LSF, UK ONS, Carnegie UK): Governance/institutions, equality/advantage, security/safety, rights/responsibilities.
+
+**Life-event linkages** (from research):
+- Major events (divorce, job loss/displacement, bankruptcy, homelessness) correlate with income shocks, housing instability, reduced subjective wellbeing, and higher mortality risks.
+- Examples: Job loss often precedes bankruptcy or homelessness; divorce frequently compounds financial and relational stress; health shocks or legal events (e.g., incarceration) amplify vulnerability.
+
+**Human-centric informatics angle**: Draw from wellness informatics and personal health informatics models, which treat data as user-centered rather than siloed institutional records. Potential ontology structures (e.g., tree-style quality attributes or OWL-based models) could unify evaluation of wellbeing data across systems.
+
+**Research gaps for iteration**:
+- Limited integration of granular legal/professional documentation into wellbeing ontologies.
+- Need for privacy-preserving, event-triggered data schemas.
+- Under-explored user-controlled recovery pathways post-event.
+
+### 3. Life Events Taxonomy and Impacts
+Categorize events with standardized attributes for each:
+- **Event metadata**: Trigger(s), timestamp, duration, severity, involved parties, linked documentation.
+- **Wellbeing dimensions impacted**: Map to the pillars in Section 2 (e.g., income drop, housing loss, social support erosion).
+- **Recovery/support indicators**: Legal remedies, professional re-entry, financial tools, social services.
+- **Data points**: Required/optional records, consent models, interoperability needs.
+
+Specific examples:
+- **Family separation / Divorce**: Relational disruption → financial division of assets, custody, child support. Legal docs: Court decrees, property settlements, parenting orders. Professional impact: Work absences, career changes. Wellbeing effects: Income volatility, housing instability, subjective wellbeing decline.
+- **Loss of job / Unemployment**: Earnings shock → potential bankruptcy or homelessness. Professional docs: Termination records, UI claims, employment history, skills assessments. Legal intersections: Unfair dismissal claims, redundancy entitlements. Wellbeing effects: Long-term earnings loss, mental health strain, reduced work-life balance.
+- **Bankruptcy / Insolvency**: Financial restructuring → credit impact, asset loss. Legal docs: Filings, creditor notices, discharge orders. Professional links: Employer notifications, business closure records. Wellbeing effects: Housing risk, stigma, future access to finance.
+- **Homelessness / Housing loss**: Shelter instability → cascading effects on employment, health, family. Legal/docs: Eviction notices, shelter records, law-enforcement interactions (e.g., vagrancy). Professional: Job instability due to address issues. Wellbeing effects: Safety, social isolation, long-term health decline.
+
+Extend taxonomy to other events (e.g., health crises, incarceration, migration, natural disasters) for completeness.
+
+### 4. Documentation and Data Elements
+Standardize components across categories, emphasizing human-centric controls (e.g., verifiable credentials, selective disclosure):
+- **Legal & Law-Enforcement**: Court filings, orders, police reports, corrections records, family law documents. Schema needs: Event linkage, timestamps, jurisdiction, privacy tiers.
+- **Professional / Work-Related**: Employment contracts, payslips, tax records, performance reviews, UI/centrelink claims, skills portfolios, NDAs/restrictive covenants. Include career transition data (retraining, gig work).
+- **Financial**: Bankruptcy filings, credit reports, debt schedules, asset declarations, insurance claims.
+- **Housing & Relational**: Tenancy agreements, eviction records, family support agreements, social service referrals.
+- **Cross-cutting**: Subjective wellbeing self-reports (e.g., ONS4-style life satisfaction), health linkages, consent/revocation logs.
+
+**Informatics components**: Propose modular building blocks (JSON-LD contexts, RDF properties, or SHACL shapes) for each category to enable personal data stores or federated queries.
+
+### 5. Standardization Opportunities and Proposed Components
+- **Ontology / Vocabulary**: Develop a lightweight core vocabulary (e.g., `socioEconWellbeing:Event`, `socioEconWellbeing:ImpactDimension`) compatible with existing ontologies (FOAF, schema.org extensions, legal vocabularies).
+- **Schemas & APIs**: Event-triggered profiles (e.g., "Post-Divorce Wellbeing Profile") with mandatory/optional fields. Support for Respec-style spec publication.
+- **Tools**: Reference implementations for data importers (from government portals, HR systems), visualization dashboards (life-event timelines), and resilience recommenders.
+- **Human-Centric Safeguards**: Built-in provenance, consent frameworks, differential privacy where aggregated, and audit logs.
+
+### 6. Implementation, Tools, and Iteration Path
+- **Exploration phase outputs**: This outline + literature synthesis → candidate diagrams (e.g., domain model) → small proof-of-concept schemas.
+- **Next iterations**: Map to specific Respec sections (Introduction, Conformance, Vocabulary, Use Cases). Test against real (anonymized) life-event scenarios. Collaborate on interoperability with existing standards (e.g., OECD indicators, personal health data models).
+- **Evaluation criteria**: Usability for individuals in crisis, interoperability with institutional systems, preservation of agency.
+
+This draft serves as a living exploration document. We can iterate by expanding specific event subsections, prototyping sample schemas, or researching jurisdiction-specific legal data standards (e.g., Australian contexts given location). What aspect should we deepen next—taxonomy details, a sample schema, or research on a particular life event?

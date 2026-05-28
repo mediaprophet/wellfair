@@ -1,0 +1,42 @@
+{
+  "com.samsung.health.weight": {
+    "row_count": 15,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.tracker.heart_rate": {
+    "row_count": 112,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.step_daily_trend": {
+    "row_count": 28,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.sleep": {
+    "row_count": 28,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.health.sleep_stage": {
+    "row_count": 112,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.sleep_snoring": {
+    "row_count": 5,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.exercise": {
+    "row_count": 12,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.badge": {
+    "row_count": 3,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.health.ecg": {
+    "row_count": 2,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  },
+  "com.samsung.shealth.alerted_heart_rate": {
+    "row_count": 1,
+    "last_sync": "2026-05-28T16:25:17.196632"
+  }
+}

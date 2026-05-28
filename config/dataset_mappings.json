@@ -1,0 +1,308 @@
+{
+  "com.samsung.health.device_profile": {
+    "display_name": "Device Profile",
+    "icon": "📱",
+    "category": "System",
+    "description": "Information about devices synced with Samsung Health (e.g., smartwatches, trackers)."
+  },
+  "com.samsung.health.ecg": {
+    "display_name": "Electrocardiogram (ECG)",
+    "icon": "🩺",
+    "category": "Cardiovascular",
+    "description": "ECG readings measuring electrical activity of the heart to monitor rhythm."
+  },
+  "com.samsung.health.floors_climbed": {
+    "display_name": "Floors Climbed",
+    "icon": "🧗",
+    "category": "Activity",
+    "description": "Daily count of stairs or elevation climbed (in floors)."
+  },
+  "com.samsung.health.food_info": {
+    "display_name": "Food Database Info",
+    "icon": "🍏",
+    "category": "Nutrition",
+    "description": "Reference lookup data for foods, calorie content, and macro breakdown."
+  },
+  "com.samsung.health.food_intake": {
+    "display_name": "Food Intake",
+    "icon": "🍽️",
+    "category": "Nutrition",
+    "description": "Logged meals, ingredients, nutritional values, and time consumed."
+  },
+  "com.samsung.health.height": {
+    "display_name": "Height Logs",
+    "icon": "📏",
+    "category": "Body / Profile",
+    "description": "Historical logs of physical height measurements."
+  },
+  "com.samsung.health.nutrition": {
+    "display_name": "Daily Nutrition Summaries",
+    "icon": "🥗",
+    "category": "Nutrition",
+    "description": "Daily summary of total consumed fats, protein, carbs, and micronutrients."
+  },
+  "com.samsung.health.sleep_stage": {
+    "display_name": "Sleep Stage Details",
+    "icon": "🛌",
+    "category": "Sleep",
+    "description": "Fine-grained timeline of sleep cycles (Awake, REM, Light, Deep sleep)."
+  },
+  "com.samsung.health.user_profile": {
+    "display_name": "User Profile",
+    "icon": "👤",
+    "category": "Body / Profile",
+    "description": "Personal health profile statistics (birthdate, gender, activity level)."
+  },
+  "com.samsung.health.water_intake": {
+    "display_name": "Water Intake",
+    "icon": "💧",
+    "category": "Nutrition",
+    "description": "Logs of daily water consumption."
+  },
+  "com.samsung.health.weight": {
+    "display_name": "Weight & Body Composition",
+    "icon": "⚖️",
+    "category": "Body / Profile",
+    "description": "Body mass records including weight, body fat %, muscle mass, and BMI."
+  },
+  "com.samsung.shealth.activity.day_summary": {
+    "display_name": "Daily Activity Summary",
+    "icon": "📅",
+    "category": "Activity",
+    "description": "Summary of active minutes, calories burned, and overall daily goals."
+  },
+  "com.samsung.shealth.activity.goal": {
+    "display_name": "Activity Goals",
+    "icon": "🎯",
+    "category": "Activity",
+    "description": "Target goals for daily active time, active energy, and steps."
+  },
+  "com.samsung.shealth.activity_level": {
+    "display_name": "Activity Level Breakdown",
+    "icon": "📈",
+    "category": "Activity",
+    "description": "Chronological classification of active states (Sedentary, Light, Active, etc.)."
+  },
+  "com.samsung.shealth.alerted_heart_rate": {
+    "display_name": "High/Low Heart Alerts",
+    "icon": "⚠️",
+    "category": "Cardiovascular",
+    "description": "Automated alert logs for unusually high or low heart rates."
+  },
+  "com.samsung.shealth.badge": {
+    "display_name": "Badges & Achievements",
+    "icon": "🏅",
+    "category": "System",
+    "description": "Gamification badges earned by meeting health and fitness milestones."
+  },
+  "com.samsung.shealth.best_records": {
+    "display_name": "Personal Best Records",
+    "icon": "🏆",
+    "category": "Activity",
+    "description": "All-time personal fitness records (e.g. max steps in a day, longest walk)."
+  },
+  "com.samsung.shealth.blood_pressure": {
+    "display_name": "Blood Pressure",
+    "icon": "🩺",
+    "category": "Cardiovascular",
+    "description": "Systolic, diastolic, mean arterial pressure, and pulse logs."
+  },
+  "com.samsung.shealth.breathing": {
+    "display_name": "Mindful Breathing Logs",
+    "icon": "🧘",
+    "category": "Wellness",
+    "description": "Logs of deep breathing exercises and duration."
+  },
+  "com.samsung.shealth.calories_burned.details": {
+    "display_name": "Calories Burned Details",
+    "icon": "🔥",
+    "category": "Activity",
+    "description": "Detailed time-series of passive and active calories burned."
+  },
+  "com.samsung.shealth.daily_activity.goal": {
+    "display_name": "Daily Goal Status",
+    "icon": "🎯",
+    "category": "Activity",
+    "description": "Targets and completion status of daily fitness tasks."
+  },
+  "com.samsung.shealth.exercise": {
+    "display_name": "Workout Sessions",
+    "icon": "🏃",
+    "category": "Activity",
+    "description": "Recorded physical workouts containing duration, distance, pace, and calories."
+  },
+  "com.samsung.shealth.exercise.weather": {
+    "display_name": "Workout Weather",
+    "icon": "🌤️",
+    "category": "Activity",
+    "description": "Environmental weather conditions recorded during exercise sessions."
+  },
+  "com.samsung.shealth.food_favorite": {
+    "display_name": "Favorite Foods",
+    "icon": "🌟",
+    "category": "Nutrition",
+    "description": "User-defined list of frequently eaten or favorite foods."
+  },
+  "com.samsung.shealth.food_frequent": {
+    "display_name": "Frequent Foods List",
+    "icon": "🔄",
+    "category": "Nutrition",
+    "description": "System-generated list of foods consumed most often."
+  },
+  "com.samsung.shealth.food_goal": {
+    "display_name": "Caloric/Nutrient Goals",
+    "icon": "🎯",
+    "category": "Nutrition",
+    "description": "Nutrient intake targets set by the user (daily calorie limits)."
+  },
+  "com.samsung.shealth.goal_history": {
+    "display_name": "Goal Target History",
+    "icon": "📜",
+    "category": "System",
+    "description": "Historical modifications to user-set fitness goals."
+  },
+  "com.samsung.shealth.hsp.references": {
+    "display_name": "Health Index References",
+    "icon": "📚",
+    "category": "System",
+    "description": "Reference values and baseline indices used by Samsung Health."
+  },
+  "com.samsung.shealth.insight.message_notification": {
+    "display_name": "Health Insights & Messages",
+    "icon": "✉️",
+    "category": "Wellness",
+    "description": "System generated recommendations, trends, and message notifications."
+  },
+  "com.samsung.shealth.permission": {
+    "display_name": "Data Permissions",
+    "icon": "🔑",
+    "category": "System",
+    "description": "Access levels and read/write authorizations granted to the app."
+  },
+  "com.samsung.shealth.preferences": {
+    "display_name": "Account Preferences",
+    "icon": "⚙️",
+    "category": "System",
+    "description": "User preferences for notifications, units, and dashboard visibility."
+  },
+  "com.samsung.shealth.report": {
+    "display_name": "Weekly / Monthly Reports",
+    "icon": "📊",
+    "category": "Wellness",
+    "description": "Aggregated weekly or monthly health summaries and progress cards."
+  },
+  "com.samsung.shealth.rewards": {
+    "display_name": "Program Rewards",
+    "icon": "🎁",
+    "category": "System",
+    "description": "Fitness program rewards and challenges records."
+  },
+  "com.samsung.shealth.service_preferences": {
+    "display_name": "Service Preferences",
+    "icon": "⚙️",
+    "category": "System",
+    "description": "Underlying background settings for Samsung health synchronization."
+  },
+  "com.samsung.shealth.sleep": {
+    "display_name": "Sleep Summary",
+    "icon": "💤",
+    "category": "Sleep",
+    "description": "Summary profiles for sleep sessions containing total duration and quality."
+  },
+  "com.samsung.shealth.sleep_combined": {
+    "display_name": "Combined Sleep Profiles",
+    "icon": "📊",
+    "category": "Sleep",
+    "description": "Aggregated nightly sleep records combined with external parameters."
+  },
+  "com.samsung.shealth.sleep_data": {
+    "display_name": "Sleep Movement Data",
+    "icon": "🛏️",
+    "category": "Sleep",
+    "description": "Detailed actigraphy logs showing physical movement during sleep."
+  },
+  "com.samsung.shealth.sleep_raw_data": {
+    "display_name": "Sleep Hardware Logs",
+    "icon": "💻",
+    "category": "Sleep",
+    "description": "Raw measurements from wearable sensors for sleep detection."
+  },
+  "com.samsung.shealth.sleep_snoring": {
+    "display_name": "Snoring Audio Logs",
+    "icon": "📢",
+    "category": "Sleep",
+    "description": "Logs of detected snoring events including timestamp and audio duration."
+  },
+  "com.samsung.shealth.social.public_challenge.extra": {
+    "display_name": "Social Challenges",
+    "icon": "👥",
+    "category": "System",
+    "description": "Global user challenges and global step ranking stats."
+  },
+  "com.samsung.shealth.social.service_status": {
+    "display_name": "Social Account Status",
+    "icon": "👥",
+    "category": "System",
+    "description": "Social connectivity, friend invites, and profile status."
+  },
+  "com.samsung.shealth.stand_day_summary": {
+    "display_name": "Daily Stand Summary",
+    "icon": "🧍",
+    "category": "Activity",
+    "description": "Hourly active/standing counts to encourage reducing sedentary time."
+  },
+  "com.samsung.shealth.step_daily_trend": {
+    "display_name": "Step Daily Trend",
+    "icon": "👣",
+    "category": "Activity",
+    "description": "Historical daily total steps, distance, and calorie logs."
+  },
+  "com.samsung.shealth.stress": {
+    "display_name": "Stress Levels",
+    "icon": "🧠",
+    "category": "Wellness",
+    "description": "Calculated stress index over time based on heart rate variability (HRV)."
+  },
+  "com.samsung.shealth.stress.histogram": {
+    "display_name": "Stress Distribution",
+    "icon": "📊",
+    "category": "Wellness",
+    "description": "Aggregated daily stress distribution metrics."
+  },
+  "com.samsung.shealth.tracker.floors_day_summary": {
+    "display_name": "Floors Climbed Summary",
+    "icon": "🧗",
+    "category": "Activity",
+    "description": "Daily summaries of floors climbed."
+  },
+  "com.samsung.shealth.tracker.heart_rate": {
+    "display_name": "Heart Rate Logs",
+    "icon": "💓",
+    "category": "Cardiovascular",
+    "description": "Continuous heart rate measurements in beats per minute (BPM)."
+  },
+  "com.samsung.shealth.tracker.oxygen_saturation": {
+    "display_name": "Oxygen Saturation (SpO2)",
+    "icon": "🩸",
+    "category": "Cardiovascular",
+    "description": "Blood oxygen saturation percentage records."
+  },
+  "com.samsung.shealth.tracker.pedometer_day_summary": {
+    "display_name": "Pedometer Daily Summary",
+    "icon": "👣",
+    "category": "Activity",
+    "description": "Consolidated pedometer step data grouped per day."
+  },
+  "com.samsung.shealth.tracker.pedometer_recommendation": {
+    "display_name": "Pedometer Insights",
+    "icon": "💡",
+    "category": "Activity",
+    "description": "Recommendations and auto-generated insights on walking goals."
+  },
+  "com.samsung.shealth.tracker.pedometer_step_count": {
+    "display_name": "Minute Pedometer Steps",
+    "icon": "👣",
+    "category": "Activity",
+    "description": "Raw, minute-by-minute step count recording."
+  }
+}

@@ -1,0 +1,298 @@
+# Copyright (C) 2025-2026 Timothy Charles Holborn <timothy.holborn@gmail.com>
+# https://www.linkedin.com/in/ubiquitous/
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Hybrid ontology: schema.org + QUDT + PROV-O + health: + SNOMED/LOINC/FHIR clinical defaults.
+# Reload at runtime — no hard-coded mappings in application code.
+
+namespaces:
+  schema: "http://schema.org/"
+  health: "https://health.example.org/ns#"
+  qudt: "http://qudt.org/schema/qudt/"
+  qudt-unit: "http://qudt.org/vocab/unit/"
+  prov: "http://www.w3.org/ns/prov#"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  # Clinical references
+  snomed: "http://snomed.info/id/"
+  loinc: "https://loinc.org/rdf/"
+  fhir: "http://hl7.org/fhir/"
+
+default_subject_template: "urn:health:{data_type}:{uuid}"
+
+# Mode flags (UI: simple vs clinical)
+ontology_modes:
+  simple:
+    description: "schema.org + QUDT + PROV — consumer/fitness focus"
+    include_clinical_references: false
+  clinical:
+    description: "Adds SNOMED / LOINC / FHIR interoperability links on selected properties"
+    include_clinical_references: true
+
+# PROV-O defaults applied to every mapped observation (when enabled)
+provenance:
+  was_derived_from: "urn:health:source:samsung-health-export"
+  generator: "health-to-solid"
+  source_label: "Samsung Health CSV export"
+
+transforms:
+  unix_ms_to_iso_with_offset:
+    description: "Convert start_time (ms UTC) + time_offset (minutes) to timezone-aware ISO"
+  minutes_to_iso_duration:
+    description: "Convert minute count to ISO 8601 duration (PT{n}M)"
+
+# Real Samsung export filenames → canonical mapping keys
+mapping_aliases:
+  com.samsung.shealth.tracker.heart_rate: com.samsung.health.heart_rate
+  com.samsung.shealth.tracker.pedometer_step_count: com.samsung.health.pedometer_step_count
+  com.samsung.shealth.exercise: com.samsung.health.exercise
+
+# Unit aliases → QUDT vocab unit local name (under qudt-unit namespace)
+unit_aliases:
+  KGM: Kilogram
+  MTR: Meter
+  MIN: Minute
+  BPM: BeatsPerMinute
+  C62: Unitless
+  ML: MilliLitre
+  MMHG: MilliBar # Map to Millibar or define standard representation
+
+mappings:
+  com.samsung.health.weight:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:27113001 # Body weight
+    loinc_concept: loinc:29463-7 # Body weight
+    label: "Body weight"
+    subject: "urn:health:weight:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      weight:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:Pound_Lb
+        fhir_reference: "fhir:Observation.valueQuantity"
+        snomed_reference: "snomed:27113001"
+      body_fat:
+        predicate: health:bodyFatPercentage
+        unit: qudt-unit:Percent
+      muscle_mass:
+        predicate: health:muscleMassKg
+        unit: qudt-unit:Kilogram
+      body_water:
+        predicate: health:bodyWaterPercentage
+        unit: qudt-unit:Percent
+      skeletal_muscle:
+        predicate: health:skeletalMuscleMassKg
+        unit: qudt-unit:Kilogram
+      bmi:
+        predicate: health:bmi
+        unit: qudt-unit:Unitless
+
+  com.samsung.shealth.sleep:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:248263006 # Sleep pattern
+    label: "Sleep session"
+    subject: "urn:health:sleep:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectivePeriod.start
+        transform: unix_ms_to_iso_with_offset
+      end_time:
+        predicate: fhir:Observation.effectivePeriod.end
+        transform: unix_ms_to_iso_with_offset
+      sleep_duration:
+        predicate: fhir:Observation.valueQuantity
+        transform: minutes_to_iso_duration
+        unit: qudt-unit:Minute
+        fhir_reference: "fhir:Observation.valueQuantity"
+      efficiency:
+        predicate: health:sleepEfficiency
+        unit: qudt-unit:Percent
+      deep_sleep:
+        predicate: health:deepSleepMinutes
+        unit: qudt-unit:Minute
+      rem_sleep:
+        predicate: health:remSleepMinutes
+        unit: qudt-unit:Minute
+      light_sleep:
+        predicate: health:lightSleepMinutes
+        unit: qudt-unit:Minute
+      wake_up_count:
+        predicate: health:wakeUpCount
+
+  com.samsung.health.heart_rate:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:364075005 # Heart rate
+    loinc_concept: loinc:8867-4 # Heart rate
+    label: "Heart rate"
+    subject: "urn:health:heart_rate:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      heart_rate:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:BeatsPerMinute
+        fhir_reference: "fhir:Observation.valueQuantity"
+        snomed_reference: "snomed:364075005"
+        loinc_reference: "loinc:8867-4"
+      min:
+        predicate: health:minHeartRate
+        unit: qudt-unit:BeatsPerMinute
+      max:
+        predicate: health:maxHeartRate
+        unit: qudt-unit:BeatsPerMinute
+      heart_rate_zone:
+        predicate: health:heartRateZone
+
+  com.samsung.health.exercise:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:256235009 # Exercise
+    label: "Exercise session"
+    subject: "urn:health:exercise:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectivePeriod.start
+        transform: unix_ms_to_iso_with_offset
+      end_time:
+        predicate: fhir:Observation.effectivePeriod.end
+        transform: unix_ms_to_iso_with_offset
+      duration:
+        predicate: fhir:Observation.valueQuantity
+        transform: minutes_to_iso_duration
+        unit: qudt-unit:Minute
+        fhir_reference: "fhir:Observation.valueQuantity"
+      calorie:
+        predicate: health:caloriesBurned
+        unit: qudt-unit:Kilocalorie
+      distance:
+        predicate: health:distance
+        unit: qudt-unit:Meter
+      exercise_type:
+        predicate: health:exerciseType
+
+  com.samsung.health.pedometer_step_count:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:256235009 # Walking / physical activity steps
+    loinc_concept: loinc:55423-8 # Number of steps in 24 hours
+    label: "Daily step count"
+    subject: "urn:health:steps:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectivePeriod.start
+        transform: unix_ms_to_iso_with_offset
+      end_time:
+        predicate: fhir:Observation.effectivePeriod.end
+        transform: unix_ms_to_iso_with_offset
+      count:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:Unitless
+        fhir_reference: "fhir:Observation.valueQuantity"
+      calorie:
+        predicate: health:caloriesBurned
+        unit: qudt-unit:Kilocalorie
+      distance:
+        predicate: health:distance
+        unit: qudt-unit:Meter
+
+  # --- Blood Pressure ---
+  com.samsung.shealth.blood_pressure:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:75367002 # Blood pressure
+    loinc_concept: loinc:85354-9 # Blood pressure panel
+    label: "Blood pressure observation"
+    subject: "urn:health:blood_pressure:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      systolic:
+        predicate: health:systolicPressure
+        unit: qudt-unit:MilliBar
+        loinc_reference: loinc:8480-6
+      diastolic:
+        predicate: health:diastolicPressure
+        unit: qudt-unit:MilliBar
+        loinc_reference: loinc:8462-4
+      pulse:
+        predicate: health:pulseRate
+        unit: qudt-unit:BeatsPerMinute
+      mean:
+        predicate: health:meanArterialPressure
+        unit: qudt-unit:MilliBar
+
+  # --- Oxygen Saturation (SpO2) ---
+  com.samsung.shealth.tracker.oxygen_saturation:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:431314004 # SpO2
+    loinc_concept: loinc:2708-6 # Oxygen saturation
+    label: "Oxygen saturation"
+    subject: "urn:health:spo2:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      spo2:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:Percent
+      heart_rate:
+        predicate: health:heartRate
+        unit: qudt-unit:BeatsPerMinute
+      max:
+        predicate: health:maxSpo2
+        unit: qudt-unit:Percent
+      min:
+        predicate: health:minSpo2
+        unit: qudt-unit:Percent
+
+  # --- Stress ---
+  com.samsung.shealth.stress:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:162290004 # Stress level
+    label: "Stress measurement"
+    subject: "urn:health:stress:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      score:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:Unitless
+      max:
+        predicate: health:maxStressScore
+        unit: qudt-unit:Unitless
+      min:
+        predicate: health:minStressScore
+        unit: qudt-unit:Unitless
+
+  # --- Water Intake ---
+  com.samsung.health.water_intake:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:226353008 # Water intake
+    label: "Water intake"
+    subject: "urn:health:water_intake:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      amount:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:MilliLitre
+      unit_amount:
+        predicate: health:unitAmount
+        unit: qudt-unit:MilliLitre
+
+  # --- Floors Climbed ---
+  com.samsung.health.floors_climbed:
+    rdf_type: fhir:Observation
+    snomed_concept: snomed:256235009 # Floors climbed
+    label: "Floors climbed"
+    subject: "urn:health:floors_climbed:{uuid}"
+    properties:
+      start_time:
+        predicate: fhir:Observation.effectiveDateTime
+        transform: unix_ms_to_iso_with_offset
+      floor:
+        predicate: fhir:Observation.valueQuantity
+        unit: qudt-unit:Unitless
