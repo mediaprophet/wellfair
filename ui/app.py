@@ -23,6 +23,7 @@ from ui.tabs.vault_admin import render_vault_admin
 from ui.tabs.document_ingestion import render_document_ingestion
 from ui.tabs.calendar_timeline import render_calendar_timeline
 from ui.tabs.sanctuary_mode import render_sanctuary_mode
+from ui.tabs.anatomy_3d import render_anatomy_3d
 from ui.tabs.case_management import render_case_management
 from ui.tabs.social_work import render_social_work
 from ui.tabs.profile_intake import render_profile_intake
@@ -186,6 +187,7 @@ def main():
         "📅 Semantic Timeline & Calendar",
         "🧠 Mental Health & Wellbeing",
         "📝 Assessments",
+        "🧬 3D Biometric Hologram",
         "🏛️ Life Events & Socioeconomic Wellbeing",
         "🤝 Social Work & Assistance",
         "📍 Location & Environmental Triggers",
@@ -256,6 +258,8 @@ def main():
         render_mental_health(dark_mode, normalized)
     elif app_section == "📝 Assessments":
         render_psychiatric_assessments(dark_mode)
+    elif app_section == "🧬 3D Biometric Hologram":
+        render_anatomy_3d(dark_mode, normalized)
     elif app_section == "🏛️ Life Events & Socioeconomic Wellbeing":
         render_life_events(dark_mode)
     elif app_section == "🤝 Social Work & Assistance":
