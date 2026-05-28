@@ -9,13 +9,13 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
     DEMO_AVATARS = {
-        "Healthy Baseline": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Michael (Homeless / Family Separation)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Elena (Trauma Survivor)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Rebecca (Birth Trauma / PTSD)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Margaret (Elder Abuse / Neglect)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Robert (Elder Neglect)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
-        "Jordan (NDIS Exploitation)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb"
+        "Healthy Baseline": "models/baseline.glb",
+        "Michael (Homeless / Family Separation)": "models/michael.glb",
+        "Elena (Trauma Survivor)": "models/elena.glb",
+        "Rebecca (Birth Trauma / PTSD)": "models/rebecca.glb",
+        "Margaret (Elder Abuse / Neglect)": "models/margaret.glb",
+        "Robert (Elder Neglect)": "models/robert.glb",
+        "Jordan (NDIS Exploitation)": "models/jordan.glb"
     }
 
     col1, col2 = st.columns([2, 2])
@@ -754,7 +754,19 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const sysSkin = createLayer('skin');
             const gltfLoader = new THREE.GLTFLoader();
             // Default generic human avatar from Three.js examples if none provided
-            const avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
+            let avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
+            
+            // Resolve local paths based on environment
+            if (avatarUrl.startsWith("models/")) {{
+                const hostname = window.location.hostname;
+                // If running in local streamlit iframe (localhost)
+                if (hostname === "localhost" || hostname === "127.0.0.1") {{
+                    avatarUrl = "http://localhost:8000/" + avatarUrl;
+                }} else {{
+                    // If running in Stlite on Github Pages
+                    avatarUrl = "https://mediaprophet.github.io/wellfair/" + avatarUrl;
+                }}
+            }}
             
             let avatarModel = null;
             let avatarMixer = null;
