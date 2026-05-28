@@ -165,7 +165,6 @@ def main():
         "🔬 Lab & Pathology Results",
         "📅 Semantic Timeline & Calendar",
         "🧠 Mental Health & Wellbeing",
-        "🧪 Psychology",
         "📝 Assessments",
         "🏛️ Life Events & Socioeconomic Wellbeing",
         "🤝 Social Work & Assistance",
@@ -234,9 +233,7 @@ def main():
     elif app_section == "📅 Semantic Timeline & Calendar":
         render_calendar_timeline(dark_mode)
     elif app_section == "🧠 Mental Health & Wellbeing":
-        render_mental_health(dark_mode)
-    elif app_section == "🧪 Psychology":
-        render_psychology(dark_mode)
+        render_mental_health(dark_mode, normalized)
     elif app_section == "📝 Assessments":
         render_psychiatric_assessments(dark_mode)
     elif app_section == "🏛️ Life Events & Socioeconomic Wellbeing":
