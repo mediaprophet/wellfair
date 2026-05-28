@@ -7,24 +7,39 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main>
-    <h1>wellfair</h1>
-    <p>`wellfair` is a local Personal Wellbeing Informatics Vault and semantic data services platform developed independently by Timothy Charles Holborn.</p>
-    <p>This documentation site provides an introduction and a lightweight browser demo that runs the Rust-based core compiled to WebAssembly. All files you upload to the demo are processed locally in your browser and are not transmitted to any server.</p>
+  <main class="landing">
+    <header class="landing-hero">
+      <h1>wellfair — wellbeing vault</h1>
+      <p class="lede">An independent, privacy-first personal wellbeing informatics vault by Timothy Charles Holborn. Explore the live browser experience powered by WebAssembly (Rust core) and Pyodide (Python analytics).</p>
+      <a class="primary-btn" href="app.html">Open the browser demo</a>
+    </header>
 
-    <h2>Quick links</h2>
-    <ul>
-      <li><a href="app.html">Launch demo (run in your browser)</a></li>
-      <li><a href="README.md">Repository README</a></li>
-      <li><a href="COPYRIGHT.md">Copyright & License</a></li>
-    </ul>
+    <section class="landing-grid">
+      <article>
+        <h2>What runs in the browser?</h2>
+        <ul>
+          <li>Analytics and dashboards powered by Python running in Pyodide.</li>
+          <li>Samsung Health CSV → RDF conversion via the Rust core compiled to WASM.</li>
+          <li>Synthetic demo profile mirroring the Streamlit experience.</li>
+        </ul>
+      </article>
+      <article>
+        <h2>Going further</h2>
+        <ul>
+          <li>Run the full Streamlit UI locally: <code>streamlit run ui/app.py</code></li>
+          <li>Upcoming native shells — Electron/Tauri desktop & Capacitor mobile.</li>
+          <li>All source code: <a href="README.md">README</a> · <a href="COPYRIGHT.md">License</a></li>
+        </ul>
+      </article>
+    </section>
 
-    <h2>Install on mobile</h2>
-    <p>On supported mobile browsers, you can add the demo to your home screen via the browser menu. The demo runs entirely client-side.</p>
+    <section class="install-note">
+      <h2>Install as a PWA</h2>
+      <p>On supported browsers, use “Add to Home Screen” to pin the demo. Everything runs client-side; no data leaves your device.</p>
+    </section>
 
-    <hr />
-    <footer>
-      <p>Hosted project docs & demo — the Streamlit app is not hosted here. For runtime usage, run the app locally.</p>
+    <footer class="landing-footer">
+      <p>Need the full vault with your own data? Clone the repo, run the Streamlit app, and plug in your Samsung Health export.</p>
     </footer>
   </main>
 </body>

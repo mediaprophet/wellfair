@@ -5,30 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>wellfair — WASM Demo</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
 </head>
 <body>
-  <main>
-    <h1>wellfair — Browser Demo</h1>
-    <p>Upload a Samsung Health CSV export file to parse and convert it to RDF (Turtle) directly in your browser. Processing uses the wellfair Rust core compiled to WebAssembly. All files remain local — nothing is sent to any server.</p>
+  <main class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <span class="brand-mark">wellfair</span>
+        <p class="brand-sub">Personal Wellbeing Informatics Vault</p>
+      </div>
+      <nav class="sidebar-nav" aria-label="Primary">
+        <button class="nav-button active" data-view="dashboard">
+          <span>Demo Insights</span>
+          <small>Powered by Pyodide</small>
+        </button>
+        <button class="nav-button" data-view="converter">
+          <span>CSV → RDF Converter</span>
+          <small>Rust / WebAssembly</small>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="installBtn" class="install-btn" hidden>Install as PWA</button>
+        <a class="docs-link" href="index.html">← Back to docs</a>
+      </div>
+      <div class="future-roadmap">
+        <h3>Next steps</h3>
+        <ul>
+          <li>Native desktop shell (Electron / Tauri)</li>
+          <li>Mobile build using Capacitor</li>
+          <li>Secure local vault sync</li>
+        </ul>
+      </div>
+    </aside>
 
-    <input id="fileInput" type="file" accept=".csv" />
-    <select id="csvType">
-      <option value="weight">Weight</option>
-      <option value="sleep">Sleep</option>
-      <option value="hr">Heart rate</option>
-      <option value="steps">Steps</option>
-    </select>
-    <button id="parseBtn">Parse CSV</button>
-    <button id="installBtn" style="display:none; margin-left:12px">Install App</button>
+    <section class="content" id="content">
+      <header class="content-header">
+        <div>
+          <h1>wellfair — browser demo</h1>
+          <p class="lead">Experience the wellbeing vault UI in the browser. Analytics run in Python (Pyodide) and conversions use the Rust core compiled to WebAssembly.</p>
+        </div>
+        <div class="profile-controls">
+          <label for="profileSelect">Demo profile</label>
+          <select id="profileSelect" aria-label="Demo profile selector"></select>
+          <span id="demoStatus" class="status-badge">Loading runtime…</span>
+        </div>
+      </header>
 
-    <h2>Parsed output (Turtle)</h2>
-    <pre id="output">(no output)</pre>
-    <div id="updateBanner" style="display:none; background:#fff3cd; border:1px solid #ffeeba; padding:10px; margin-top:12px; border-radius:6px">
-      <strong>New version available.</strong>
-      <button id="reloadBtn" style="margin-left:12px">Reload to update</button>
-    </div>
+      <section id="profileSummary" class="profile-summary" aria-live="polite"></section>
 
-    <p><a href="index.html">Back to docs</a></p>
+      <section id="dashboardView" class="view active" aria-live="polite">
+        <div id="kpiGrid" class="kpi-grid" role="list"></div>
+        <section class="charts-section">
+          <div id="chartsGrid" class="chart-grid"></div>
+          <aside class="insights-panel">
+            <h2>Insights</h2>
+            <ul id="insightsList"></ul>
+          </aside>
+        </section>
+        <section class="timeline-section">
+          <div class="timeline-header">
+            <h2>Recent timeline</h2>
+            <p>Key events extracted from the wellbeing ontology.</p>
+          </div>
+          <div id="timelineList" class="timeline-list"></div>
+        </section>
+      </section>
+
+      <section id="converterView" class="view" aria-labelledby="converterHeading">
+        <header class="converter-header">
+          <h2 id="converterHeading">Convert Samsung Health CSV to RDF (Turtle)</h2>
+          <p>Files never leave your device. The WebAssembly module mirrors the wellfare core used by the native app.</p>
+        </header>
+        <form class="converter-form" onsubmit="return false;">
+          <label class="form-control">
+            <span>Upload Samsung Health CSV</span>
+            <input id="fileInput" type="file" accept=".csv" />
+          </label>
+          <label class="form-control">
+            <span>Dataset type</span>
+            <select id="csvType">
+              <option value="weight">Weight</option>
+              <option value="sleep">Sleep</option>
+              <option value="hr">Heart rate</option>
+              <option value="steps">Steps</option>
+            </select>
+          </label>
+          <button id="parseBtn" type="button" class="primary-btn">Parse CSV</button>
+          <span id="wasmStatus" class="status-badge subtle">WASM loading…</span>
+        </form>
+        <section class="output-section">
+          <div class="output-header">
+            <h3>RDF output (Turtle)</h3>
+            <button id="copyBtn" type="button" class="ghost-btn">Copy</button>
+          </div>
+          <pre id="output" class="output">(no output)</pre>
+        </section>
+        <section class="converter-note">
+          <h3>Bring your own vault</h3>
+          <p>Run the full Streamlit experience locally (<code>streamlit run ui/app.py</code>) or integrate this WASM build into the forthcoming native desktop and mobile shells.</p>
+        </section>
+      </section>
+
+      <div id="updateBanner" class="update-banner" hidden>
+        <span>New version available.</span>
+        <button id="reloadBtn" class="primary-btn ghost">Reload</button>
+      </div>
+    </section>
   </main>
 
   <script type="module" src="./app.js"></script>

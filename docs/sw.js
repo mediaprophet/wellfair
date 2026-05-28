@@ -1,10 +1,15 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `wellfair-${CACHE_VERSION}`;
 const ASSETS = [
   'index.html',
   'app.html',
   'style.css',
   'app.js',
+  'pyodide/wellfair_demo.py',
+  'sample_data/synthetic_steps.csv',
+  'sample_data/synthetic_sleep.csv',
+  'sample_data/synthetic_weight.csv',
+  'sample_data/synthetic_hr.csv',
   'manifest.webmanifest',
   'icons/icon-192.svg',
   'icons/icon-512.svg'
