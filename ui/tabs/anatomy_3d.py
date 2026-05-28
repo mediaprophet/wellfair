@@ -33,205 +33,412 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         "darkMode": dark_mode
     }
     
-    # Generate HTML Payload
+    # Generate HTML Payload with Three.js, OrbitControls, and Advanced UI
     html_code = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Outfit', sans-serif; }}
+            body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Outfit', sans-serif; user-select: none; }}
             #canvas-container {{ width: 100%; height: 600px; position: relative; }}
-            .overlay-card {{
+            
+            /* Premium Glassmorphism UI */
+            .glass-panel {{
                 position: absolute;
-                background: { "rgba(15, 23, 42, 0.7)" if dark_mode else "rgba(255, 255, 255, 0.8)" };
-                border: 1px solid { "rgba(255, 255, 255, 0.15)" if dark_mode else "rgba(15, 23, 42, 0.1)" };
+                background: { "rgba(10, 5, 15, 0.75)" if dark_mode else "rgba(255, 255, 255, 0.85)" };
+                border: 1px solid { "rgba(255, 30, 86, 0.2)" if dark_mode else "rgba(15, 23, 42, 0.1)" };
                 color: { "#f1f5f9" if dark_mode else "#0f172a" };
-                padding: 12px 16px;
+                backdrop-filter: blur(16px);
                 border-radius: 12px;
-                backdrop-filter: blur(12px);
-                pointer-events: none;
-                transition: opacity 0.3s;
-                opacity: 0;
-                transform: translate(-50%, -50%);
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                transition: all 0.3s ease;
             }}
-            .metric-title {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; font-weight: 600; margin-bottom: 4px; }}
-            .metric-value {{ font-size: 24px; font-weight: 800; }}
-            .pulse-red {{ color: #ff1e56; text-shadow: 0 0 10px rgba(255,30,86,0.5); }}
-            .pulse-blue {{ color: #00f0ff; text-shadow: 0 0 10px rgba(0,240,255,0.5); }}
-            .pulse-amber {{ color: #ffaa00; text-shadow: 0 0 10px rgba(255,170,0,0.5); }}
-            #heart-card {{ top: 40%; left: 35%; }}
-            #brain-card {{ top: 20%; left: 65%; }}
-            #nervous-card {{ top: 60%; left: 65%; }}
+            
+            /* Layer Controls Sidebar */
+            #layer-controls {{
+                top: 20px;
+                left: 20px;
+                width: 220px;
+                padding: 16px;
+                z-index: 10;
+            }}
+            .panel-title {{
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.15em;
+                color: { "#ff1e56" if dark_mode else "#0d9488" };
+                font-weight: 800;
+                margin-bottom: 16px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+                padding-bottom: 8px;
+            }}
+            
+            /* Toggle Switches */
+            .toggle-row {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+            }}
+            .toggle-row:hover {{ color: { "#ffb3c6" if dark_mode else "#3b82f6" }; }}
+            .switch {{
+                position: relative;
+                display: inline-block;
+                width: 34px;
+                height: 18px;
+            }}
+            .switch input {{ opacity: 0; width: 0; height: 0; }}
+            .slider {{
+                position: absolute;
+                cursor: pointer;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background-color: rgba(255,255,255,0.1);
+                transition: .4s;
+                border-radius: 34px;
+                border: 1px solid rgba(255,255,255,0.2);
+            }}
+            .slider:before {{
+                position: absolute;
+                content: "";
+                height: 12px;
+                width: 12px;
+                left: 2px;
+                bottom: 2px;
+                background-color: #94a3b8;
+                transition: .4s;
+                border-radius: 50%;
+            }}
+            input:checked + .slider {{ background-color: { "#ff1e56" if dark_mode else "#10b981" }; border-color: transparent; }}
+            input:checked + .slider:before {{ transform: translateX(16px); background-color: #fff; }}
+
+            /* Interactive Tooltip (Raycaster) */
+            #info-tooltip {{
+                display: none;
+                pointer-events: none;
+                z-index: 20;
+                padding: 16px;
+                min-width: 180px;
+                transform: translate(-50%, -100%);
+                margin-top: -15px;
+            }}
+            #tooltip-title {{
+                font-size: 14px;
+                font-weight: 800;
+                color: { "#00f0ff" if dark_mode else "#3b82f6" };
+                margin-bottom: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }}
+            #tooltip-desc {{
+                font-size: 12px;
+                color: #94a3b8;
+            }}
+            #tooltip-metric {{
+                margin-top: 8px;
+                font-size: 20px;
+                font-weight: 700;
+                color: { "#ffb3c6" if dark_mode else "#0f172a" };
+            }}
+
+            .instruction {{
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 11px;
+                color: #94a3b8;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                background: rgba(0,0,0,0.5);
+                padding: 6px 12px;
+                border-radius: 20px;
+                pointer-events: none;
+            }}
         </style>
+        
+        <!-- Three.js and OrbitControls -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     </head>
     <body>
         <div id="canvas-container">
-            <div id="heart-card" class="overlay-card">
-                <div class="metric-title">Cardiac System</div>
-                <div class="metric-value" id="heart-val">-- BPM</div>
+            <!-- UI Sidebar -->
+            <div id="layer-controls" class="glass-panel">
+                <div class="panel-title">Anatomy 3D Atlas</div>
+                
+                <label class="toggle-row">
+                    Skeletal System
+                    <div class="switch">
+                        <input type="checkbox" id="toggle-skeletal" checked>
+                        <span class="slider"></span>
+                    </div>
+                </label>
+                
+                <label class="toggle-row">
+                    Cardiovascular
+                    <div class="switch">
+                        <input type="checkbox" id="toggle-cardio" checked>
+                        <span class="slider"></span>
+                    </div>
+                </label>
+                
+                <label class="toggle-row">
+                    Nervous System
+                    <div class="switch">
+                        <input type="checkbox" id="toggle-nervous" checked>
+                        <span class="slider"></span>
+                    </div>
+                </label>
             </div>
-            <div id="brain-card" class="overlay-card">
-                <div class="metric-title">Cognitive Recovery</div>
-                <div class="metric-value" id="brain-val">-- %</div>
+
+            <!-- Dynamic Tooltip -->
+            <div id="info-tooltip" class="glass-panel">
+                <div id="tooltip-title">Organ</div>
+                <div id="tooltip-desc">Description</div>
+                <div id="tooltip-metric">--</div>
             </div>
-            <div id="nervous-card" class="overlay-card">
-                <div class="metric-title">Nervous System</div>
-                <div class="metric-value" id="stress-val">-- Score</div>
-            </div>
+
+            <div class="instruction">Left Click: Inspect | Drag: Rotate | Scroll: Zoom</div>
         </div>
 
         <script>
-            const bioData = {json.dumps(bio_context)};
+            const bioData = {json.dumps(bio_context).replace("<", "\\u003c")};
+            const isDark = bioData.darkMode;
             
-            // UI Updates
-            setTimeout(() => {{
-                document.getElementById('heart-card').style.opacity = 1;
-                document.getElementById('brain-card').style.opacity = 1;
-                document.getElementById('nervous-card').style.opacity = 1;
-                
-                const hrEl = document.getElementById('heart-val');
-                hrEl.innerText = bioData.heartRate + " BPM";
-                if(bioData.heartRate > 90) hrEl.className = "metric-value pulse-red";
-                else hrEl.className = "metric-value pulse-blue";
-                
-                const brEl = document.getElementById('brain-val');
-                brEl.innerText = bioData.sleepEfficiency + "%";
-                if(bioData.sleepEfficiency < 75) brEl.className = "metric-value pulse-amber";
-                else brEl.className = "metric-value pulse-blue";
-                
-                const stEl = document.getElementById('stress-val');
-                stEl.innerText = bioData.stress;
-                if(bioData.stress > 60) stEl.className = "metric-value pulse-amber";
-                else stEl.className = "metric-value pulse-blue";
-            }}, 1000);
-
-            // Three.js Scene Setup
+            // Core Setup
             const container = document.getElementById('canvas-container');
             const scene = new THREE.Scene();
-            // Transparent background
             
             const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.z = 10;
-            camera.position.y = 0;
+            camera.position.set(0, 1, 8);
 
             const renderer = new THREE.WebGLRenderer({{ alpha: true, antialias: true }});
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
 
-            // Abstract Hologram Humanoid Construction
-            const humanGroup = new THREE.Group();
-            
-            // Base Hologram Material
-            const wireMaterial = new THREE.MeshBasicMaterial({{ 
-                color: bioData.darkMode ? 0x00f0ff : 0x0d9488, 
-                wireframe: true, 
-                transparent: true, 
-                opacity: 0.15 
-            }});
-            
-            const solidMaterial = new THREE.MeshPhongMaterial({{
-                color: bioData.darkMode ? 0x0088ff : 0x14b8a6,
-                transparent: true,
-                opacity: 0.1,
-                shininess: 100,
-                blending: THREE.AdditiveBlending
-            }});
+            // OrbitControls (Like Anatomy 3D Atlas)
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 0, 0);
+            controls.minDistance = 3;
+            controls.maxDistance = 15;
 
-            function createPart(geo, y, scale=1) {{
-                const mesh1 = new THREE.Mesh(geo, wireMaterial);
-                const mesh2 = new THREE.Mesh(geo, solidMaterial);
-                mesh1.scale.set(scale, scale, scale);
-                mesh2.scale.set(scale*0.98, scale*0.98, scale*0.98);
-                const group = new THREE.Group();
-                group.add(mesh1);
-                group.add(mesh2);
-                group.position.y = y;
-                return group;
-            }}
-
-            // Head
-            const head = createPart(new THREE.SphereGeometry(0.5, 16, 16), 2.5);
-            humanGroup.add(head);
-
-            // Torso
-            const torso = createPart(new THREE.CylinderGeometry(0.8, 0.6, 2.5, 16, 8), 0.5);
-            humanGroup.add(torso);
-            
-            // Arms
-            const armGeo = new THREE.CylinderGeometry(0.2, 0.15, 2.2, 8, 4);
-            const lArm = createPart(armGeo, 0.5); lArm.position.x = -1.2;
-            const rArm = createPart(armGeo, 0.5); rArm.position.x = 1.2;
-            humanGroup.add(lArm);
-            humanGroup.add(rArm);
-            
-            // Legs
-            const legGeo = new THREE.CylinderGeometry(0.25, 0.15, 2.5, 8, 4);
-            const lLeg = createPart(legGeo, -2.2); lLeg.position.x = -0.4;
-            const rLeg = createPart(legGeo, -2.2); rLeg.position.x = 0.4;
-            humanGroup.add(lLeg);
-            humanGroup.add(rLeg);
-
-            // --- Biometric Anomalies ---
-            
-            // Heart Node
-            const heartGeo = new THREE.SphereGeometry(0.25, 16, 16);
-            const heartColor = bioData.heartRate > 90 ? 0xff1e56 : 0x00f0ff;
-            const heartMat = new THREE.MeshBasicMaterial({{ color: heartColor, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending }});
-            const heartNode = new THREE.Mesh(heartGeo, heartMat);
-            heartNode.position.set(-0.2, 1.2, 0.5);
-            humanGroup.add(heartNode);
-            
-            // Brain Node
-            const brainGeo = new THREE.SphereGeometry(0.3, 16, 16);
-            const brainColor = bioData.sleepEfficiency < 75 ? 0xffaa00 : 0x00f0ff;
-            const brainMat = new THREE.MeshBasicMaterial({{ color: brainColor, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }});
-            const brainNode = new THREE.Mesh(brainGeo, brainMat);
-            brainNode.position.set(0, 2.5, 0);
-            humanGroup.add(brainNode);
-
-            scene.add(humanGroup);
-            humanGroup.position.y = -0.5;
-
-            // Lights
-            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            // Lighting (Studio Setup for X-Ray / Glass aesthetic)
+            const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.4 : 0.7);
             scene.add(ambient);
-            const pointLight = new THREE.PointLight(0xffffff, 1);
-            pointLight.position.set(5, 5, 5);
-            scene.add(pointLight);
+            
+            const dirLight = new THREE.DirectionalLight(isDark ? 0x00f0ff : 0xffffff, 0.8);
+            dirLight.position.set(5, 5, 5);
+            scene.add(dirLight);
+            
+            const backLight = new THREE.DirectionalLight(isDark ? 0xff1e56 : 0x0d9488, 0.5);
+            backLight.position.set(-5, 5, -5);
+            scene.add(backLight);
 
-            // Animation Loop
+            // ==========================================
+            // ANATOMY ATLAS SYSTEM GENERATION
+            // ==========================================
+            
+            const atlasGroup = new THREE.Group();
+            
+            // Materials
+            const matBone = new THREE.MeshPhysicalMaterial({{
+                color: isDark ? 0xaaaaaa : 0xffffff,
+                transparent: true,
+                opacity: 0.3,
+                roughness: 0.2,
+                metalness: 0.1,
+                clearcoat: 1.0,
+                side: THREE.DoubleSide
+            }});
+            
+            const matHeart = new THREE.MeshPhysicalMaterial({{
+                color: 0xff1e56,
+                emissive: bioData.heartRate > 90 ? 0xff0000 : 0x550011,
+                transparent: true,
+                opacity: 0.85,
+                roughness: 0.1,
+                transmission: 0.5
+            }});
+            
+            const matBrain = new THREE.MeshPhysicalMaterial({{
+                color: 0x00f0ff,
+                emissive: bioData.sleepEfficiency < 75 ? 0xffaa00 : 0x002255,
+                transparent: true,
+                opacity: 0.7,
+                roughness: 0.4
+            }});
+            
+            // 1. SKELETAL SYSTEM
+            const skeletalLayer = new THREE.Group();
+            skeletalLayer.name = "SkeletalSystem";
+            
+            // Skull
+            const skullGeo = new THREE.SphereGeometry(0.6, 32, 32);
+            const skull = new THREE.Mesh(skullGeo, matBone);
+            skull.position.y = 2.5;
+            skull.scale.set(1, 1.2, 1);
+            skull.userData = {{ name: "Cranium", desc: "Protects the brain.", metric: "Structural Intact" }};
+            skeletalLayer.add(skull);
+            
+            // Spine
+            for(let i=0; i<12; i++) {{
+                const vert = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.15, 16), matBone);
+                vert.position.set(0, 1.5 - (i * 0.25), -0.2);
+                vert.userData = {{ name: "Vertebrae", desc: "Spinal column.", metric: "Cervical/Thoracic" }};
+                skeletalLayer.add(vert);
+            }}
+            
+            // Ribcage (Instanced Torus)
+            for(let i=0; i<8; i++) {{
+                const rib = new THREE.Mesh(new THREE.TorusGeometry(0.6 + (Math.sin(i/8 * Math.PI)*0.2), 0.05, 8, 32, Math.PI), matBone);
+                rib.position.set(0, 1.2 - (i * 0.2), -0.2);
+                rib.rotation.x = -Math.PI / 2 + 0.2;
+                rib.userData = {{ name: "Ribcage", desc: "Thoracic cavity protection.", metric: "Respiration Normal" }};
+                skeletalLayer.add(rib);
+            }}
+            
+            // 2. CARDIOVASCULAR SYSTEM
+            const cardioLayer = new THREE.Group();
+            cardioLayer.name = "CardioSystem";
+            
+            const heart = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 32), matHeart);
+            heart.position.set(-0.2, 0.8, 0.2);
+            heart.userData = {{ name: "Heart (Myocardium)", desc: "Central circulatory pump.", metric: bioData.heartRate + " BPM" }};
+            cardioLayer.add(heart);
+            
+            // Aorta (Tube)
+            class CustomSinCurve extends THREE.Curve {{
+                constructor(scale = 1) {{ super(); this.scale = scale; }}
+                getPoint(t, optionalTarget = new THREE.Vector3()) {{
+                    const tx = Math.sin(t * Math.PI) * 0.2;
+                    const ty = t * -1.5;
+                    const tz = Math.cos(t * Math.PI) * 0.1;
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }}
+            }}
+            const aortaGeo = new THREE.TubeGeometry(new CustomSinCurve(1), 20, 0.05, 8, false);
+            const aorta = new THREE.Mesh(aortaGeo, matHeart);
+            aorta.position.set(-0.2, 0.9, 0.2);
+            aorta.userData = {{ name: "Aorta", desc: "Main systemic artery.", metric: "Pressure Nom" }};
+            cardioLayer.add(aorta);
+            
+            // 3. NERVOUS SYSTEM
+            const nervousLayer = new THREE.Group();
+            nervousLayer.name = "NervousSystem";
+            
+            const brain = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), matBrain);
+            brain.position.set(0, 2.5, 0);
+            brain.scale.set(0.9, 1.0, 0.9);
+            brain.userData = {{ name: "Brain (Cerebrum)", desc: "Central Nervous System.", metric: bioData.sleepEfficiency + "% Recovery" }};
+            nervousLayer.add(brain);
+            
+            const spinalCord = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3, 16), matBrain);
+            spinalCord.position.set(0, 0.5, -0.2);
+            spinalCord.userData = {{ name: "Spinal Cord", desc: "Main neural pathway.", metric: "Conductivity Nom" }};
+            nervousLayer.add(spinalCord);
+
+            // Add layers to main group
+            atlasGroup.add(skeletalLayer);
+            atlasGroup.add(cardioLayer);
+            atlasGroup.add(nervousLayer);
+            atlasGroup.position.y = -0.5;
+            scene.add(atlasGroup);
+
+            // ==========================================
+            // UI LAYER TOGGLES
+            // ==========================================
+            document.getElementById('toggle-skeletal').addEventListener('change', (e) => {{ skeletalLayer.visible = e.target.checked; }});
+            document.getElementById('toggle-cardio').addEventListener('change', (e) => {{ cardioLayer.visible = e.target.checked; }});
+            document.getElementById('toggle-nervous').addEventListener('change', (e) => {{ nervousLayer.visible = e.target.checked; }});
+
+            // ==========================================
+            // RAYCASTING (Click to Inspect)
+            // ==========================================
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            const tooltip = document.getElementById('info-tooltip');
+            let hoveredMesh = null;
+            let originalEmissive = new THREE.Color(0x000000);
+
+            container.addEventListener('pointermove', (event) => {{
+                const rect = container.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                // Position tooltip to follow mouse (if visible)
+                if(tooltip.style.display === 'block') {{
+                    tooltip.style.left = (event.clientX - rect.left) + 'px';
+                    tooltip.style.top = (event.clientY - rect.top) + 'px';
+                }}
+            }});
+            
+            container.addEventListener('click', () => {{
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(atlasGroup.children, true);
+                
+                // Reset previous hover
+                if (hoveredMesh) {{
+                    hoveredMesh.material.emissive = originalEmissive;
+                    hoveredMesh = null;
+                    tooltip.style.display = 'none';
+                }}
+
+                if (intersects.length > 0) {{
+                    const object = intersects[0].object;
+                    if (object.userData && object.userData.name) {{
+                        hoveredMesh = object;
+                        originalEmissive = object.material.emissive.clone();
+                        object.material.emissive.setHex(0xffffff); // Highlight
+                        
+                        // Update UI
+                        document.getElementById('tooltip-title').innerText = object.userData.name;
+                        document.getElementById('tooltip-desc').innerText = object.userData.desc;
+                        document.getElementById('tooltip-metric').innerText = object.userData.metric;
+                        tooltip.style.display = 'block';
+                    }}
+                }}
+            }});
+
+            // ==========================================
+            // ANIMATION LOOP
+            // ==========================================
             let time = 0;
             function animate() {{
                 requestAnimationFrame(animate);
+                controls.update(); // Required for damping
                 
-                // Slow rotation
-                humanGroup.rotation.y = Math.sin(time * 0.5) * 0.3;
+                // Biological Animations
+                time += 0.016;
                 
-                // Heartbeat pulse effect
-                const pulseRate = bioData.heartRate / 60; // beats per second
-                const pulse = (Math.sin(time * Math.PI * 2 * pulseRate) + 1) / 2; // 0 to 1
-                heartNode.scale.setScalar(1 + pulse * 0.4);
-                heartNode.material.opacity = 0.4 + pulse * 0.6;
+                // Heartbeat pulse
+                if (cardioLayer.visible) {{
+                    const pulseRate = bioData.heartRate / 60;
+                    const pulse = (Math.sin(time * Math.PI * 2 * pulseRate) + 1) / 2;
+                    heart.scale.setScalar(1 + pulse * 0.15);
+                }}
                 
-                // Brain interference effect (poor sleep = jitter)
-                if (bioData.sleepEfficiency < 75) {{
-                    brainNode.position.x = (Math.random() - 0.5) * 0.05;
-                    brainNode.material.opacity = 0.3 + Math.random() * 0.5;
-                }} else {{
-                    const brainPulse = (Math.sin(time * 2) + 1) / 2;
-                    brainNode.scale.setScalar(1 + brainPulse * 0.1);
+                // Brain activity
+                if (nervousLayer.visible) {{
+                    if (bioData.sleepEfficiency < 75) {{
+                        brain.position.x = (Math.random() - 0.5) * 0.02;
+                    }} else {{
+                        const brainPulse = (Math.sin(time * 1.5) + 1) / 2;
+                        brain.scale.setScalar(0.9 + brainPulse * 0.05);
+                    }}
                 }}
 
-                time += 0.016; // Approx 60fps
                 renderer.render(scene, camera);
             }}
             animate();
 
-            // Handle resize
+            // Handle Resize
             window.addEventListener('resize', () => {{
                 camera.aspect = container.clientWidth / container.clientHeight;
                 camera.updateProjectionMatrix();
@@ -245,4 +452,4 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     # Render component
     components.html(html_code, height=620)
     
-    st.info("The holographic projection maps real-time biometric anomalies directly to the anatomy. High heart rates cause the cardiac node to pulse rapidly in crimson, while poor sleep efficiency triggers cognitive interference (amber static) in the neural node.")
+    st.info("💡 **Atlas Controls:** Use the glass panel to toggle anatomical layers. Left-click and drag to rotate the model in 3D space. Scroll to zoom. Click on specific organs or bones (Raycasting) to reveal real-time biometric metrics linked to that system.")
