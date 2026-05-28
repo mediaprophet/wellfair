@@ -8,6 +8,16 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("## 🧬 3D Biometric Hologram")
     st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
+    DEMO_AVATARS = {
+        "Healthy Baseline": "https://models.readyplayer.me/658b1c4e95159048a07c57d5.glb?morphTargets=ARKit,Oculus,Visemes", # Example working RPM placeholder
+        "Michael (Homeless / Family Separation)": "https://models.readyplayer.me/michael_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
+        "Elena (Trauma Survivor)": "https://models.readyplayer.me/elena_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
+        "Rebecca (Birth Trauma / PTSD)": "https://models.readyplayer.me/rebecca_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
+        "Margaret (Elder Abuse / Neglect)": "https://models.readyplayer.me/margaret_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
+        "Robert (Elder Neglect)": "https://models.readyplayer.me/robert_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
+        "Jordan (NDIS Exploitation)": "https://models.readyplayer.me/jordan_placeholder.glb?morphTargets=ARKit,Oculus,Visemes"
+    }
+
     col1, col2 = st.columns([2, 2])
     with col1:
         st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Click glowing nodes to inspect real-time biometrics and trigger the deep-dive camera zoom.")
@@ -15,9 +25,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     with col2:
         sim_persona = st.selectbox(
             "Persona Simulation",
-            ["Healthy Baseline", "Margaret (Elder Abuse / Neglect)", "Rebecca (Birth Trauma / PTSD)", "Jordan (NDIS Exploitation)"]
+            list(DEMO_AVATARS.keys())
         )
-        avatar_url = st.text_input("🔗 Custom Avatar GLB URL (Optional)", placeholder="https://models.readyplayer.me/YOUR_ID.glb", value="")
+        custom_avatar_url = st.text_input("🔗 Custom Avatar GLB URL (Optional)", placeholder="https://models.readyplayer.me/YOUR_ID.glb", value="")
+        avatar_url = custom_avatar_url if custom_avatar_url.strip() != "" else DEMO_AVATARS[sim_persona]
 
     timeline_week = st.select_slider(
         "⏳ Hologram Timeline Scrubber",
@@ -53,6 +64,24 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         sleep_eff = 60
         stress_score = 85
         trauma_target = "financial_stress"
+    elif sim_persona == "Michael (Homeless / Family Separation)":
+        maslow_scores = [20, 10, 20, 30, 10]
+        avg_hr = 90
+        sleep_eff = 30
+        stress_score = 95
+        trauma_target = "exposure"
+    elif sim_persona == "Elena (Trauma Survivor)":
+        maslow_scores = [60, 30, 50, 40, 40]
+        avg_hr = 100
+        sleep_eff = 40
+        stress_score = 90
+        trauma_target = "hypervigilance"
+    elif sim_persona == "Robert (Elder Neglect)":
+        maslow_scores = [35, 25, 40, 30, 20]
+        avg_hr = 110
+        sleep_eff = 35
+        stress_score = 85
+        trauma_target = "systemic_frailty"
 
     # Apply Timeline Modifiers (Heal/Degrade based on scrubber)
     if "Week 2" in timeline_week and sim_persona != "Healthy Baseline":
