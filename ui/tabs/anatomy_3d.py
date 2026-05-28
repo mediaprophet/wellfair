@@ -10,13 +10,22 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     
     col1, col2 = st.columns([2, 2])
     with col1:
-        st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Scroll to zoom. Click glowing nodes to inspect real-time biometrics.")
+        st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Click glowing nodes to inspect real-time biometrics and trigger the deep-dive camera zoom.")
+        x_ray_mode = st.checkbox("🔍 Enable Deep X-Ray Mode", value=False)
     with col2:
         sim_persona = st.selectbox(
             "Persona Simulation",
             ["Healthy Baseline", "Margaret (Elder Abuse / Neglect)", "Rebecca (Birth Trauma / PTSD)", "Jordan (NDIS Exploitation)"]
         )
         avatar_url = st.text_input("🔗 Custom Avatar GLB URL (Optional)", placeholder="https://models.readyplayer.me/YOUR_ID.glb", value="")
+
+    timeline_week = st.select_slider(
+        "⏳ Hologram Timeline Scrubber",
+        options=["Week 1 (Crisis)", "Week 2 (Stabilisation)", "Week 3 (Recovery)", "Week 4 (Baseline)"],
+        value="Week 1 (Crisis)"
+    )
+
+    is_sanctuary = st.session_state.get("sanctuary_mode", False)
 
     # Default Biometrics & Maslow Scores (1-100)
     # [Physiological, Safety, Belonging, Esteem, Self-Actualization]
@@ -45,6 +54,26 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         stress_score = 85
         trauma_target = "financial_stress"
 
+    # Apply Timeline Modifiers (Heal/Degrade based on scrubber)
+    if "Week 2" in timeline_week and sim_persona != "Healthy Baseline":
+        maslow_scores = [min(100, s + 10) for s in maslow_scores]
+        avg_hr = max(75, avg_hr - 5)
+        sleep_eff = min(100, sleep_eff + 10)
+        stress_score = max(45, stress_score - 10)
+    elif "Week 3" in timeline_week and sim_persona != "Healthy Baseline":
+        maslow_scores = [min(100, s + 20) for s in maslow_scores]
+        avg_hr = max(72, avg_hr - 15)
+        sleep_eff = min(100, sleep_eff + 20)
+        stress_score = max(42, stress_score - 30)
+        # Week 3 removes severe trauma visual modifiers
+        trauma_target = "none"
+    elif "Week 4" in timeline_week and sim_persona != "Healthy Baseline":
+        maslow_scores = [90, 85, 80, 75, 70]
+        avg_hr = 70
+        sleep_eff = 85
+        stress_score = 40
+        trauma_target = "none"
+
     bio_context = {
         "heartRate": avg_hr,
         "sleepEfficiency": sleep_eff,
@@ -53,12 +82,14 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         "darkMode": dark_mode,
         "persona": sim_persona,
         "trauma": trauma_target,
-        "avatarUrl": avatar_url
+        "avatarUrl": avatar_url,
+        "xRay": x_ray_mode,
+        "isSanctuary": is_sanctuary
     }
     
     bio_json_safe = json.dumps(bio_context).replace("<", "\\u003c")
     
-    # Generate HTML Payload with Three.js, EffectComposer, CSS2DRenderer, UnrealBloom, and GLTFLoader
+    # Generate HTML Payload with Three.js, EffectComposer, CSS2DRenderer, UnrealBloom, GLTFLoader, and GSAP
     html_code = f"""
     <!DOCTYPE html>
     <html>
@@ -200,6 +231,43 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 100% {{ box-shadow: 0 0 0 0 rgba(255, 30, 86, 0); }}
             }}
             
+            #sanctuary-banner {{
+                position: absolute;
+                bottom: 24px;
+                left: 24px;
+                padding: 10px 20px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                border: 1px solid #10b981;
+                background: rgba(16, 185, 129, 0.1);
+                color: #10b981;
+                border-radius: 8px;
+                display: none;
+                z-index: 10;
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+            }}
+
+            #btn-reset-cam {{
+                position: absolute;
+                bottom: 24px;
+                right: 24px;
+                padding: 10px 20px;
+                background: rgba(0, 240, 255, 0.1);
+                border: 1px solid #00f0ff;
+                color: #00f0ff;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                z-index: 10;
+                transition: all 0.3s ease;
+                display: none;
+            }}
+            #btn-reset-cam:hover {{ background: rgba(0, 240, 255, 0.3); box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }}
+            
             #loading-overlay {{
                 position: absolute;
                 top: 0; left: 0; right: 0; bottom: 0;
@@ -219,6 +287,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
         
         <!-- Post-Processing -->
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
@@ -252,6 +321,12 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
             <!-- Anomaly Banner -->
             <div id="condition-banner" class="glass-panel"></div>
+            
+            <!-- Sanctuary Banner -->
+            <div id="sanctuary-banner" class="glass-panel">🔒 Sanctuary Mode Active: E2E Encrypted</div>
+            
+            <!-- Reset Camera -->
+            <button id="btn-reset-cam" class="glass-panel">Reset View</button>
         </div>
 
         <script>
@@ -264,11 +339,18 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 b.classList.add("condition-active");
             }}
             
+            if (bioData.isSanctuary) {{
+                document.getElementById("sanctuary-banner").style.display = "block";
+            }}
+            
             const container = document.getElementById('canvas-container');
             const scene = new THREE.Scene();
             
+            const defaultCameraPos = new THREE.Vector3(0, 1.5, 10);
+            const defaultControlsTarget = new THREE.Vector3(0, 0.5, 0);
+
             const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 1.5, 10);
+            camera.position.copy(defaultCameraPos);
 
             const renderer = new THREE.WebGLRenderer({{ alpha: true, antialias: true, powerPreference: "high-performance" }});
             renderer.setSize(container.clientWidth, container.clientHeight);
@@ -288,7 +370,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.target.set(0, 0.5, 0);
+            controls.target.copy(defaultControlsTarget);
             controls.maxDistance = 15;
             controls.minDistance = 2;
 
@@ -336,7 +418,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 emissive: 0x0055ff, 
                 emissiveIntensity: 0.2, 
                 transparent: true, 
-                opacity: 0.15,
+                opacity: bioData.xRay ? 0.03 : 0.15,
                 wireframe: true,
                 blending: THREE.AdditiveBlending
             }});
@@ -627,12 +709,33 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             scene.add(spatialLabel);
 
             // ==========================================
-            // RAYCASTING
+            // RAYCASTING & CAMERA ANIMATION (GSAP)
             // ==========================================
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2();
             let hoveredMesh = null;
             let originalEmissiveInt = 0;
+            
+            const btnResetCam = document.getElementById('btn-reset-cam');
+            
+            btnResetCam.addEventListener('click', () => {{
+                // Animate camera back to default
+                gsap.to(camera.position, {{
+                    x: defaultCameraPos.x,
+                    y: defaultCameraPos.y,
+                    z: defaultCameraPos.z,
+                    duration: 1.5,
+                    ease: "power3.inOut"
+                }});
+                gsap.to(controls.target, {{
+                    x: defaultControlsTarget.x,
+                    y: defaultControlsTarget.y,
+                    z: defaultControlsTarget.z,
+                    duration: 1.5,
+                    ease: "power3.inOut"
+                }});
+                btnResetCam.style.display = "none";
+            }});
 
             container.addEventListener('pointermove', (event) => {{
                 const rect = container.getBoundingClientRect();
@@ -677,6 +780,28 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                         worldPos.y += 0.5; // Offset above the organ
                         spatialLabel.position.copy(worldPos);
                         labelDiv.classList.add('visible');
+                        
+                        // GSAP CAMERA ZOOM TO TARGET
+                        // Calculate a position slightly offset from the organ
+                        const offsetPos = new THREE.Vector3(worldPos.x + 1.5, worldPos.y, worldPos.z + 2.0);
+                        
+                        gsap.to(camera.position, {{
+                            x: offsetPos.x,
+                            y: offsetPos.y,
+                            z: offsetPos.z,
+                            duration: 1.5,
+                            ease: "power3.inOut"
+                        }});
+                        
+                        gsap.to(controls.target, {{
+                            x: worldPos.x,
+                            y: worldPos.y - 0.5,
+                            z: worldPos.z,
+                            duration: 1.5,
+                            ease: "power3.inOut"
+                        }});
+                        
+                        btnResetCam.style.display = "block";
                     }}
                 }}
             }});
