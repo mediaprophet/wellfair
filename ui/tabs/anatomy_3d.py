@@ -8,7 +8,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("## 🧬 3D Biometric Hologram")
     st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
-    col1, col2 = st.columns([3, 1])
+    col1, col2 = st.columns([2, 2])
     with col1:
         st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Scroll to zoom. Click glowing nodes to inspect real-time biometrics.")
     with col2:
@@ -16,6 +16,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             "Simulate Condition",
             ["Healthy", "Metabolic Syndrome", "Chronic Stress", "Acute Infection"]
         )
+        avatar_url = st.text_input("🔗 Custom Avatar GLB URL (Optional)", placeholder="https://models.readyplayer.me/YOUR_ID.glb", value="")
 
     # Extract Biometric Averages
     avg_hr = 70
@@ -51,12 +52,13 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         "sleepEfficiency": sleep_eff,
         "stress": stress_score,
         "darkMode": dark_mode,
-        "condition": sim_condition
+        "condition": sim_condition,
+        "avatarUrl": avatar_url
     }
     
     bio_json_safe = json.dumps(bio_context).replace("<", "\\u003c")
     
-    # Generate HTML Payload with Three.js, EffectComposer, CSS2DRenderer, and UnrealBloom
+    # Generate HTML Payload with Three.js, EffectComposer, CSS2DRenderer, UnrealBloom, and GLTFLoader
     html_code = f"""
     <!DOCTYPE html>
     <html>
@@ -197,11 +199,26 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 70% {{ box-shadow: 0 0 0 15px rgba(255, 30, 86, 0); }}
                 100% {{ box-shadow: 0 0 0 0 rgba(255, 30, 86, 0); }}
             }}
+            
+            #loading-overlay {{
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #00f0ff;
+                font-weight: bold;
+                letter-spacing: 0.1em;
+                z-index: 100;
+                transition: opacity 0.5s ease;
+            }}
         </style>
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
         
         <!-- Post-Processing -->
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
@@ -214,10 +231,12 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     </head>
     <body>
         <div id="canvas-container">
+            <div id="loading-overlay">Initializing Hologram Avatar...</div>
             <!-- UI Sidebar -->
             <div id="layer-controls" class="glass-panel">
                 <div class="panel-title">Holographic Layers</div>
                 
+                <label class="toggle-row">Integumentary (Skin) <div class="switch"><input type="checkbox" id="t-skin" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Skeletal <div class="switch"><input type="checkbox" id="t-skeletal" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Muscular <div class="switch"><input type="checkbox" id="t-muscular"><span class="slider"></span></div></label>
                 <label class="toggle-row">Cardiovascular <div class="switch"><input type="checkbox" id="t-cardio" checked><span class="slider"></span></div></label>
@@ -227,9 +246,6 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 <label class="toggle-row">Respiratory <div class="switch"><input type="checkbox" id="t-respiratory" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Immune/Lymph <div class="switch"><input type="checkbox" id="t-immune" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Urinary <div class="switch"><input type="checkbox" id="t-urinary"><span class="slider"></span></div></label>
-                <label class="toggle-row">Female Repro <div class="switch"><input type="checkbox" id="t-repro_f"><span class="slider"></span></div></label>
-                <label class="toggle-row">Male Repro <div class="switch"><input type="checkbox" id="t-repro_m"><span class="slider"></span></div></label>
-                <label class="toggle-row">Integumentary <div class="switch"><input type="checkbox" id="t-skin" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Sensory <div class="switch"><input type="checkbox" id="t-sensory" checked><span class="slider"></span></div></label>
             </div>
 
@@ -313,13 +329,16 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const matLymph = new THREE.MeshStandardMaterial({{ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 1.0, wireframe: true, transparent: true, opacity: 0.2 }});
             const matUro = new THREE.MeshStandardMaterial({{ color: 0xffff00, emissive: 0xaaaa00, emissiveIntensity: 1.0, transparent: true, opacity: 0.6 }});
             
-            // Point Cloud Skin (Sci-Fi Aesthetic)
-            const skinGeo = new THREE.CylinderGeometry(1.2, 0.9, 5, 64, 32);
-            const headGeo = new THREE.SphereGeometry(1.0, 32, 32);
-            headGeo.translate(0, 3.2, 0);
-            skinGeo.merge(headGeo);
-            
-            const matSkinPoints = new THREE.PointsMaterial({{ color: 0x00f0ff, size: 0.02, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending }});
+            // Holographic Skin Material (For GLB)
+            const matSkinHolo = new THREE.MeshStandardMaterial({{ 
+                color: 0x00f0ff, 
+                emissive: 0x0055ff, 
+                emissiveIntensity: 0.2, 
+                transparent: true, 
+                opacity: 0.15,
+                wireframe: true,
+                blending: THREE.AdditiveBlending
+            }});
             
             // Condition Overrides
             if (bioData.condition === "Metabolic Syndrome") {{
@@ -327,7 +346,8 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 matEndocrine.emissiveIntensity = 4.0;
                 matHeart.emissive.setHex(0xff5500);
                 matHeart.emissiveIntensity = 3.0;
-                matSkinPoints.color.setHex(0xffaa00);
+                matSkinHolo.color.setHex(0xffaa00);
+                matSkinHolo.emissive.setHex(0x553300);
             }} else if (bioData.condition === "Chronic Stress") {{
                 matBrain.emissive.setHex(0xff8800);
                 matBrain.emissiveIntensity = 4.0;
@@ -339,8 +359,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 matLungs.emissiveIntensity = 3.0;
                 matLymph.emissive.setHex(0xffaa00);
                 matLymph.emissiveIntensity = 2.0;
-                matSkinPoints.color.setHex(0xff1e56);
-                matSkinPoints.opacity = 0.8;
+                matSkinHolo.color.setHex(0xff1e56);
+                matSkinHolo.emissive.setHex(0x550011);
+                matSkinHolo.opacity = 0.25;
             }}
 
             const atlasGroup = new THREE.Group();
@@ -370,13 +391,6 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 rib.rotation.x = -Math.PI / 2 + 0.1;
                 sysSkel.add(rib);
             }}
-
-            // MUSCULAR
-            const sysMusc = createLayer('muscular');
-            const torsoHull = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.85, 4, 32, 16), matMuscle);
-            torsoHull.position.set(0, 0.5, 0);
-            sysMusc.add(torsoHull);
-            sysMusc.visible = false;
 
             // CARDIOVASCULAR
             const sysCardio = createLayer('cardio');
@@ -448,16 +462,6 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             sysUro.add(kidL);
             sysUro.visible = false;
 
-            // REPRODUCTIVE
-            const sysReproF = createLayer('repro_f'); sysReproF.visible = false;
-            const sysReproM = createLayer('repro_m'); sysReproM.visible = false;
-
-            // SKIN (Sci-Fi Point Cloud)
-            const sysSkin = createLayer('skin');
-            const skinPoints = new THREE.Points(skinGeo, matSkinPoints);
-            skinPoints.position.y = 0.5;
-            sysSkin.add(skinPoints);
-
             // SENSORY
             const sysSensory = createLayer('sensory');
             const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({{color:0xffffff, emissive:0xffffff, emissiveIntensity:2}}));
@@ -469,6 +473,70 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
             atlasGroup.position.y = -1.5;
             scene.add(atlasGroup);
+
+            // ==========================================
+            // GLB AVATAR (SKIN LAYER)
+            // ==========================================
+            const sysSkin = createLayer('skin');
+            const gltfLoader = new THREE.GLTFLoader();
+            // Default generic human avatar from Three.js examples if none provided
+            const avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
+            
+            let avatarModel = null;
+            let avatarMixer = null;
+
+            gltfLoader.load(avatarUrl, (gltf) => {{
+                avatarModel = gltf.scene;
+                
+                // Scale depending on the model (Soldier is usually scale 1.5 approx to fit our skeleton)
+                // We will adjust based on whether it looks like a ready player me or soldier
+                if (avatarUrl.includes("readyplayer.me")) {{
+                    avatarModel.scale.set(3, 3, 3);
+                    avatarModel.position.y = 0.5; // Align with skeleton
+                }} else {{
+                    avatarModel.scale.set(2.2, 2.2, 2.2);
+                    avatarModel.position.y = 0;
+                }}
+                
+                // Apply Data-Driven Morphs
+                // If weight/condition implies larger mass, scale X and Z
+                if (bioData.condition === "Metabolic Syndrome") {{
+                    avatarModel.scale.x *= 1.2;
+                    avatarModel.scale.z *= 1.2;
+                }}
+                // If sleep is poor, simulate slouching (tilting model forward slightly)
+                if (bioData.sleepEfficiency < 60) {{
+                    avatarModel.rotation.x = 0.15;
+                }}
+
+                avatarModel.traverse((child) => {{
+                    if (child.isMesh) {{
+                        child.material = matSkinHolo;
+                        // Keep a reference to original data if needed, or set userData for HUD
+                        child.userData = {{ name: "Integumentary System", desc: "Avatar Skin Shell", metric: "Active" }};
+                    }}
+                }});
+
+                // Play animation if available (Soldier has animations)
+                if (gltf.animations && gltf.animations.length > 0) {{
+                    avatarMixer = new THREE.AnimationMixer(avatarModel);
+                    // Usually the first animation is an Idle/Walk
+                    const action = avatarMixer.clipAction(gltf.animations[0]);
+                    action.play();
+                }}
+
+                sysSkin.add(avatarModel);
+                
+                // Hide loader
+                const overlay = document.getElementById("loading-overlay");
+                overlay.style.opacity = "0";
+                setTimeout(() => overlay.remove(), 500);
+
+            }}, undefined, (error) => {{
+                console.error("Error loading GLB avatar:", error);
+                document.getElementById("loading-overlay").innerText = "Failed to load Avatar GLB";
+            }});
+
 
             // ==========================================
             // UI TOGGLES
@@ -516,16 +584,18 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             
             container.addEventListener('click', () => {{
                 raycaster.setFromCamera(mouse, camera);
-                // Intersect only meshes, not point clouds to make it easier
+                // Intersect only meshes in the atlasGroup
                 const interactables = [];
                 atlasGroup.traverse((child) => {{
-                    if (child.isMesh && child.visible && child.parent.visible) interactables.push(child);
+                    if (child.isMesh && child.visible && child.parent && child.parent.visible) interactables.push(child);
                 }});
 
                 const intersects = raycaster.intersectObjects(interactables, false);
                 
                 if (hoveredMesh) {{
-                    hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
+                    if(hoveredMesh.material) {{
+                        hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
+                    }}
                     hoveredMesh = null;
                     labelDiv.classList.remove('visible');
                 }}
@@ -534,8 +604,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     const object = intersects[0].object;
                     if (object.userData && object.userData.name) {{
                         hoveredMesh = object;
-                        originalEmissiveInt = object.material.emissiveIntensity || 0;
-                        object.material.emissiveIntensity = 5.0; // Huge bloom burst on click
+                        if(object.material) {{
+                            originalEmissiveInt = object.material.emissiveIntensity || 0;
+                            object.material.emissiveIntensity = 5.0; // Huge bloom burst on click
+                        }}
                         
                         document.getElementById('lbl-title').innerText = object.userData.name;
                         document.getElementById('lbl-desc').innerText = object.userData.desc;
@@ -559,6 +631,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 requestAnimationFrame(animate);
                 controls.update();
                 const time = clock.getElapsedTime();
+                const delta = clock.getDelta();
+                
+                if (avatarMixer) avatarMixer.update(delta * 2); // Slight speed adjustment
                 
                 // Cardiovascular Pulse
                 if (layers['cardio'].visible) {{
@@ -581,11 +656,6 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 // Nervous Jitter (Stress)
                 if (layers['nervous'].visible && bioData.condition === "Chronic Stress") {{
                     brain.position.x = (Math.random() - 0.5) * 0.05;
-                }}
-
-                // Point cloud rotation
-                if (layers['skin'].visible) {{
-                    skinPoints.rotation.y = Math.sin(time * 0.2) * 0.2;
                 }}
 
                 // Render via Composer for Post-Processing
