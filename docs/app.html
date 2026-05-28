@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>wellfair — health-to-solid WASM Demo</title>
+  <title>wellfair — WASM Demo</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main>
-    <h1>wellfair — health-to-solid WASM Demo</h1>
-    <p>Upload a Samsung Health CSV file to parse it in the browser using the Rust core compiled to WASM. This demo shows the `health-to-solid` conversion capability within the broader wellfair ecosystem. Files remain local to your browser.</p>
+    <h1>wellfair — Browser Demo</h1>
+    <p>Upload a Samsung Health CSV export file to parse and convert it to RDF (Turtle) directly in your browser. Processing uses the wellfair Rust core compiled to WebAssembly. All files remain local — nothing is sent to any server.</p>
 
     <input id="fileInput" type="file" accept=".csv" />
     <select id="csvType">

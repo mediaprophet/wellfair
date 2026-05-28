@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `wellfair-${CACHE_VERSION}`;
 const ASSETS = [
   'index.html',
@@ -46,22 +46,6 @@ async function cacheFirst(request) {
     cache.put(request, copy);
   }
   return response;
-}
-
-async function networkFirst(request) {
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      const copy = response.clone();
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, copy);
-    }
-    return response;
-  } catch (e) {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    return caches.match('/docs/index.html');
-  }
 }
 
 async function networkFirst(request) {
