@@ -101,4 +101,11 @@ pytest tests/test_synthetic.py -v
 
 ## License
 
-GNU General Public License v3.0 (or later), consistent with [HealthPod](https://github.com/humancentrichealth/healthpod). See [COPYRIGHT.md](COPYRIGHT.md).
+This project is an entirely new application and does not incorporate the original HealthPod codebase.
+
+Copyright © 2025–2026 Timothy Charles Holborn.
+
+Licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)** license.
+
+See `LICENSE` and `COPYRIGHT.md` for details.
+ 
