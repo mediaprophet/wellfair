@@ -243,7 +243,7 @@ def init_mock_data():
                 "linked_psych_observation_ids": ["psych-obs-1"],
                 "linked_medication_ids": [],
                 "maslow_layer": MaslowLayer.SAFETY,
-                "data_quality_tag": LifeDataQualityTag.EXACT,
+                "data_quality_tag": DataQualityTag.EXACT,
                 "notes": "Discussing options with employment lawyer. GP has noted increased anxiety since redundancy."
             },
             {
@@ -278,7 +278,7 @@ def init_mock_data():
                 "linked_psych_observation_ids": ["psych-obs-3"],
                 "linked_medication_ids": ["med-sertraline"],
                 "maslow_layer": MaslowLayer.BELONGING,
-                "data_quality_tag": LifeDataQualityTag.SELF_REPORT,
+                "data_quality_tag": DataQualityTag.SELF_REPORT,
                 "notes": "Mediation progressing slowly. Counsellor reports patient is engaging well with sessions."
             },
             {
@@ -309,7 +309,7 @@ def init_mock_data():
                 "linked_psych_observation_ids": ["psych-obs-2"],
                 "linked_medication_ids": [],
                 "maslow_layer": MaslowLayer.PHYSIOLOGICAL,
-                "data_quality_tag": LifeDataQualityTag.SELF_REPORT,
+                "data_quality_tag": DataQualityTag.SELF_REPORT,
                 "notes": "Resolved — secured rental. Father (John) provided support during this period."
             }
         ]

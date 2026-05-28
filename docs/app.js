@@ -304,15 +304,11 @@ async function renderProfile(profileId) {
   demoStatus.classList.remove('error');
   try {
     const csvMap = await fetchProfileCsv(profileId);
-    const pyCsvMap = STATE.pyodide.toPy(csvMap);
-    STATE.pyodide.globals.set('CSV_MAP', pyCsvMap);
+    STATE.pyodide.globals.set('CSV_MAP', csvMap);
     STATE.pyodide.globals.set('PROFILE_ID', profileId);
-    const result = await STATE.pyodide.runPythonAsync('build_demo_dashboard(dict(CSV_MAP), PROFILE_ID)');
+    const result = await STATE.pyodide.runPythonAsync('build_demo_dashboard(CSV_MAP.to_py(), PROFILE_ID)');
     const dashboard = result.toJs({ dict_converter: Object.fromEntries, create_proxies: false });
     result.destroy();
-    if (typeof pyCsvMap.destroy === 'function') {
-      pyCsvMap.destroy();
-    }
     STATE.currentProfile = profileId;
     const profileMeta = DEMO_PROFILES.find((item) => item.id === profileId);
     renderProfileSummary(profileMeta);
