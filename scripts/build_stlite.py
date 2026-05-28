@@ -30,6 +30,8 @@ def main():
                     "data": base64.b64encode(content).decode("ascii")
                 }
 
+    files_json = json.dumps(stlite_files).replace("<", "\\u003c")
+
     html = f"""<!DOCTYPE html>
 <html>
   <head>
@@ -37,15 +39,65 @@ def main():
     <title>Wellfair Vault (WASM Demo)</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.css"/>
     <style>
-      body, html {{ height: 100%; margin: 0; padding: 0; }}
+      body, html {{ height: 100%; margin: 0; padding: 0; background-color: #030005; font-family: 'Outfit', sans-serif; }}
       #root {{ height: 100%; }}
+      /* Loader Styles */
+      #loader-wrapper {{
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #030005;
+        background-image: radial-gradient(circle at 50% 50%, #1a0014 0%, #030005 60%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+        transition: opacity 0.8s ease-out;
+      }}
+      .spinner {{
+        width: 60px;
+        height: 60px;
+        border: 3px solid rgba(255, 30, 86, 0.1);
+        border-radius: 50%;
+        border-top-color: #ff1e56;
+        animation: spin 1s ease-in-out infinite, pulse 2s infinite alternate;
+        box-shadow: 0 0 20px rgba(255, 30, 86, 0.4);
+      }}
+      @keyframes spin {{ 
+        to {{ transform: rotate(360deg); }} 
+      }}
+      @keyframes pulse {{
+        from {{ box-shadow: 0 0 10px rgba(255, 30, 86, 0.2); }}
+        to {{ box-shadow: 0 0 30px rgba(255, 30, 86, 0.6); }}
+      }}
+      .loader-text {{
+        margin-top: 24px;
+        color: #ffb3c6;
+        font-weight: 600;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-size: 14px;
+        animation: blink 1.5s infinite;
+      }}
+      @keyframes blink {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: 0.5; }}
+      }}
+      .hidden {{
+        opacity: 0 !important;
+        pointer-events: none;
+      }}
     </style>
   </head>
   <body>
+    <div id="loader-wrapper">
+        <div class="spinner"></div>
+        <div class="loader-text">Initializing Holographic Engine...</div>
+    </div>
     <div id="root"></div>
     <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.js"></script>
     <script>
-      const files = {json.dumps(stlite_files)};
+      const files = {files_json};
       
       stlite.mount(
         {{
@@ -55,6 +107,19 @@ def main():
         }},
         document.getElementById("root")
       )
+
+      // Hide loader once Streamlit mounts the .stApp DOM element
+      const observer = new MutationObserver((mutations, obs) => {{
+        const stApp = document.querySelector('.stApp');
+        if (stApp) {{
+            const loader = document.getElementById('loader-wrapper');
+            loader.classList.add('hidden');
+            setTimeout(() => loader.remove(), 1000); // Remove from DOM after fade out
+            obs.disconnect(); // Stop observing
+        }}
+      }});
+      observer.observe(document.body, {{ childList: true, subtree: true }});
+
     </script>
   </body>
 </html>
