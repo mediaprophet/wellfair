@@ -418,7 +418,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // ==========================================
             const holographicVertexShader = `
                 varying vec3 vNormal;
-                varying vec3 vPosition;
+                varying vec3 vViewPosition;
                 varying vec2 vUv;
 
                 uniform float uTime;
@@ -426,20 +426,21 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
                 void main() {{
                   vNormal = normalize(normalMatrix * normal);
-                  vPosition = position;
+                  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                  vViewPosition = -mvPosition.xyz;
                   vUv = uv;
 
-                  // Subtle holographic glitch / breathing effect
                   vec3 pos = position;
-                  pos += normal * sin(uTime * 8.0 + position.y * 10.0) * 0.002 * uGlitchIntensity;
+                  // Very subtle breathing / holographic flicker
+                  pos += normal * sin(uTime * 6.0) * 0.0015 * uGlitchIntensity;
 
-                  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                  gl_Position = projectionMatrix * mvPosition;
                 }}
             `;
 
             const holographicFragmentShader = `
                 varying vec3 vNormal;
-                varying vec3 vPosition;
+                varying vec3 vViewPosition;
                 varying vec2 vUv;
 
                 uniform float uTime;
@@ -451,27 +452,25 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 uniform float uRimPower;
 
                 void main() {{
-                  // Fresnel Rim Lighting (edge glow)
-                  vec3 viewDirection = normalize(cameraPosition - vPosition);
-                  float fresnel = 1.0 - dot(viewDirection, vNormal);
-                  fresnel = pow(fresnel, uRimPower);
+                  vec3 normal = normalize(vNormal);
+                  vec3 viewDir = normalize(vViewPosition);
 
-                  // Base holographic transparency
-                  float alpha = uOpacity * (0.6 + fresnel * 0.8);
+                  // Strong Fresnel rim (edge glow) - this is what makes it feel holographic
+                  float fresnel = pow(1.0 - dot(viewDir, normal), uRimPower);
 
-                  // Animated scanlines
-                  float scanline = sin(vUv.y * 120.0 + uTime * 12.0) * 0.08 + 0.92;
+                  // Animated subtle scanlines
+                  float scan = sin(vUv.y * 180.0 - uTime * 12.0) * 0.04 + 0.96;
 
-                  // Data-driven tint
-                  vec3 color = uBaseColor;
-                  color = mix(color, uStressColor, uStressLevel * 0.7);
+                  // Base color with stress tint
+                  vec3 color = mix(uBaseColor, uStressColor, uStressLevel * 0.75);
 
-                  // Wellbeing-based overall glow
-                  float glowBoost = uWellbeingScore * 0.6 + 0.8;
+                  // Inner glow based on wellbeing
+                  float innerGlow = uWellbeingScore * 1.4 + 0.6;
 
-                  // Final color with inner glow + scanline
-                  vec3 finalColor = color * glowBoost * (1.0 + fresnel * 1.8);
-                  finalColor *= scanline;
+                  vec3 finalColor = color * (fresnel * 2.2 + innerGlow);
+                  finalColor *= scan;
+
+                  float alpha = uOpacity * (0.55 + fresnel * 0.9);
 
                   gl_FragColor = vec4(finalColor, alpha);
                 }}
