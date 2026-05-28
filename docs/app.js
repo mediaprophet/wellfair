@@ -45,6 +45,36 @@ if (installBtn) {
   });
 }
 
+// Update-notification flow: show banner when a new SW is waiting
+const updateBanner = document.getElementById('updateBanner');
+const reloadBtn = document.getElementById('reloadBtn');
+
+function showUpdate() {
+  if (updateBanner) updateBanner.style.display = 'block';
+}
+
+reloadBtn && reloadBtn.addEventListener('click', async () => {
+  // Send skipWaiting to the waiting SW then reload
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (reg && reg.waiting) {
+    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+  setTimeout(() => location.reload(true), 1000);
+});
+
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SW_UPDATED') {
+    showUpdate();
+  }
+});
+
+// Also check for waiting SW on load
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (reg && reg.waiting) showUpdate();
+  });
+}
+
 const fileInput = document.getElementById('fileInput');
 const parseBtn = document.getElementById('parseBtn');
 const output = document.getElementById('output');

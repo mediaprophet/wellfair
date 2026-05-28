@@ -24,6 +24,18 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Notify clients when a new service worker has taken control (useful to show update UI)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ includeUncontrolled: true });
+      for (const client of all) {
+        client.postMessage({ type: 'SW_UPDATED' });
+      }
+    })()
+  );
+});
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -62,5 +74,12 @@ self.addEventListener('fetch', event => {
     } else {
       event.respondWith(cacheFirst(event.request));
     }
+  }
+});
+
+// Listen for messages from the page (e.g., SKIP_WAITING)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
