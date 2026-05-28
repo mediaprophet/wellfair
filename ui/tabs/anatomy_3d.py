@@ -12,47 +12,47 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     with col1:
         st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Scroll to zoom. Click glowing nodes to inspect real-time biometrics.")
     with col2:
-        sim_condition = st.selectbox(
-            "Simulate Condition",
-            ["Healthy", "Metabolic Syndrome", "Chronic Stress", "Acute Infection"]
+        sim_persona = st.selectbox(
+            "Persona Simulation",
+            ["Healthy Baseline", "Margaret (Elder Abuse / Neglect)", "Rebecca (Birth Trauma / PTSD)", "Jordan (NDIS Exploitation)"]
         )
         avatar_url = st.text_input("🔗 Custom Avatar GLB URL (Optional)", placeholder="https://models.readyplayer.me/YOUR_ID.glb", value="")
 
-    # Extract Biometric Averages
+    # Default Biometrics & Maslow Scores (1-100)
+    # [Physiological, Safety, Belonging, Esteem, Self-Actualization]
+    maslow_scores = [95, 90, 85, 80, 75]
     avg_hr = 70
     sleep_eff = 85
     stress_score = 40
-    
-    hr_df = find_df_by_keyword(normalized_data, "heart_rate")
-    if hr_df is not None and not hr_df.empty and "heart_rate" in hr_df.columns:
-        avg_hr = int(hr_df["heart_rate"].mean())
-        
-    sleep_df = find_df_by_keyword(normalized_data, "sleep")
-    if sleep_df is not None and not sleep_df.empty and "efficiency" in sleep_df.columns:
-        sleep_eff = int(sleep_df["efficiency"].mean())
-        
-    stress_df = find_df_by_keyword(normalized_data, "stress")
-    if stress_df is not None and not stress_df.empty and "score" in stress_df.columns:
-        stress_score = int(stress_df["score"].mean())
+    trauma_target = "none"
 
-    # Override biometrics if simulating a condition to demonstrate the systemic effects
-    if sim_condition == "Metabolic Syndrome":
+    if sim_persona == "Margaret (Elder Abuse / Neglect)":
+        maslow_scores = [40, 20, 60, 50, 40]
         avg_hr = 95
-        stress_score = 65
-    elif sim_condition == "Chronic Stress":
-        sleep_eff = 50
-        stress_score = 90
+        sleep_eff = 45
+        stress_score = 88
+        trauma_target = "systemic_frailty"
+    elif sim_persona == "Rebecca (Birth Trauma / PTSD)":
+        maslow_scores = [85, 40, 70, 60, 50]
+        avg_hr = 105
+        sleep_eff = 55
+        stress_score = 92
+        trauma_target = "pelvic_trauma"
+    elif sim_persona == "Jordan (NDIS Exploitation)":
+        maslow_scores = [70, 30, 40, 40, 30]
         avg_hr = 88
-    elif sim_condition == "Acute Infection":
-        avg_hr = 110
-        sleep_eff = 40
+        sleep_eff = 60
+        stress_score = 85
+        trauma_target = "financial_stress"
 
     bio_context = {
         "heartRate": avg_hr,
         "sleepEfficiency": sleep_eff,
         "stress": stress_score,
+        "maslow": maslow_scores,
         "darkMode": dark_mode,
-        "condition": sim_condition,
+        "persona": sim_persona,
+        "trauma": trauma_target,
         "avatarUrl": avatar_url
     }
     
@@ -236,6 +236,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             <div id="layer-controls" class="glass-panel">
                 <div class="panel-title">Holographic Layers</div>
                 
+                <label class="toggle-row">Maslow Rings <div class="switch"><input type="checkbox" id="t-maslow" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Integumentary (Skin) <div class="switch"><input type="checkbox" id="t-skin" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Skeletal <div class="switch"><input type="checkbox" id="t-skeletal" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Muscular <div class="switch"><input type="checkbox" id="t-muscular"><span class="slider"></span></div></label>
@@ -257,9 +258,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const bioData = {bio_json_safe};
             const isDark = bioData.darkMode;
             
-            if (bioData.condition !== "Healthy") {{
+            if (bioData.persona !== "Healthy Baseline") {{
                 const b = document.getElementById("condition-banner");
-                b.innerText = "SIMULATING: " + bioData.condition;
+                b.innerText = "SIMULATING: " + bioData.persona;
                 b.classList.add("condition-active");
             }}
             
@@ -267,7 +268,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const scene = new THREE.Scene();
             
             const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 1, 9);
+            camera.position.set(0, 1.5, 10);
 
             const renderer = new THREE.WebGLRenderer({{ alpha: true, antialias: true, powerPreference: "high-performance" }});
             renderer.setSize(container.clientWidth, container.clientHeight);
@@ -340,28 +341,27 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 blending: THREE.AdditiveBlending
             }});
             
+            // Particles Material
+            const particleColor = bioData.stress > 70 ? 0xff0033 : (bioData.sleepEfficiency < 60 ? 0xffaa00 : 0x00ff88);
+            const matParticles = new THREE.PointsMaterial({{ color: particleColor, size: 0.05, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending }});
+
             // Condition Overrides
-            if (bioData.condition === "Metabolic Syndrome") {{
-                matEndocrine.emissive.setHex(0xffaa00);
-                matEndocrine.emissiveIntensity = 4.0;
+            if (bioData.trauma === "systemic_frailty") {{
                 matHeart.emissive.setHex(0xff5500);
-                matHeart.emissiveIntensity = 3.0;
                 matSkinHolo.color.setHex(0xffaa00);
                 matSkinHolo.emissive.setHex(0x553300);
-            }} else if (bioData.condition === "Chronic Stress") {{
-                matBrain.emissive.setHex(0xff8800);
-                matBrain.emissiveIntensity = 4.0;
-                matEndocrine.emissive.setHex(0xff0000); 
-                matEndocrine.emissiveIntensity = 5.0;
-                filmPass.uniforms.nIntensity.value = 1.2; // Lots of static
-            }} else if (bioData.condition === "Acute Infection") {{
-                matLungs.emissive.setHex(0xff0000);
-                matLungs.emissiveIntensity = 3.0;
-                matLymph.emissive.setHex(0xffaa00);
-                matLymph.emissiveIntensity = 2.0;
+                matBrain.emissiveIntensity = 0.5; // Dimmed cognition
+            }} else if (bioData.trauma === "pelvic_trauma") {{
                 matSkinHolo.color.setHex(0xff1e56);
                 matSkinHolo.emissive.setHex(0x550011);
-                matSkinHolo.opacity = 0.25;
+                matBrain.emissive.setHex(0xff8800); // Hypervigilance
+                matBrain.emissiveIntensity = 3.0;
+                filmPass.uniforms.nIntensity.value = 1.0; 
+            }} else if (bioData.trauma === "financial_stress") {{
+                matEndocrine.emissive.setHex(0xff0000); // Adrenal fatigue
+                matEndocrine.emissiveIntensity = 5.0;
+                matHeart.emissiveIntensity = 4.0;
+                filmPass.uniforms.nIntensity.value = 1.5; 
             }}
 
             const atlasGroup = new THREE.Group();
@@ -373,6 +373,60 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 atlasGroup.add(group);
                 return group;
             }}
+
+            // MASLOW RINGS
+            const sysMaslow = createLayer('maslow');
+            const maslowLabels = ["Physiological", "Safety", "Belonging", "Esteem", "Self-Actualization"];
+            const maslowColors = [0xff1e56, 0xffaa00, 0xffff00, 0x00ff88, 0x00f0ff];
+            const rings = [];
+            
+            for(let i=0; i<5; i++) {{
+                const score = bioData.maslow[i];
+                // If score is low, ring is broken (dashed or low opacity/red glow)
+                const ringColor = score < 50 ? 0xff0000 : maslowColors[i];
+                const ringOpac = score < 50 ? 0.2 : 0.8;
+                const ringEmisInt = score < 50 ? 0.5 : 2.0;
+                
+                const rMat = new THREE.MeshStandardMaterial({{
+                    color: ringColor,
+                    emissive: ringColor,
+                    emissiveIntensity: ringEmisInt,
+                    transparent: true,
+                    opacity: ringOpac,
+                    wireframe: score < 50
+                }});
+                
+                const rGeo = new THREE.TorusGeometry(1.5 + (i * 0.3), 0.02, 8, 64);
+                const ring = new THREE.Mesh(rGeo, rMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = -0.5 - (i * 0.1);
+                
+                ring.userData = {{ 
+                    name: `Maslow: ${maslowLabels[i]}`, 
+                    desc: score < 50 ? "Critical Deficit Detected" : "Need Satisfied", 
+                    metric: `Score: ${score}/100` 
+                }};
+                
+                sysMaslow.add(ring);
+                rings.push({{ mesh: ring, speed: (i+1)*0.2, dir: i%2===0?1:-1 }});
+            }}
+
+            // PARTICLES
+            const pGeo = new THREE.BufferGeometry();
+            const pCount = 500;
+            const pPositions = new Float32Array(pCount * 3);
+            for(let i=0; i<pCount*3; i+=3) {{
+                const r = 1.0 + Math.random() * 2.0;
+                const theta = Math.random() * Math.PI * 2;
+                const y = Math.random() * 5 - 1;
+                pPositions[i] = r * Math.cos(theta);
+                pPositions[i+1] = y;
+                pPositions[i+2] = r * Math.sin(theta);
+            }}
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+            const particleSystem = new THREE.Points(pGeo, matParticles);
+            sysMaslow.add(particleSystem); // Group particles with maslow for now or separate layer
+
 
             // SKELETAL
             const sysSkel = createLayer('skeletal');
@@ -418,11 +472,11 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const pancreas = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), matEndocrine);
             pancreas.rotation.z = Math.PI / 2;
             pancreas.position.set(0, 0.0, 0.2);
-            pancreas.userData = {{ name: "Pancreas", desc: "Insulin Regulation.", metric: bioData.condition==="Metabolic Syndrome"?"Insulin Resistant!":"Nominal" }};
+            pancreas.userData = {{ name: "Pancreas", desc: "Insulin Regulation.", metric: "Nominal" }};
             sysEndo.add(pancreas);
             const adrenalL = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), matEndocrine);
             adrenalL.position.set(-0.35, -0.1, -0.15);
-            adrenalL.userData = {{ name: "Adrenals", desc: "Cortisol production.", metric: bioData.condition==="Chronic Stress"?"Cortisol Spike!":"Normal" }};
+            adrenalL.userData = {{ name: "Adrenals", desc: "Cortisol production.", metric: bioData.stress>70?"Cortisol Spike!":"Normal" }};
             sysEndo.add(adrenalL);
 
             // NERVOUS
@@ -440,7 +494,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const lungL = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), matLungs);
             lungL.scale.set(1, 2.0, 1);
             lungL.position.set(-0.5, 1.4, 0);
-            lungL.userData = {{ name: "Left Lung", desc: "Gas exchange.", metric: bioData.condition==="Acute Infection"?"SpO2 88%":"SpO2 99%" }};
+            lungL.userData = {{ name: "Left Lung", desc: "Gas exchange.", metric: "SpO2 99%" }};
             const lungR = lungL.clone();
             lungR.position.set(0.5, 1.4, 0);
             sysResp.add(lungL);
@@ -471,6 +525,15 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             eyeR.position.set(0.3, 3.3, 0.6);
             sysSensory.add(eyeR);
 
+            // TRAUMA OVERLAYS
+            if (bioData.trauma === "pelvic_trauma") {{
+                const pelvicGlow = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshStandardMaterial({{color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 5.0, transparent:true, opacity:0.8}}));
+                pelvicGlow.position.set(0, -0.5, 0.2);
+                pelvicGlow.scale.set(1.5, 0.8, 1);
+                pelvicGlow.userData = {{ name: "Pelvic Floor", desc: "Severe trauma detected (Birth Complications).", metric: "Chronic Pain" }};
+                sysSkel.add(pelvicGlow);
+            }}
+
             atlasGroup.position.y = -1.5;
             scene.add(atlasGroup);
 
@@ -488,8 +551,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             gltfLoader.load(avatarUrl, (gltf) => {{
                 avatarModel = gltf.scene;
                 
-                // Scale depending on the model (Soldier is usually scale 1.5 approx to fit our skeleton)
-                // We will adjust based on whether it looks like a ready player me or soldier
+                // Scale depending on the model
                 if (avatarUrl.includes("readyplayer.me")) {{
                     avatarModel.scale.set(3, 3, 3);
                     avatarModel.position.y = 0.5; // Align with skeleton
@@ -498,21 +560,18 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     avatarModel.position.y = 0;
                 }}
                 
-                // Apply Data-Driven Morphs
-                // If weight/condition implies larger mass, scale X and Z
-                if (bioData.condition === "Metabolic Syndrome") {{
-                    avatarModel.scale.x *= 1.2;
-                    avatarModel.scale.z *= 1.2;
-                }}
-                // If sleep is poor, simulate slouching (tilting model forward slightly)
-                if (bioData.sleepEfficiency < 60) {{
-                    avatarModel.rotation.x = 0.15;
+                // Trauma Morphs
+                if (bioData.trauma === "systemic_frailty") {{
+                    avatarModel.scale.x *= 0.85; // Emaciated / Frail
+                    avatarModel.scale.z *= 0.85;
+                    avatarModel.rotation.x = 0.25; // Severe Slouch
+                }} else if (bioData.trauma === "financial_stress") {{
+                    avatarModel.rotation.x = 0.15; // Tense/Slouch
                 }}
 
                 avatarModel.traverse((child) => {{
                     if (child.isMesh) {{
                         child.material = matSkinHolo;
-                        // Keep a reference to original data if needed, or set userData for HUD
                         child.userData = {{ name: "Integumentary System", desc: "Avatar Skin Shell", metric: "Active" }};
                     }}
                 }});
@@ -542,9 +601,8 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // UI TOGGLES
             // ==========================================
             const toggles = [
-                'skeletal', 'muscular', 'cardio', 'digestive', 'endocrine', 
-                'nervous', 'respiratory', 'immune', 'urinary', 'repro_f', 
-                'repro_m', 'skin', 'sensory'
+                'maslow', 'skeletal', 'muscular', 'cardio', 'digestive', 'endocrine', 
+                'nervous', 'respiratory', 'immune', 'urinary', 'skin', 'sensory'
             ];
             toggles.forEach(id => {{
                 const el = document.getElementById('t-' + id);
@@ -633,7 +691,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 const time = clock.getElapsedTime();
                 const delta = clock.getDelta();
                 
-                if (avatarMixer) avatarMixer.update(delta * 2); // Slight speed adjustment
+                if (avatarMixer) avatarMixer.update(delta * 2);
                 
                 // Cardiovascular Pulse
                 if (layers['cardio'].visible) {{
@@ -645,7 +703,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 
                 // Respiratory Breathing
                 if (layers['respiratory'].visible) {{
-                    const breathRate = bioData.condition === "Acute Infection" ? 3 : 1;
+                    const breathRate = bioData.trauma !== "none" ? 1.5 : 1;
                     const breath = (Math.sin(time * breathRate) + 1) / 2;
                     lungL.scale.setScalar(0.9 + breath * 0.15);
                     lungL.scale.y = 2.0;
@@ -654,8 +712,17 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }}
                 
                 // Nervous Jitter (Stress)
-                if (layers['nervous'].visible && bioData.condition === "Chronic Stress") {{
+                if (layers['nervous'].visible && bioData.stress > 70) {{
                     brain.position.x = (Math.random() - 0.5) * 0.05;
+                }}
+
+                // Maslow Rings Rotation
+                if (layers['maslow'].visible) {{
+                    rings.forEach(r => {{
+                        r.mesh.rotation.z += (delta * r.speed * r.dir);
+                    }});
+                    // Particle Orbit
+                    particleSystem.rotation.y += delta * 0.5;
                 }}
 
                 // Render via Composer for Post-Processing
