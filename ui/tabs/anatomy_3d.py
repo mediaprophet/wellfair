@@ -9,13 +9,13 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
     DEMO_AVATARS = {
-        "Healthy Baseline": "https://models.readyplayer.me/658b1c4e95159048a07c57d5.glb?morphTargets=ARKit,Oculus,Visemes", # Example working RPM placeholder
-        "Michael (Homeless / Family Separation)": "https://models.readyplayer.me/michael_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
-        "Elena (Trauma Survivor)": "https://models.readyplayer.me/elena_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
-        "Rebecca (Birth Trauma / PTSD)": "https://models.readyplayer.me/rebecca_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
-        "Margaret (Elder Abuse / Neglect)": "https://models.readyplayer.me/margaret_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
-        "Robert (Elder Neglect)": "https://models.readyplayer.me/robert_placeholder.glb?morphTargets=ARKit,Oculus,Visemes",
-        "Jordan (NDIS Exploitation)": "https://models.readyplayer.me/jordan_placeholder.glb?morphTargets=ARKit,Oculus,Visemes"
+        "Healthy Baseline": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Michael (Homeless / Family Separation)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Elena (Trauma Survivor)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Rebecca (Birth Trauma / PTSD)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Margaret (Elder Abuse / Neglect)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Robert (Elder Neglect)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb",
+        "Jordan (NDIS Exploitation)": "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb"
     }
 
     col1, col2 = st.columns([2, 2])
