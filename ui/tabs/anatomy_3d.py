@@ -6,11 +6,11 @@ from ui.utils import find_df_by_keyword
 
 def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("## 🧬 3D Biometric Hologram")
-    st.markdown("A revolutionary, real-time spatial projection of physiological data.")
+    st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.info("💡 **Atlas Controls:** Use the glass panel to toggle all 13 anatomical systems. Left-click and drag to rotate. Scroll to zoom. Click on organs to inspect.")
+        st.info("💡 **Holographic Atlas Controls:** Toggle systems via the glass panel. Left-click and drag to rotate. Scroll to zoom. Click glowing nodes to inspect real-time biometrics.")
     with col2:
         sim_condition = st.selectbox(
             "Simulate Condition",
@@ -56,7 +56,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     
     bio_json_safe = json.dumps(bio_context).replace("<", "\\u003c")
     
-    # Generate HTML Payload with Three.js, OrbitControls, and Advanced UI
+    # Generate HTML Payload with Three.js, EffectComposer, CSS2DRenderer, and UnrealBloom
     html_code = f"""
     <!DOCTYPE html>
     <html>
@@ -64,45 +64,45 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         <meta charset="utf-8">
         <style>
             body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Outfit', sans-serif; user-select: none; }}
-            #canvas-container {{ width: 100%; height: 750px; position: relative; }}
+            #canvas-container {{ width: 100%; height: 800px; position: relative; background: radial-gradient(circle at 50% 50%, { "#1a0f2e" if dark_mode else "#e2e8f0" }, { "#05020a" if dark_mode else "#cbd5e1" }); border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.5); }}
             
             /* Premium Glassmorphism UI */
             .glass-panel {{
                 position: absolute;
-                background: { "rgba(10, 5, 15, 0.75)" if dark_mode else "rgba(255, 255, 255, 0.85)" };
-                border: 1px solid { "rgba(255, 30, 86, 0.2)" if dark_mode else "rgba(15, 23, 42, 0.1)" };
-                color: { "#f1f5f9" if dark_mode else "#0f172a" };
-                backdrop-filter: blur(16px);
-                border-radius: 12px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                background: { "rgba(10, 5, 20, 0.65)" if dark_mode else "rgba(255, 255, 255, 0.75)" };
+                border: 1px solid { "rgba(0, 240, 255, 0.2)" if dark_mode else "rgba(15, 23, 42, 0.1)" };
+                color: { "#f8fafc" if dark_mode else "#0f172a" };
+                backdrop-filter: blur(24px);
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
                 transition: all 0.3s ease;
             }}
             
             /* Layer Controls Sidebar */
             #layer-controls {{
-                top: 20px;
-                left: 20px;
-                width: 240px;
-                padding: 16px;
+                top: 24px;
+                left: 24px;
+                width: 250px;
+                padding: 20px;
                 z-index: 10;
                 max-height: 700px;
                 overflow-y: auto;
             }}
             
             /* Custom Scrollbar */
-            #layer-controls::-webkit-scrollbar {{ width: 6px; }}
+            #layer-controls::-webkit-scrollbar {{ width: 4px; }}
             #layer-controls::-webkit-scrollbar-track {{ background: transparent; }}
-            #layer-controls::-webkit-scrollbar-thumb {{ background: rgba(255,255,255,0.2); border-radius: 3px; }}
+            #layer-controls::-webkit-scrollbar-thumb {{ background: rgba(0, 240, 255, 0.3); border-radius: 2px; }}
 
             .panel-title {{
-                font-size: 11px;
+                font-size: 12px;
                 text-transform: uppercase;
-                letter-spacing: 0.15em;
-                color: { "#ff1e56" if dark_mode else "#0d9488" };
+                letter-spacing: 0.2em;
+                color: { "#00f0ff" if dark_mode else "#0d9488" };
                 font-weight: 800;
-                margin-bottom: 16px;
-                border-bottom: 1px solid rgba(255,255,255,0.1);
-                padding-bottom: 8px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid rgba(0,240,255,0.2);
+                padding-bottom: 10px;
             }}
             
             /* Toggle Switches */
@@ -110,81 +110,89 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
                 font-size: 12px;
-                font-weight: 500;
+                font-weight: 600;
                 cursor: pointer;
+                letter-spacing: 0.05em;
             }}
-            .toggle-row:hover {{ color: { "#ffb3c6" if dark_mode else "#3b82f6" }; }}
+            .toggle-row:hover {{ color: { "#ff1e56" if dark_mode else "#3b82f6" }; text-shadow: 0 0 8px rgba(255, 30, 86, 0.5); }}
             .switch {{
                 position: relative;
                 display: inline-block;
-                width: 30px;
-                height: 16px;
+                width: 32px;
+                height: 18px;
             }}
             .switch input {{ opacity: 0; width: 0; height: 0; }}
             .slider {{
                 position: absolute;
                 cursor: pointer;
                 top: 0; left: 0; right: 0; bottom: 0;
-                background-color: rgba(150,150,150,0.3);
+                background-color: rgba(100,100,100,0.3);
                 transition: .4s;
                 border-radius: 34px;
             }}
             .slider:before {{
                 position: absolute;
                 content: "";
-                height: 10px;
-                width: 10px;
+                height: 12px;
+                width: 12px;
                 left: 3px;
                 bottom: 3px;
                 background-color: #fff;
                 transition: .4s;
                 border-radius: 50%;
+                box-shadow: 0 0 5px rgba(255,255,255,0.8);
             }}
-            input:checked + .slider {{ background-color: { "#ff1e56" if dark_mode else "#10b981" }; }}
+            input:checked + .slider {{ background-color: { "#00f0ff" if dark_mode else "#10b981" }; box-shadow: 0 0 10px rgba(0,240,255,0.4); }}
             input:checked + .slider:before {{ transform: translateX(14px); }}
 
-            /* Interactive Tooltip (Raycaster) */
-            #info-tooltip {{
-                display: none;
+            /* CSS2D Floating Label */
+            .spatial-label {{
+                background: { "rgba(10, 5, 20, 0.85)" if dark_mode else "rgba(255, 255, 255, 0.95)" };
+                border: 1px solid { "#ff1e56" if dark_mode else "#3b82f6" };
+                backdrop-filter: blur(10px);
+                padding: 12px 16px;
+                border-radius: 8px;
+                color: { "#fff" if dark_mode else "#000" };
+                font-size: 12px;
                 pointer-events: none;
-                z-index: 20;
-                padding: 16px;
-                min-width: 200px;
-                transform: translate(-50%, -100%);
-                margin-top: -15px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                box-shadow: 0 4px 20px rgba(255, 30, 86, 0.3);
+                margin-top: -30px;
+                min-width: 150px;
             }}
-            #tooltip-title {{
-                font-size: 14px;
-                font-weight: 800;
-                color: { "#00f0ff" if dark_mode else "#3b82f6" };
-                margin-bottom: 4px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }}
-            #tooltip-desc {{ font-size: 12px; color: #94a3b8; line-height: 1.4; }}
-            #tooltip-metric {{
-                margin-top: 8px;
-                font-size: 18px;
-                font-weight: 700;
-                color: { "#ffb3c6" if dark_mode else "#0f172a" };
-            }}
+            .spatial-label.visible {{ opacity: 1; }}
+            .label-title {{ color: { "#ff1e56" if dark_mode else "#3b82f6" }; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; margin-bottom: 4px; }}
+            .label-metric {{ font-size: 16px; font-weight: 700; margin-top: 6px; color: { "#00f0ff" if dark_mode else "#10b981" }; text-shadow: 0 0 5px rgba(0,240,255,0.5); }}
             
+            /* Connector Line */
+            .label-connector {{
+                position: absolute;
+                bottom: -20px;
+                left: 50%;
+                width: 1px;
+                height: 20px;
+                background: { "#ff1e56" if dark_mode else "#3b82f6" };
+                box-shadow: 0 0 5px { "#ff1e56" if dark_mode else "#3b82f6" };
+            }}
+
             #condition-banner {{
                 position: absolute;
-                top: 20px;
-                right: 20px;
-                padding: 12px 20px;
-                font-size: 12px;
-                font-weight: bold;
-                letter-spacing: 0.1em;
+                top: 24px;
+                right: 24px;
+                padding: 12px 24px;
+                font-size: 13px;
+                font-weight: 800;
+                letter-spacing: 0.15em;
                 text-transform: uppercase;
                 border-left: 4px solid #ff1e56;
                 display: none;
+                z-index: 10;
             }}
-            .condition-active {{ display: block !important; animation: pulse 2s infinite; }}
-            @keyframes pulse {{
+            .condition-active {{ display: block !important; animation: pulse-banner 2s infinite; }}
+            @keyframes pulse-banner {{
                 0% {{ box-shadow: 0 0 0 0 rgba(255, 30, 86, 0.4); }}
                 70% {{ box-shadow: 0 0 0 15px rgba(255, 30, 86, 0); }}
                 100% {{ box-shadow: 0 0 0 0 rgba(255, 30, 86, 0); }}
@@ -193,12 +201,22 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+        
+        <!-- Post-Processing -->
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/FilmPass.js"></script>
     </head>
     <body>
         <div id="canvas-container">
-            <!-- UI Sidebar (13 Systems) -->
+            <!-- UI Sidebar -->
             <div id="layer-controls" class="glass-panel">
-                <div class="panel-title">13 Anatomical Systems</div>
+                <div class="panel-title">Holographic Layers</div>
                 
                 <label class="toggle-row">Skeletal <div class="switch"><input type="checkbox" id="t-skeletal" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Muscular <div class="switch"><input type="checkbox" id="t-muscular"><span class="slider"></span></div></label>
@@ -208,22 +226,15 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 <label class="toggle-row">Nervous <div class="switch"><input type="checkbox" id="t-nervous" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Respiratory <div class="switch"><input type="checkbox" id="t-respiratory" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Immune/Lymph <div class="switch"><input type="checkbox" id="t-immune" checked><span class="slider"></span></div></label>
-                <label class="toggle-row">Urinary <div class="switch"><input type="checkbox" id="t-urinary" checked><span class="slider"></span></div></label>
+                <label class="toggle-row">Urinary <div class="switch"><input type="checkbox" id="t-urinary"><span class="slider"></span></div></label>
                 <label class="toggle-row">Female Repro <div class="switch"><input type="checkbox" id="t-repro_f"><span class="slider"></span></div></label>
                 <label class="toggle-row">Male Repro <div class="switch"><input type="checkbox" id="t-repro_m"><span class="slider"></span></div></label>
-                <label class="toggle-row">Integumentary <div class="switch"><input type="checkbox" id="t-skin"><span class="slider"></span></div></label>
+                <label class="toggle-row">Integumentary <div class="switch"><input type="checkbox" id="t-skin" checked><span class="slider"></span></div></label>
                 <label class="toggle-row">Sensory <div class="switch"><input type="checkbox" id="t-sensory" checked><span class="slider"></span></div></label>
             </div>
 
             <!-- Anomaly Banner -->
             <div id="condition-banner" class="glass-panel"></div>
-
-            <!-- Tooltip -->
-            <div id="info-tooltip" class="glass-panel">
-                <div id="tooltip-title">Organ</div>
-                <div id="tooltip-desc">Description</div>
-                <div id="tooltip-metric">--</div>
-            </div>
         </div>
 
         <script>
@@ -236,68 +247,104 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 b.classList.add("condition-active");
             }}
             
-            // Core Setup
             const container = document.getElementById('canvas-container');
             const scene = new THREE.Scene();
             
             const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
             camera.position.set(0, 1, 9);
 
-            const renderer = new THREE.WebGLRenderer({{ alpha: true, antialias: true }});
+            const renderer = new THREE.WebGLRenderer({{ alpha: true, antialias: true, powerPreference: "high-performance" }});
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
+            // Enable Tone Mapping for Bloom
+            renderer.toneMapping = THREE.ReinhardToneMapping;
             container.appendChild(renderer.domElement);
+
+            // CSS2D Renderer for Floating Labels
+            const labelRenderer = new THREE.CSS2DRenderer();
+            labelRenderer.setSize(container.clientWidth, container.clientHeight);
+            labelRenderer.domElement.style.position = 'absolute';
+            labelRenderer.domElement.style.top = '0px';
+            labelRenderer.domElement.style.pointerEvents = 'none';
+            container.appendChild(labelRenderer.domElement);
 
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.target.set(0, 0, 0);
+            controls.target.set(0, 0.5, 0);
+            controls.maxDistance = 15;
+            controls.minDistance = 2;
 
-            const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.3 : 0.6);
+            const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.2 : 0.6);
             scene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(isDark ? 0x00f0ff : 0xffffff, 0.8);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
             dirLight.position.set(5, 5, 5);
             scene.add(dirLight);
-            const backLight = new THREE.DirectionalLight(isDark ? 0xff1e56 : 0x0d9488, 0.5);
-            backLight.position.set(-5, 5, -5);
-            scene.add(backLight);
+
+            // POST-PROCESSING: Bloom & Film
+            const renderScene = new THREE.RenderPass(scene, camera);
+            const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(container.clientWidth, container.clientHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0;
+            bloomPass.strength = isDark ? 1.8 : 0.8;
+            bloomPass.radius = 0.5;
+
+            const filmPass = new THREE.FilmPass(
+                0.35,   // noise intensity
+                0.025,  // scanline intensity
+                648,    // scanline count
+                false   // grayscale
+            );
+
+            const composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+            composer.addPass(filmPass);
 
             // ==========================================
-            // 13 ANATOMICAL SYSTEMS GENERATION
+            // HIGH-END SHADER MATERIALS
             // ==========================================
-            const atlasGroup = new THREE.Group();
-            const layers = {{}};
+            const matBone = new THREE.MeshStandardMaterial({{ color: 0xcccccc, metalness: 0.8, roughness: 0.2, transparent: true, opacity: 0.3 }});
+            const matMuscle = new THREE.MeshStandardMaterial({{ color: 0xff0033, wireframe: true, transparent: true, opacity: 0.15 }});
+            const matHeart = new THREE.MeshStandardMaterial({{ color: 0xff0000, emissive: 0xff1e56, emissiveIntensity: 2.0, transparent: true, opacity: 0.9 }});
+            const matBrain = new THREE.MeshStandardMaterial({{ color: 0x0088ff, emissive: 0x00f0ff, emissiveIntensity: 1.5, transparent: true, opacity: 0.85 }});
+            const matDigestive = new THREE.MeshStandardMaterial({{ color: 0x00ff00, emissive: 0x22cc22, emissiveIntensity: 0.5, transparent: true, opacity: 0.4, wireframe: true }});
+            const matLungs = new THREE.MeshStandardMaterial({{ color: 0x00aaff, emissive: 0x0088ff, emissiveIntensity: 0.8, transparent: true, opacity: 0.3 }});
+            const matEndocrine = new THREE.MeshStandardMaterial({{ color: 0xff00ff, emissive: 0xcc00ff, emissiveIntensity: 2.0 }});
+            const matLymph = new THREE.MeshStandardMaterial({{ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 1.0, wireframe: true, transparent: true, opacity: 0.2 }});
+            const matUro = new THREE.MeshStandardMaterial({{ color: 0xffff00, emissive: 0xaaaa00, emissiveIntensity: 1.0, transparent: true, opacity: 0.6 }});
             
-            // Shared Materials
-            const matBone = new THREE.MeshPhysicalMaterial({{ color: isDark?0xaaaaaa:0xffffff, transparent: true, opacity: 0.3, roughness: 0.2 }});
-            const matMuscle = new THREE.MeshPhysicalMaterial({{ color: 0x8b0000, transparent: true, opacity: 0.2, roughness: 0.8 }});
-            const matHeart = new THREE.MeshPhysicalMaterial({{ color: 0xff1e56, transparent: true, opacity: 0.85 }});
-            const matBrain = new THREE.MeshPhysicalMaterial({{ color: 0x00f0ff, transparent: true, opacity: 0.7 }});
-            const matDigestive = new THREE.MeshPhysicalMaterial({{ color: 0x84cc16, transparent: true, opacity: 0.5 }});
-            const matLungs = new THREE.MeshPhysicalMaterial({{ color: 0x38bdf8, transparent: true, opacity: 0.4 }});
-            const matEndocrine = new THREE.MeshPhysicalMaterial({{ color: 0xd946ef, emissive: 0x4a044e, transparent: true, opacity: 0.9 }});
-            const matLymph = new THREE.MeshPhysicalMaterial({{ color: 0xa3e635, wireframe: true, transparent: true, opacity: 0.3 }});
-            const matUro = new THREE.MeshPhysicalMaterial({{ color: 0xfacc15, transparent: true, opacity: 0.7 }});
-            const matSkin = new THREE.MeshPhysicalMaterial({{ color: 0x0ea5e9, transparent: true, opacity: 0.05, depthWrite: false }});
-            const matSensory = new THREE.MeshPhysicalMaterial({{ color: 0xffffff, emissive: 0x00f0ff, transparent: true, opacity: 0.8 }});
-
+            // Point Cloud Skin (Sci-Fi Aesthetic)
+            const skinGeo = new THREE.CylinderGeometry(1.2, 0.9, 5, 64, 32);
+            const headGeo = new THREE.SphereGeometry(1.0, 32, 32);
+            headGeo.translate(0, 3.2, 0);
+            skinGeo.merge(headGeo);
+            
+            const matSkinPoints = new THREE.PointsMaterial({{ color: 0x00f0ff, size: 0.02, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending }});
+            
             // Condition Overrides
             if (bioData.condition === "Metabolic Syndrome") {{
-                matEndocrine.emissive.setHex(0xffaa00); // Pancreas distress
-                matHeart.emissive.setHex(0x550000); // Hypertension
-                matDigestive.color.setHex(0xaaaa00);
+                matEndocrine.emissive.setHex(0xffaa00);
+                matEndocrine.emissiveIntensity = 4.0;
+                matHeart.emissive.setHex(0xff5500);
+                matHeart.emissiveIntensity = 3.0;
+                matSkinPoints.color.setHex(0xffaa00);
             }} else if (bioData.condition === "Chronic Stress") {{
-                matBrain.emissive.setHex(0xffaa00);
-                matEndocrine.emissive.setHex(0xff1e56); // Adrenals firing
+                matBrain.emissive.setHex(0xff8800);
+                matBrain.emissiveIntensity = 4.0;
+                matEndocrine.emissive.setHex(0xff0000); 
+                matEndocrine.emissiveIntensity = 5.0;
+                filmPass.uniforms.nIntensity.value = 1.2; // Lots of static
             }} else if (bioData.condition === "Acute Infection") {{
-                matLungs.color.setHex(0xff1e56); // Lung inflammation
-                matLungs.opacity = 0.7;
-                matLymph.opacity = 0.8; // Swollen lymph
-                matLymph.color.setHex(0xffaa00);
-                matSkin.color.setHex(0xff0000); // Fever
-                matSkin.opacity = 0.1;
+                matLungs.emissive.setHex(0xff0000);
+                matLungs.emissiveIntensity = 3.0;
+                matLymph.emissive.setHex(0xffaa00);
+                matLymph.emissiveIntensity = 2.0;
+                matSkinPoints.color.setHex(0xff1e56);
+                matSkinPoints.opacity = 0.8;
             }}
 
+            const atlasGroup = new THREE.Group();
+            const layers = {{}};
             function createLayer(name) {{
                 const group = new THREE.Group();
                 group.name = name;
@@ -306,147 +353,121 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 return group;
             }}
 
-            // 1. SKELETAL
+            // SKELETAL
             const sysSkel = createLayer('skeletal');
-            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 32), matBone);
-            skull.position.y = 2.5;
-            skull.scale.set(1, 1.2, 1);
-            skull.userData = {{ name: "Cranium", desc: "Bone structure of the head.", metric: "Density Normal" }};
+            const skull = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), matBone);
+            skull.position.y = 3.2;
+            skull.userData = {{ name: "Cranium", desc: "Osteo structure.", metric: "Density Normal" }};
             sysSkel.add(skull);
-            for(let i=0; i<12; i++) {{
-                const vert = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.15, 16), matBone);
-                vert.position.set(0, 1.5 - (i * 0.25), -0.2);
+            for(let i=0; i<15; i++) {{
+                const vert = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.2, 8), matBone);
+                vert.position.set(0, 2.0 - (i * 0.22), -0.3);
                 sysSkel.add(vert);
             }}
-            for(let i=0; i<8; i++) {{
-                const rib = new THREE.Mesh(new THREE.TorusGeometry(0.6 + (Math.sin(i/8*Math.PI)*0.2), 0.05, 8, 32, Math.PI), matBone);
-                rib.position.set(0, 1.2 - (i * 0.2), -0.2);
-                rib.rotation.x = -Math.PI / 2 + 0.2;
+            for(let i=0; i<10; i++) {{
+                const rib = new THREE.Mesh(new THREE.TorusGeometry(0.7 + (Math.sin(i/10*Math.PI)*0.3), 0.04, 8, 32, Math.PI), matBone);
+                rib.position.set(0, 1.8 - (i * 0.2), -0.3);
+                rib.rotation.x = -Math.PI / 2 + 0.1;
                 sysSkel.add(rib);
             }}
 
-            // 2. MUSCULAR (Simple Hull)
+            // MUSCULAR
             const sysMusc = createLayer('muscular');
-            const torsoHull = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.7, 2.8, 16), matMuscle);
+            const torsoHull = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.85, 4, 32, 16), matMuscle);
             torsoHull.position.set(0, 0.5, 0);
             sysMusc.add(torsoHull);
             sysMusc.visible = false;
 
-            // 3. CARDIOVASCULAR
+            // CARDIOVASCULAR
             const sysCardio = createLayer('cardio');
-            const heart = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), matHeart);
-            heart.position.set(-0.2, 0.8, 0.2);
-            heart.userData = {{ name: "Heart (Myocardium)", desc: "Central pump.", metric: bioData.heartRate + " BPM" }};
+            const heart = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 2), matHeart);
+            heart.position.set(-0.25, 1.3, 0.3);
+            heart.userData = {{ name: "Myocardium", desc: "Central pump.", metric: bioData.heartRate + " BPM" }};
             sysCardio.add(heart);
-            const aorta = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2, 8), matHeart);
-            aorta.position.set(-0.1, 0, 0.1);
+            const aorta = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI), matHeart);
+            aorta.position.set(-0.1, 1.6, 0.3);
             sysCardio.add(aorta);
 
-            // 4. DIGESTIVE
+            // DIGESTIVE
             const sysDigestive = createLayer('digestive');
-            const stomach = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), matDigestive);
+            const stomach = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), matDigestive);
             stomach.scale.set(1.5, 1, 1);
-            stomach.position.set(-0.3, -0.2, 0.2);
-            stomach.userData = {{ name: "Stomach", desc: "Digests food.", metric: bioData.condition==="Metabolic Syndrome"?"Delayed Emptying":"Normal" }};
+            stomach.position.set(-0.3, 0.2, 0.3);
+            stomach.userData = {{ name: "Stomach", desc: "Gastric process.", metric: "Active" }};
             sysDigestive.add(stomach);
-            const intestines = new THREE.Mesh(new THREE.TorusKnotGeometry(0.3, 0.1, 64, 8, 2, 3), matDigestive);
-            intestines.position.set(0, -1.0, 0.1);
-            intestines.userData = {{ name: "Intestines", desc: "Nutrient absorption.", metric: "Motility Active" }};
+            const intestines = new THREE.Mesh(new THREE.TorusKnotGeometry(0.4, 0.1, 100, 16, 3, 4), matDigestive);
+            intestines.position.set(0, -0.6, 0.2);
             sysDigestive.add(intestines);
 
-            // 5. ENDOCRINE
+            // ENDOCRINE
             const sysEndo = createLayer('endocrine');
-            const pancreas = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 8), matEndocrine);
+            const pancreas = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), matEndocrine);
             pancreas.rotation.z = Math.PI / 2;
-            pancreas.position.set(0, -0.4, 0.1);
-            pancreas.userData = {{ name: "Pancreas", desc: "Insulin production.", metric: bioData.condition==="Metabolic Syndrome"?"Insulin Resistance":"Nominal" }};
+            pancreas.position.set(0, 0.0, 0.2);
+            pancreas.userData = {{ name: "Pancreas", desc: "Insulin Regulation.", metric: bioData.condition==="Metabolic Syndrome"?"Insulin Resistant!":"Nominal" }};
             sysEndo.add(pancreas);
-            const thyroid = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), matEndocrine);
-            thyroid.scale.set(2, 1, 1);
-            thyroid.position.set(0, 1.7, 0.2);
-            sysEndo.add(thyroid);
-            const adrenalL = new THREE.Mesh(new THREE.SphereGeometry(0.06), matEndocrine);
-            adrenalL.position.set(-0.3, -0.4, -0.15);
-            adrenalL.userData = {{ name: "Adrenal Glands", desc: "Cortisol production.", metric: bioData.condition==="Chronic Stress"?"Cortisol Elevated!":"Normal" }};
+            const adrenalL = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), matEndocrine);
+            adrenalL.position.set(-0.35, -0.1, -0.15);
+            adrenalL.userData = {{ name: "Adrenals", desc: "Cortisol production.", metric: bioData.condition==="Chronic Stress"?"Cortisol Spike!":"Normal" }};
             sysEndo.add(adrenalL);
 
-            // 6. NERVOUS
+            // NERVOUS
             const sysNervous = createLayer('nervous');
-            const brain = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), matBrain);
-            brain.position.set(0, 2.5, 0);
-            brain.scale.set(0.9, 1.0, 0.9);
-            brain.userData = {{ name: "Brain", desc: "Central Nervous System.", metric: bioData.sleepEfficiency + "% Recovery" }};
+            const brain = new THREE.Mesh(new THREE.IcosahedronGeometry(0.65, 3), matBrain);
+            brain.position.set(0, 3.2, 0);
+            brain.userData = {{ name: "Cerebral Cortex", desc: "Central Nervous System.", metric: bioData.sleepEfficiency + "% Sleep Recovery" }};
             sysNervous.add(brain);
-            const spineCord = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.5, 8), matBrain);
-            spineCord.position.set(0, 0.5, -0.2);
+            const spineCord = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4, 8), matBrain);
+            spineCord.position.set(0, 1.0, -0.3);
             sysNervous.add(spineCord);
 
-            // 7. RESPIRATORY
+            // RESPIRATORY
             const sysResp = createLayer('respiratory');
-            const lungL = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), matLungs);
-            lungL.scale.set(1, 1.8, 1);
-            lungL.position.set(-0.4, 0.9, 0);
-            lungL.userData = {{ name: "Left Lung", desc: "Gas exchange.", metric: bioData.condition==="Acute Infection"?"SpO2 88% (Low)":"SpO2 99%" }};
+            const lungL = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), matLungs);
+            lungL.scale.set(1, 2.0, 1);
+            lungL.position.set(-0.5, 1.4, 0);
+            lungL.userData = {{ name: "Left Lung", desc: "Gas exchange.", metric: bioData.condition==="Acute Infection"?"SpO2 88%":"SpO2 99%" }};
             const lungR = lungL.clone();
-            lungR.position.set(0.4, 0.9, 0);
-            lungR.userData = {{ name: "Right Lung", desc: "Gas exchange.", metric: bioData.condition==="Acute Infection"?"Consolidation Detected":"Clear" }};
+            lungR.position.set(0.5, 1.4, 0);
             sysResp.add(lungL);
             sysResp.add(lungR);
 
-            // 8. IMMUNE / LYMPH
+            // IMMUNE / LYMPH
             const sysImmune = createLayer('immune');
-            const lymph = new THREE.Mesh(new THREE.TorusKnotGeometry(0.8, 0.02, 64, 8, 3, 5), matLymph);
-            lymph.position.y = 0.5;
-            lymph.userData = {{ name: "Lymphatic Network", desc: "Immune defense.", metric: bioData.condition==="Acute Infection"?"High Leukocytes":"Normal" }};
+            const lymph = new THREE.Mesh(new THREE.TorusKnotGeometry(1.0, 0.03, 100, 8, 4, 7), matLymph);
+            lymph.position.y = 1.0;
+            lymph.userData = {{ name: "Lymphatic Nodes", desc: "Immune defense.", metric: "Active" }};
             sysImmune.add(lymph);
 
-            // 9. URINARY
+            // URINARY
             const sysUro = createLayer('urinary');
-            const kidL = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), matUro);
+            const kidL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), matUro);
             kidL.scale.set(1, 1.5, 1);
-            kidL.position.set(-0.3, -0.6, -0.2);
-            kidL.userData = {{ name: "Kidney", desc: "Filters blood.", metric: "GFR Normal" }};
-            const kidR = kidL.clone();
-            kidR.position.set(0.3, -0.6, -0.2);
+            kidL.position.set(-0.4, -0.2, -0.2);
+            kidL.userData = {{ name: "Kidney", desc: "Filtration.", metric: "GFR Normal" }};
             sysUro.add(kidL);
-            sysUro.add(kidR);
-            const bladder = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), matUro);
-            bladder.position.set(0, -1.6, 0.1);
-            sysUro.add(bladder);
+            sysUro.visible = false;
 
-            // 10 & 11. REPRODUCTIVE (Abstracted)
-            const sysReproF = createLayer('repro_f');
-            const uterus = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshPhysicalMaterial({{color: 0xec4899, transparent:true, opacity:0.8}}));
-            uterus.position.set(0, -1.4, 0);
-            sysReproF.add(uterus);
-            sysReproF.visible = false;
-            
-            const sysReproM = createLayer('repro_m');
-            const prostate = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhysicalMaterial({{color: 0x3b82f6, transparent:true, opacity:0.8}}));
-            prostate.position.set(0, -1.5, 0.15);
-            sysReproM.add(prostate);
-            sysReproM.visible = false;
+            // REPRODUCTIVE
+            const sysReproF = createLayer('repro_f'); sysReproF.visible = false;
+            const sysReproM = createLayer('repro_m'); sysReproM.visible = false;
 
-            // 12. INTEGUMENTARY (Skin)
+            // SKIN (Sci-Fi Point Cloud)
             const sysSkin = createLayer('skin');
-            const skinHull = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.75, 3.5, 32), matSkin);
-            skinHull.position.y = 0.5;
-            const headHull = new THREE.Mesh(new THREE.SphereGeometry(0.7, 32, 32), matSkin);
-            headHull.position.y = 2.5;
-            sysSkin.add(skinHull);
-            sysSkin.add(headHull);
-            sysSkin.visible = false;
+            const skinPoints = new THREE.Points(skinGeo, matSkinPoints);
+            skinPoints.position.y = 0.5;
+            sysSkin.add(skinPoints);
 
-            // 13. SENSORY
+            // SENSORY
             const sysSensory = createLayer('sensory');
-            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08), matSensory);
-            eyeL.position.set(-0.25, 2.6, 0.5);
-            const eyeR = eyeL.clone();
-            eyeR.position.set(0.25, 2.6, 0.5);
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({{color:0xffffff, emissive:0xffffff, emissiveIntensity:2}}));
+            eyeL.position.set(-0.3, 3.3, 0.6);
             sysSensory.add(eyeL);
+            const eyeR = eyeL.clone();
+            eyeR.position.set(0.3, 3.3, 0.6);
             sysSensory.add(eyeR);
 
-            atlasGroup.position.y = -0.5;
+            atlasGroup.position.y = -1.5;
             scene.add(atlasGroup);
 
             // ==========================================
@@ -465,46 +486,67 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             }});
 
             // ==========================================
+            // CSS2D SPATIAL LABELS
+            // ==========================================
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'spatial-label';
+            labelDiv.innerHTML = `
+                <div class="label-title" id="lbl-title">Organ</div>
+                <div id="lbl-desc" style="font-size:11px; color:#94a3b8">Desc</div>
+                <div class="label-metric" id="lbl-metric">--</div>
+                <div class="label-connector"></div>
+            `;
+            const spatialLabel = new THREE.CSS2DObject(labelDiv);
+            spatialLabel.position.set(0, 0, 0);
+            scene.add(spatialLabel);
+
+            // ==========================================
             // RAYCASTING
             // ==========================================
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2();
-            const tooltip = document.getElementById('info-tooltip');
             let hoveredMesh = null;
-            let originalEmissive = new THREE.Color(0x000000);
+            let originalEmissiveInt = 0;
 
             container.addEventListener('pointermove', (event) => {{
                 const rect = container.getBoundingClientRect();
                 mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-                
-                if(tooltip.style.display === 'block') {{
-                    tooltip.style.left = (event.clientX - rect.left) + 'px';
-                    tooltip.style.top = (event.clientY - rect.top) + 'px';
-                }}
             }});
             
             container.addEventListener('click', () => {{
                 raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(atlasGroup.children, true);
+                // Intersect only meshes, not point clouds to make it easier
+                const interactables = [];
+                atlasGroup.traverse((child) => {{
+                    if (child.isMesh && child.visible && child.parent.visible) interactables.push(child);
+                }});
+
+                const intersects = raycaster.intersectObjects(interactables, false);
                 
                 if (hoveredMesh) {{
-                    hoveredMesh.material.emissive = originalEmissive;
+                    hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
                     hoveredMesh = null;
-                    tooltip.style.display = 'none';
+                    labelDiv.classList.remove('visible');
                 }}
 
                 if (intersects.length > 0) {{
                     const object = intersects[0].object;
                     if (object.userData && object.userData.name) {{
                         hoveredMesh = object;
-                        originalEmissive = object.material.emissive.clone();
-                        object.material.emissive.setHex(0xffffff); // Highlight
+                        originalEmissiveInt = object.material.emissiveIntensity || 0;
+                        object.material.emissiveIntensity = 5.0; // Huge bloom burst on click
                         
-                        document.getElementById('tooltip-title').innerText = object.userData.name;
-                        document.getElementById('tooltip-desc').innerText = object.userData.desc;
-                        document.getElementById('tooltip-metric').innerText = object.userData.metric;
-                        tooltip.style.display = 'block';
+                        document.getElementById('lbl-title').innerText = object.userData.name;
+                        document.getElementById('lbl-desc').innerText = object.userData.desc;
+                        document.getElementById('lbl-metric').innerText = object.userData.metric;
+                        
+                        // Attach label to the clicked object's world position
+                        const worldPos = new THREE.Vector3();
+                        object.getWorldPosition(worldPos);
+                        worldPos.y += 0.5; // Offset above the organ
+                        spatialLabel.position.copy(worldPos);
+                        labelDiv.classList.add('visible');
                     }}
                 }}
             }});
@@ -512,35 +554,44 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // ==========================================
             // ANIMATION
             // ==========================================
-            let time = 0;
+            const clock = new THREE.Clock();
             function animate() {{
                 requestAnimationFrame(animate);
                 controls.update();
-                time += 0.016;
+                const time = clock.getElapsedTime();
                 
                 // Cardiovascular Pulse
                 if (layers['cardio'].visible) {{
                     const pulseRate = bioData.heartRate / 60;
                     const pulse = (Math.sin(time * Math.PI * 2 * pulseRate) + 1) / 2;
-                    heart.scale.setScalar(1 + pulse * 0.15);
+                    heart.scale.setScalar(1 + pulse * 0.2);
+                    heart.material.emissiveIntensity = 2.0 + (pulse * 3.0);
                 }}
                 
                 // Respiratory Breathing
                 if (layers['respiratory'].visible) {{
-                    const breathRate = bioData.condition === "Acute Infection" ? 3 : 1; // Faster breathing if sick
+                    const breathRate = bioData.condition === "Acute Infection" ? 3 : 1;
                     const breath = (Math.sin(time * breathRate) + 1) / 2;
                     lungL.scale.setScalar(0.9 + breath * 0.15);
-                    lungL.scale.y = 1.8;
+                    lungL.scale.y = 2.0;
                     lungR.scale.setScalar(0.9 + breath * 0.15);
-                    lungR.scale.y = 1.8;
+                    lungR.scale.y = 2.0;
                 }}
                 
                 // Nervous Jitter (Stress)
                 if (layers['nervous'].visible && bioData.condition === "Chronic Stress") {{
-                    brain.position.x = (Math.random() - 0.5) * 0.03;
+                    brain.position.x = (Math.random() - 0.5) * 0.05;
                 }}
 
-                renderer.render(scene, camera);
+                // Point cloud rotation
+                if (layers['skin'].visible) {{
+                    skinPoints.rotation.y = Math.sin(time * 0.2) * 0.2;
+                }}
+
+                // Render via Composer for Post-Processing
+                composer.render();
+                // Render CSS2D on top
+                labelRenderer.render(scene, camera);
             }}
             animate();
 
@@ -548,10 +599,12 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 camera.aspect = container.clientWidth / container.clientHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(container.clientWidth, container.clientHeight);
+                labelRenderer.setSize(container.clientWidth, container.clientHeight);
+                composer.setSize(container.clientWidth, container.clientHeight);
             }});
         </script>
     </body>
     </html>
     """
     
-    components.html(html_code, height=770)
+    components.html(html_code, height=820)
