@@ -126,7 +126,7 @@ def render_case_management(dark_mode: bool, normalized: dict):
                         f"""
                         <div class="premium-card" style="border-left: 5px solid {c_color};">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                                <strong style="font-size: 1.15rem;">{{case.title}}</strong>
+                                <strong style="font-size: 1.15rem;">{case.title}</strong>
                                 <div style="display: flex; gap: 6px;">
                                     <span style="font-size: 0.7rem; background: {c_color}22; color: {c_color}; padding: 2px 8px; border-radius: 4px; font-weight: bold;">
                                         {category_label}
@@ -137,7 +137,7 @@ def render_case_management(dark_mode: bool, normalized: dict):
                                 </div>
                             </div>
                             <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 8px;">
-                                Created: {{case.date_created.strftime('%d %b %Y')}} | Updated: {{case.date_updated.strftime('%d %b %Y')}} | Privacy: {{case.privacy_mode.name}}
+                                Created: {case.date_created.strftime('%d %b %Y')} | Updated: {case.date_updated.strftime('%d %b %Y')} | Privacy: {case.privacy_mode.name}
                             </div>
                         </div>
                         """,
