@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>health-to-solid WASM Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>health-to-solid — WASM Demo</h1>
+    <p>Upload a Samsung Health CSV file to parse it in the browser using the Rust core compiled to WASM.</p>
+
+    <input id="fileInput" type="file" accept=".csv" />
+    <select id="csvType">
+      <option value="weight">Weight</option>
+      <option value="sleep">Sleep</option>
+      <option value="hr">Heart rate</option>
+      <option value="steps">Steps</option>
+    </select>
+    <button id="parseBtn">Parse CSV</button>
+
+    <h2>Parsed output</h2>
+    <pre id="output">(no output)</pre>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

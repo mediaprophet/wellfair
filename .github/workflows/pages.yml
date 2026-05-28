@@ -10,10 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare Pages content
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install wasm-pack
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build wellfare-core WASM
         run: |
           mkdir -p docs
-          cp README.md docs/index.md
+          cd wellfare-core
+          wasm-pack build --release --target web --out-dir ../docs/pkg
+
+      - name: Copy web frontend to docs
+        run: |
+          cp -r web/* docs/ || true
+
+      - name: Ensure README is available
+        run: |
+          cp README.md docs/index.md || true
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v1
         with:

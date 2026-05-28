@@ -1,6 +1,8 @@
 pub mod models;
 pub mod parser;
 pub mod rdf;
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;
 
 #[cfg(test)]
 mod tests {
