@@ -54,6 +54,8 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         "condition": sim_condition
     }
     
+    bio_json_safe = json.dumps(bio_context).replace("<", "\\u003c")
+    
     # Generate HTML Payload with Three.js, OrbitControls, and Advanced UI
     html_code = f"""
     <!DOCTYPE html>
@@ -225,7 +227,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         </div>
 
         <script>
-            const bioData = {json.dumps(bio_context).replace("<", "\\u003c")};
+            const bioData = {bio_json_safe};
             const isDark = bioData.darkMode;
             
             if (bioData.condition !== "Healthy") {{
