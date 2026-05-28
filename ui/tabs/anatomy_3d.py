@@ -316,6 +316,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
         
         <!-- Post-Processing -->
@@ -753,6 +754,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // ==========================================
             const sysSkin = createLayer('skin');
             const gltfLoader = new THREE.GLTFLoader();
+            const dracoLoader = new THREE.DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            gltfLoader.setDRACOLoader(dracoLoader);
             // Default generic human avatar from Three.js examples if none provided
             let avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
             
@@ -794,8 +798,21 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
                 avatarModel.traverse((child) => {{
                     if (child.isMesh) {{
-                        child.material = matSkinHolo;
-                        child.userData = {{ name: "Integumentary System", desc: "Avatar Skin Shell", metric: "Active" }};
+                        const meshName = child.name.toLowerCase();
+                        if (meshName.includes("cardiovascular") || meshName.includes("heart")) {{
+                            child.material = matHeart;
+                            child.userData = {{ name: "Cardiovascular System", desc: "Heart Rate & Circulation", metric: bioData.heartRate + " BPM" }};
+                        }} else if (meshName.includes("nervous") || meshName.includes("brain")) {{
+                            child.material = matBrain;
+                            child.userData = {{ name: "Nervous System", desc: "Cognitive Load & Stress", metric: bioData.stress + "%" }};
+                        }} else if (meshName.includes("endocrine")) {{
+                            child.material = matEndocrine;
+                            child.userData = {{ name: "Endocrine System", desc: "Hormonal Balance", metric: "Active" }};
+                        }} else {{
+                            // Default Fallback
+                            child.material = matSkinHolo;
+                            child.userData = {{ name: "Integumentary System", desc: "Avatar Skin Shell", metric: "Active" }};
+                        }}
                     }}
                 }});
 
