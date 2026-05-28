@@ -1,0 +1,112 @@
+[
+  {
+    "filename": "baseline.glb",
+    "system": "integumentary",
+    "uberon_id": "UBERON:0000955",
+    "description": "Androgenous full-body reference \u2013 used as healthy baseline and male personas",
+    "size_bytes": 40096088,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/Androgenous/Androgenous.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_heart_m.glb",
+    "system": "cardiovascular",
+    "uberon_id": "UBERON:0000948",
+    "description": "Visible Human Male heart \u2013 detailed anatomical mesh",
+    "size_bytes": 6906392,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/VH_M_Heart.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_brain_m.glb",
+    "system": "nervous",
+    "uberon_id": "UBERON:0000955",
+    "description": "Allen Institute Male brain atlas \u2013 FMA-mapped cortical mesh",
+    "size_bytes": 11977320,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/Allen_M_Brain.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_kidney_l_m.glb",
+    "system": "urinary",
+    "uberon_id": "UBERON:0004538",
+    "description": "Visible Human Male left kidney",
+    "size_bytes": 1881948,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/VH_M_Kidney_L.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_kidney_r_m.glb",
+    "system": "urinary",
+    "uberon_id": "UBERON:0004539",
+    "description": "Visible Human Male right kidney",
+    "size_bytes": 1897160,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/VH_M_Kidney_R.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_large_intestine_m.glb",
+    "system": "digestive",
+    "uberon_id": "UBERON:0000059",
+    "description": "Stony Brook University Male large intestine",
+    "size_bytes": 686968,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/SBU_M_Intestine_Large.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_gallbladder_m.glb",
+    "system": "digestive",
+    "uberon_id": "UBERON:0002110",
+    "description": "Visible Human Male gallbladder",
+    "size_bytes": 64152,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/VH_M_Gallbladder.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_lymph_node_m.glb",
+    "system": "immune",
+    "uberon_id": "UBERON:0000029",
+    "description": "NIH Male lymph node \u2013 immune system layer",
+    "size_bytes": 7413888,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/NIH_M_Lymph_Node.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_vasculature_m.glb",
+    "system": "cardiovascular",
+    "uberon_id": "UBERON:0004537",
+    "description": "Visible Human Male blood vasculature network",
+    "size_bytes": 7441296,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.1/VH_M_Blood_Vasculature.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_lung_m.glb",
+    "system": "respiratory",
+    "uberon_id": "UBERON:0002048",
+    "description": "Visible Human Male lung v1.4",
+    "size_bytes": 10941068,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.4/3d-vh-m-lung.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  },
+  {
+    "filename": "organ_vasculature_v14_m.glb",
+    "system": "cardiovascular",
+    "uberon_id": "UBERON:0004537",
+    "description": "Visible Human Male blood vasculature v1.4 (higher detail)",
+    "size_bytes": 18047792,
+    "source": "https://github.com/hubmapconsortium/ccf-3d-reference-object-library/blob/main/VH_Male/v1.4/3d-vh-m-blood-vasculature.glb",
+    "license": "CC BY 4.0",
+    "attribution": "HuBMAP Consortium / Indiana University"
+  }
+]

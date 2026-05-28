@@ -8,14 +8,18 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     st.markdown("## 🧬 3D Biometric Hologram")
     st.markdown("A premium, real-time spatial projection of physiological data using advanced WebGL post-processing.")
     
+    # HuBMAP Human Reference Atlas (HRA) models – CC BY 4.0
+    # Source: https://github.com/hubmapconsortium/ccf-3d-reference-object-library
+    # Attribution: HuBMAP Consortium / Indiana University
+    # Run scripts/download_hra_models.py to populate docs/models/hra/
     DEMO_AVATARS = {
-        "Healthy Baseline": "models/baseline.glb",
-        "Michael (Homeless / Family Separation)": "models/michael.glb",
-        "Elena (Trauma Survivor)": "models/elena.glb",
-        "Rebecca (Birth Trauma / PTSD)": "models/rebecca.glb",
-        "Margaret (Elder Abuse / Neglect)": "models/margaret.glb",
-        "Robert (Elder Neglect)": "models/robert.glb",
-        "Jordan (NDIS Exploitation)": "models/jordan.glb"
+        "Healthy Baseline": "models/hra/baseline.glb",
+        "Michael (Homeless / Family Separation)": "models/hra/baseline.glb",
+        "Elena (Trauma Survivor)": "models/hra/baseline.glb",
+        "Rebecca (Birth Trauma / PTSD)": "models/hra/baseline.glb",
+        "Margaret (Elder Abuse / Neglect)": "models/hra/baseline.glb",
+        "Robert (Elder Neglect)": "models/hra/baseline.glb",
+        "Jordan (NDIS Exploitation)": "models/hra/baseline.glb"
     }
 
     col1, col2 = st.columns([2, 2])
@@ -796,22 +800,60 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     avatarModel.rotation.x = 0.15; // Tense/Slouch
                 }}
 
+                // ============================================================
+                // Semantic HRA Mesh Traversal
+                // Maps HuBMAP CCF / UBERON mesh names to physiological shaders.
+                // HRA GLBs use node names like: VH_M_Heart, Allen_M_Brain,
+                // VH_M_Blood_Vasculature, VH_M_Kidney, etc.
+                // Fallback to generic holographic skin for unrecognised nodes.
+                // ============================================================
                 avatarModel.traverse((child) => {{
                     if (child.isMesh) {{
-                        const meshName = child.name.toLowerCase();
-                        if (meshName.includes("cardiovascular") || meshName.includes("heart")) {{
+                        const n = child.name.toLowerCase();
+
+                        // CARDIOVASCULAR: Heart + vasculature (UBERON:0000948, 0004537)
+                        if (n.includes("heart") || n.includes("vasculature") || n.includes("cardiac") || n.includes("aorta")) {{
                             child.material = matHeart;
                             child.userData = {{ name: "Cardiovascular System", desc: "Heart Rate & Circulation", metric: bioData.heartRate + " BPM" }};
-                        }} else if (meshName.includes("nervous") || meshName.includes("brain")) {{
+
+                        // NERVOUS SYSTEM: Brain + spinal cord (UBERON:0000955)
+                        }} else if (n.includes("brain") || n.includes("neuron") || n.includes("spinal") || n.includes("nerve") || n.includes("allen")) {{
                             child.material = matBrain;
-                            child.userData = {{ name: "Nervous System", desc: "Cognitive Load & Stress", metric: bioData.stress + "%" }};
-                        }} else if (meshName.includes("endocrine")) {{
+                            child.userData = {{ name: "Nervous System", desc: "Cognitive Load & Stress", metric: bioData.stress + "% stress" }};
+
+                        // ENDOCRINE: Adrenal, thyroid, pancreas, pituitary (UBERON:0000407)
+                        }} else if (n.includes("endocrine") || n.includes("adrenal") || n.includes("thyroid") || n.includes("pancreas") || n.includes("pituitary")) {{
                             child.material = matEndocrine;
-                            child.userData = {{ name: "Endocrine System", desc: "Hormonal Balance", metric: "Active" }};
+                            child.userData = {{ name: "Endocrine System", desc: "Hormonal & Metabolic Balance", metric: "Active" }};
+
+                        // RESPIRATORY: Lung, trachea, bronchus (UBERON:0002048)
+                        }} else if (n.includes("lung") || n.includes("trachea") || n.includes("bronch") || n.includes("respiratory")) {{
+                            const matResp = new THREE.MeshStandardMaterial({{ color: 0x4ade80, emissive: 0x4ade80, emissiveIntensity: 0.5, transparent: true, opacity: 0.4, wireframe: false }});
+                            child.material = matResp;
+                            child.userData = {{ name: "Respiratory System", desc: "Oxygen Exchange", metric: "Active" }};
+
+                        // URINARY: Kidney, bladder (UBERON:0004538)
+                        }} else if (n.includes("kidney") || n.includes("bladder") || n.includes("ureter") || n.includes("urinary")) {{
+                            const matUrinary = new THREE.MeshStandardMaterial({{ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.6, transparent: true, opacity: 0.5 }});
+                            child.material = matUrinary;
+                            child.userData = {{ name: "Urinary System", desc: "Filtration & Fluid Balance", metric: "Active" }};
+
+                        // DIGESTIVE: Intestine, liver, gallbladder (UBERON:0001007)
+                        }} else if (n.includes("intestine") || n.includes("liver") || n.includes("gallbladder") || n.includes("colon") || n.includes("digestive")) {{
+                            const matDigest = new THREE.MeshStandardMaterial({{ color: 0xf97316, emissive: 0xf97316, emissiveIntensity: 0.4, transparent: true, opacity: 0.4 }});
+                            child.material = matDigest;
+                            child.userData = {{ name: "Digestive System", desc: "Nutrient Absorption", metric: "Active" }};
+
+                        // IMMUNE / LYMPH: Lymph nodes, spleen, tonsil (UBERON:0000029)
+                        }} else if (n.includes("lymph") || n.includes("spleen") || n.includes("tonsil") || n.includes("immune") || n.includes("nih_m")) {{
+                            const matImmune = new THREE.MeshStandardMaterial({{ color: 0xa78bfa, emissive: 0xa78bfa, emissiveIntensity: 0.6, transparent: true, opacity: 0.5 }});
+                            child.material = matImmune;
+                            child.userData = {{ name: "Immune System", desc: "Lymph Network & Immunity", metric: "Active" }};
+
+                        // DEFAULT FALLBACK: Holographic skin shader
                         }} else {{
-                            // Default Fallback
                             child.material = matSkinHolo;
-                            child.userData = {{ name: "Integumentary System", desc: "Avatar Skin Shell", metric: "Active" }};
+                            child.userData = {{ name: "Body Structure", desc: "Anatomical Reference", metric: "Active" }};
                         }}
                     }}
                 }});
