@@ -35,7 +35,7 @@ def main():
   <head>
     <meta charset="UTF-8" />
     <title>Wellfair Vault (WASM Demo)</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.31.1/build/stlite.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.css"/>
     <style>
       body, html {{ height: 100%; margin: 0; padding: 0; }}
       #root {{ height: 100%; }}
@@ -43,7 +43,7 @@ def main():
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.31.1/build/stlite.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.js"></script>
     <script>
       const files = {json.dumps(stlite_files)};
       
