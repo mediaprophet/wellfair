@@ -7,6 +7,7 @@ class PrivacyMode(str, Enum):
     MODE_A_STRICT = "V"  # Very Restricted (Self + Doctor only)
     MODE_B_PRIVILEGED = "R"  # Restricted (Doctor-facing)
     MODE_C_SHARED = "N"  # Normal (Carer/Family shared)
+    MODE_S_SANCTUARY = "S"  # Sanctuary Mode (Locked down completely)
 
 
 class LegalBasis(str, Enum):

@@ -181,7 +181,7 @@ def render_document_ingestion(dark_mode: bool):
                                         {"desc": "FLAIR", "slices": 60, "thickness_mm": 3.0}
                                     ]
                                 },
-                                privacy_mode=PrivacyMode.MODE_C_SANCTUARY
+                                privacy_mode=PrivacyMode.MODE_S_SANCTUARY
                             )
                         ]
                         
