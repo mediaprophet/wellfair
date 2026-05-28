@@ -424,7 +424,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 uniform float uTime;
                 uniform float uGlitchIntensity;
 
-                void main() {
+                void main() {{
                   vNormal = normalize(normalMatrix * normal);
                   vPosition = position;
                   vUv = uv;
@@ -434,7 +434,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                   pos += normal * sin(uTime * 8.0 + position.y * 10.0) * 0.002 * uGlitchIntensity;
 
                   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-                }
+                }}
             `;
 
             const holographicFragmentShader = `
@@ -450,7 +450,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 uniform float uWellbeingScore;
                 uniform float uRimPower;
 
-                void main() {
+                void main() {{
                   // Fresnel Rim Lighting (edge glow)
                   vec3 viewDirection = normalize(cameraPosition - vPosition);
                   float fresnel = 1.0 - dot(viewDirection, vNormal);
@@ -474,7 +474,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                   finalColor *= scanline;
 
                   gl_FragColor = vec4(finalColor, alpha);
-                }
+                }}
             `;
 
             const stressLevel = bioData.stress / 100.0;
@@ -485,48 +485,48 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             let stressColor = new THREE.Color(0xff1e56);
             let glitchInt = 1.0;
 
-            const matSkinHolo = new THREE.ShaderMaterial({
+            const matSkinHolo = new THREE.ShaderMaterial({{
                 vertexShader: holographicVertexShader,
                 fragmentShader: holographicFragmentShader,
-                uniforms: {
-                    uTime: { value: 0.0 },
-                    uOpacity: { value: bioData.xRay ? 0.03 : 0.25 },
-                    uBaseColor: { value: baseColor },
-                    uStressColor: { value: stressColor },
-                    uStressLevel: { value: stressLevel },
-                    uWellbeingScore: { value: wellbeing },
-                    uRimPower: { value: 2.0 },
-                    uGlitchIntensity: { value: glitchInt }
-                },
+                uniforms: {{
+                    uTime: {{ value: 0.0 }},
+                    uOpacity: {{ value: bioData.xRay ? 0.03 : 0.25 }},
+                    uBaseColor: {{ value: baseColor }},
+                    uStressColor: {{ value: stressColor }},
+                    uStressLevel: {{ value: stressLevel }},
+                    uWellbeingScore: {{ value: wellbeing }},
+                    uRimPower: {{ value: 2.0 }},
+                    uGlitchIntensity: {{ value: glitchInt }}
+                }},
                 transparent: true,
                 wireframe: false,
                 blending: THREE.AdditiveBlending,
                 side: THREE.DoubleSide
-            });
+            }});
             
             // Particles Material
             const particleColor = bioData.stress > 70 ? 0xff0033 : (bioData.sleepEfficiency < 60 ? 0xffaa00 : 0x00ff88);
-            const matParticles = new THREE.PointsMaterial({ color: particleColor, size: 0.05, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
+            const matParticles = new THREE.PointsMaterial({{ color: particleColor, size: 0.05, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending }});
 
             // Condition Overrides
-            if (bioData.trauma === "systemic_frailty") {
+            if (bioData.trauma === "systemic_frailty") {{
                 matHeart.emissive.setHex(0xff5500);
                 matSkinHolo.uniforms.uBaseColor.value.setHex(0xffaa00);
                 matSkinHolo.uniforms.uGlitchIntensity.value = 2.0;
                 matBrain.emissiveIntensity = 0.5; // Dimmed cognition
-            } else if (bioData.trauma === "pelvic_trauma") {
+            }} else if (bioData.trauma === "pelvic_trauma") {{
                 matSkinHolo.uniforms.uBaseColor.value.setHex(0xff1e56);
                 matSkinHolo.uniforms.uGlitchIntensity.value = 4.0;
                 matBrain.emissive.setHex(0xff8800); // Hypervigilance
                 matBrain.emissiveIntensity = 3.0;
                 filmPass.uniforms.nIntensity.value = 1.0; 
-            } else if (bioData.trauma === "financial_stress") {
+            }} else if (bioData.trauma === "financial_stress") {{
                 matEndocrine.emissive.setHex(0xff0000); // Adrenal fatigue
                 matSkinHolo.uniforms.uGlitchIntensity.value = 2.5;
                 matEndocrine.emissiveIntensity = 5.0;
                 matHeart.emissiveIntensity = 4.0;
                 filmPass.uniforms.nIntensity.value = 1.5; 
-            }
+            }}
 
             const atlasGroup = new THREE.Group();
             const layers = {{}};
