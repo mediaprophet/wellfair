@@ -17,3 +17,6 @@ from src.phr_models.psychology import (
     TherapyModality, TherapySessionNote, PsychologicalFormulation,
     AttachmentStyle, AttachmentStyleRecord, SubRosaCategory, SubRosaRecord
 )
+from src.phr_models.imaging import (
+    ImagingModality, ImagingSeries, MedicalImagingStudy
+)

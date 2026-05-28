@@ -8,6 +8,7 @@ from src.phr_models.claims import (
 from src.phr_models.pathology import DiagnosticReport, PathologyObservation, DiagnosticReportStatus
 from src.phr_models.proxy_consent import PrivacyMode
 from src.phr_models.psychiatric import DASS21Assessment, K10Assessment
+from src.phr_models.imaging import MedicalImagingStudy, ImagingModality, ImagingSeries
 
 def render_document_ingestion(dark_mode: bool):
     st.markdown("## 📥 Document Ingestion & Semantic Claims")
@@ -36,7 +37,7 @@ def render_document_ingestion(dark_mode: bool):
         
         doc_type = st.selectbox(
             "Document Type",
-            options=["Pathology Report", "Clinical Discharge Summary", "Prescription", "Self-Report Notes", "Psychiatric Questionnaire"]
+            options=["Pathology Report", "Clinical Discharge Summary", "Prescription", "Self-Report Notes", "Psychiatric Questionnaire", "Medical Imaging Archive (ZIP/DICOM)"]
         )
         
         st.caption("Metadata (Usually auto-extracted, manual override here)")
@@ -156,6 +157,48 @@ def render_document_ingestion(dark_mode: bool):
                         st.success("Psychiatric Questionnaire extracted successfully! Please review.")
                         st.rerun()
 
+                    elif "Imaging" in doc_type:
+                        mock_source = InformationSource(
+                            id=f"src-{int(time.time())}",
+                            author_type=AuthorType(author_t),
+                            author_name="Automated Radiology System",
+                            organization=org,
+                            credentials="RANZCR Accredited 9876",
+                            date_recorded=datetime.now()
+                        )
+                        
+                        mock_claims = [
+                            ClinicalClaim(
+                                id=f"claim-{int(time.time())}-img1",
+                                source_document_id=mock_source.id,
+                                domain="Radiology",
+                                claim_text="Study: MRI Brain without contrast",
+                                extracted_data={
+                                    "modality": "MRI",
+                                    "study_description": "MRI Brain without contrast",
+                                    "series": [
+                                        {"desc": "T1 Axial", "slices": 120, "thickness_mm": 1.5},
+                                        {"desc": "FLAIR", "slices": 60, "thickness_mm": 3.0}
+                                    ]
+                                },
+                                privacy_mode=PrivacyMode.MODE_C_SANCTUARY
+                            )
+                        ]
+                        
+                        package = ContentPackage(
+                            id=f"pkg-{int(time.time())}",
+                            original_file_name=uploaded_file.name,
+                            upload_date=datetime.now(),
+                            source=mock_source,
+                            raw_extracted_text="MOCK DICOM HEADER EXTRACT: Modality=MR, StudyDesc=MRI Brain without contrast, Series=T1 Axial (120 slices), Series=FLAIR (60 slices)",
+                            claims=mock_claims
+                        )
+                        
+                        package.evaluate_claims()
+                        st.session_state.pending_packages.append(package)
+                        st.success("DICOM Metadata extracted! Placed under Sanctuary Mode.")
+                        st.rerun()
+
     with c2:
         st.markdown("### 🔍 Pending Packages Review")
         
@@ -243,6 +286,32 @@ def render_document_ingestion(dark_mode: bool):
                                     if "psychiatric_assessments" not in st.session_state:
                                         st.session_state.psychiatric_assessments = []
                                     st.session_state.psychiatric_assessments.append(dass)
+                                
+                                elif claim.domain == "Radiology" and "modality" in claim.extracted_data:
+                                    # Create Medical Imaging Study
+                                    series_list = []
+                                    for idx_s, s in enumerate(claim.extracted_data.get("series", [])):
+                                        series_list.append(ImagingSeries(
+                                            id=f"series-{pkg.id}-{idx_s}",
+                                            series_description=s.get("desc", ""),
+                                            modality=ImagingModality(claim.extracted_data.get("modality", "MRI")),
+                                            slice_thickness_mm=s.get("thickness_mm"),
+                                            number_of_slices=s.get("slices", 0),
+                                            dicom_archive_uri=f"vault://imaging/{pkg.original_file_name}.enc"
+                                        ))
+                                        
+                                    imaging_study = MedicalImagingStudy(
+                                        id=f"study-{pkg.id}",
+                                        patient_id="patient-self",
+                                        date_recorded=pkg.upload_date,
+                                        study_description=claim.extracted_data.get("study_description", "Unknown Study"),
+                                        modality=ImagingModality(claim.extracted_data.get("modality", "MRI")),
+                                        series=series_list,
+                                        privacy_mode=claim.privacy_mode
+                                    )
+                                    if "imaging_studies" not in st.session_state:
+                                        st.session_state.imaging_studies = []
+                                    st.session_state.imaging_studies.append(imaging_study)
 
                             pkg.status = "Approved"
                             st.success("Committed structured data to Vault!")
