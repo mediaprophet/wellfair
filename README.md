@@ -6,7 +6,13 @@ This repository includes the `health-to-solid` capability for Samsung Health exp
 
 It ingests Samsung Health export data, normalizes it with a YAML-driven ontology, and emits Solid-compatible RDF (Turtle + JSON-LD) for local prototyping, analysis, and visualization.
 
-> This is an entirely new application. It does not incorporate the original HealthPod codebase from ANU Software Innovation Institute / anusii.
+## Browser demo (WASM)
+
+A lightweight browser demo running the Rust core compiled to WebAssembly is available at:
+
+**<https://mediaprophet.github.io/wellfair/>**
+
+All files you upload are processed locally in your browser and are not transmitted to any server.
 
 ## About Wellfair
 

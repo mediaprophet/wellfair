@@ -1,6 +1,6 @@
 # Copyright notice
 
-This repository is an entirely new application created independently by Timothy Charles Holborn. It does not incorporate the original HealthPod codebase from ANU Software Innovation Institute / anusii.
+This repository is an entirely new application created independently by Timothy Charles Holborn.
 
 ## Copyright and license
 
