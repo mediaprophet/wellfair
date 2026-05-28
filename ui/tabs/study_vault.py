@@ -190,10 +190,10 @@ Digitise standardized diagnostic intake questionnaires, parse and evaluate medic
             # Build DataFrame
             comorb_data = pd.DataFrame([
                 {"Condition": "Post-viral Fatigue", "Correlation": 85},
-                {"Dysautonomia", 75},
-                {"Fibromyalgia", 60},
-                {"IBS", 45},
-                {"Cardiovascular Arrythmia", 30}
+                {"Condition": "Dysautonomia", "Correlation": 75},
+                {"Condition": "Fibromyalgia", "Correlation": 60},
+                {"Condition": "IBS", "Correlation": 45},
+                {"Condition": "Cardiovascular Arrythmia", "Correlation": 30}
             ])
             fig = px.bar(
                 comorb_data,
