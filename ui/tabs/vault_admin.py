@@ -91,7 +91,7 @@ def render_vault_admin(dark_mode: bool, normalized: dict, export_path: str, temp
                 dtype = selected_ds['dtype']
                 
                 st.markdown("#### 📈 Visualization")
-                plot_dataset_chart(dtype, df, selected_ds['display_name'])
+                plot_dataset_chart(dtype, df, selected_ds['display_name'], dark_mode)
                 
                 st.divider()
                 

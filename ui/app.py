@@ -129,28 +129,36 @@ def main():
         st.markdown(
             """<style>
             .stApp {
-                background: #0c051a !important;
-                color: #f4f4f7 !important;
+                background-color: #030005 !important;
+                background-image: radial-gradient(circle at 50% 0%, #20000a 0%, transparent 40%), linear-gradient(0deg, #030005 0%, #030005 100%) !important;
+                color: #ffb3c6 !important;
             }
             h1, h2, h3, h4, h5 {
-                color: #f43f5e !important;
+                color: #ff1e56 !important;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
             }
             .premium-card {
-                background: rgba(20, 10, 35, 0.6) !important;
-                border: 1px solid rgba(244, 63, 94, 0.15) !important;
-                box-shadow: 0 10px 30px rgba(244, 63, 94, 0.1) !important;
+                background: rgba(15, 0, 5, 0.7) !important;
+                border: 1px solid rgba(255, 30, 86, 0.3) !important;
+                box-shadow: 0 0 15px rgba(255, 30, 86, 0.1) !important;
+                animation: pulse 4s infinite alternate;
+            }
+            @keyframes pulse {
+                from { box-shadow: 0 0 15px rgba(255, 30, 86, 0.05); }
+                to { box-shadow: 0 0 25px rgba(255, 30, 86, 0.2); border-color: rgba(255, 30, 86, 0.5); }
             }
             .premium-card:hover {
-                border-color: #a855f7 !important;
-                box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2) !important;
+                border-color: #ff1e56 !important;
+                box-shadow: 0 0 35px rgba(255, 30, 86, 0.4) !important;
             }
             section[data-testid="stSidebar"] {
-                background-color: #080312 !important;
-                border-right: 1px solid rgba(244, 63, 94, 0.1) !important;
+                background-color: #050002 !important;
+                border-right: 1px solid rgba(255, 30, 86, 0.2) !important;
             }
             div[data-testid="stForm"] {
-                border: 1px solid rgba(168, 85, 247, 0.2) !important;
-                background: rgba(15, 5, 25, 0.4) !important;
+                border: 1px solid rgba(255, 30, 86, 0.2) !important;
+                background: rgba(10, 0, 5, 0.8) !important;
             }
             div[data-testid="stRadio"] [data-testid="stRadioOptionCircle"] {
                 display: none !important;

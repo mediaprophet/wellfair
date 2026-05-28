@@ -191,25 +191,25 @@ def render_personal_health(dark_mode: bool, normalized: dict):
             
             with c1:
                 if weight_df is not None and not weight_df.empty:
-                    plot_dataset_chart("com.samsung.health.weight", weight_df, "Body Weight Trend")
+                    plot_dataset_chart("com.samsung.health.weight", weight_df, "Body Weight Trend", dark_mode)
                 else:
                     st.info("No Weight data found for dashboard trend.")
                     
                 if steps_df is not None and not steps_df.empty:
-                    plot_dataset_chart("com.samsung.shealth.tracker.pedometer_day_summary", steps_df, "Daily Step Count")
+                    plot_dataset_chart("com.samsung.shealth.tracker.pedometer_day_summary", steps_df, "Daily Step Count", dark_mode)
                 else:
                     st.info("No Steps data found for dashboard trend.")
                     
             with c2:
                 if sleep_df is not None and not sleep_df.empty:
-                    plot_dataset_chart("com.samsung.shealth.sleep", sleep_df, "Sleep Duration")
+                    plot_dataset_chart("com.samsung.shealth.sleep", sleep_df, "Sleep Duration", dark_mode)
                 else:
                     st.info("No Sleep data found for dashboard trend.")
                     
                 if hr_df is not None and not hr_df.empty:
-                    plot_dataset_chart("com.samsung.health.heart_rate", hr_df, "Heart Rate")
+                    plot_dataset_chart("com.samsung.health.heart_rate", hr_df, "Heart Rate", dark_mode)
                 elif bp_df is not None and not bp_df.empty:
-                    plot_dataset_chart("com.samsung.shealth.blood_pressure", bp_df, "Blood Pressure")
+                    plot_dataset_chart("com.samsung.shealth.blood_pressure", bp_df, "Blood Pressure", dark_mode)
                 else:
                     st.info("No Heart Rate or Blood Pressure data found for dashboard trend.")
 
