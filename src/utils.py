@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Shared utilities for health-to-solid."""
+"""Shared utilities for wellfair and health-to-solid semantic export."""
 
 from __future__ import annotations
 

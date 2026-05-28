@@ -1,0 +1,19 @@
+{
+  "id": "jordan_m",
+  "name": "Jordan M.",
+  "age": 37,
+  "gender": "non-binary",
+  "location": "Adelaide, Australia",
+  "situation": "NDIS exploitation, disability, systemic abuse",
+  "narrative": "Jordan has significant disabilities (chronic pain, autism, anxiety) and receives NDIS support. A predatory support worker has befriended Jordan and is now financially exploiting them through 'loans,' controlling their spending, and isolating them from other supports. Jordan's disability makes them vulnerable to manipulation and their support provider is complicit through negligence. Their sleep is disrupted by pain and anxiety, and stress from the exploitation situation is worsening their health. They've limited ability to advocate for themselves.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["ndis_exploitation", "disability", "financial_abuse", "chronic_pain", "systemic_abuse"],
+  "welfare_context": {
+    "primary_challenge": "Protection & Advocacy Empowerment",
+    "secondary_challenges": ["Pain Management", "Support System Safety", "Financial Recovery"],
+    "intervention_stage": "Protective Coordination"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "person_id": "margaret_t",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 35,
+      "max_score": 100,
+      "factors": ["poor_sleep_anxiety_driven", "irregular_meals", "limited_medication_access", "sedentary_lifestyle"],
+      "concern_level": "severe"
+    },
+    "safety": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["financial_control", "caregiver_neglect", "medical_decision_removal", "isolation", "vulnerability"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["enforced_isolation", "broken_friendships", "family_abuse", "loneliness"],
+      "concern_level": "critical"
+    },
+    "esteem": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["gaslighting_effects", "lost_autonomy", "self_doubt", "diminished_competence"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["lost_purpose", "no_control_over_life", "reduced_capacity"],
+      "concern_level": "severe"
+    }
+  },
+  "total_wellbeing_score": 21,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["safety", "love_belonging"],
+  "recommended_interventions": [
+    "Elder abuse investigation & reporting",
+    "Emergency housing support",
+    "Financial advice & asset protection",
+    "Medical assessment & autonomy restoration",
+    "Mental health assessment for depression/anxiety",
+    "Social connection rebuilding",
+    "Legal support for protection orders"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "40-50%",
+    "sleep_fragmentation": "Moderate (3-5 awakenings/night, anxiety-driven)",
+    "resting_heart_rate": "75-80 bpm",
+    "activity_pattern": "Very low (< 3,000 steps/day, mostly sedentary)",
+    "weight_trend": "Gradual loss from stress",
+    "stress_markers": "Chronically elevated, anxiety spikes during day"
+  },
+  "risk_assessment": {
+    "suicide_risk": "moderate",
+    "self_harm_risk": "low",
+    "substance_abuse_risk": "low",
+    "health_deterioration_risk": "high",
+    "cognitive_decline_risk": "moderate"
+  },
+  "notes": "Margaret is in institutional abuse situation with cognitive impact. She needs immediate protective intervention and cognitive assessment. Financial and medical autonomy restoration are critical. Depression is significant but treatable. Isolation is enforced and dangerous to health."
+}

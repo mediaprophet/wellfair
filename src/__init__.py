@@ -3,4 +3,4 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""health-to-solid: Samsung Health export → Solid-ready RDF."""
+"""wellfair: Samsung Health export → Solid-ready RDF and broader wellbeing informatics."""

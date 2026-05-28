@@ -1,0 +1,65 @@
+{
+  "person_id": "jordan_m",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 25,
+      "max_score": 100,
+      "factors": ["chronic_pain_disrupts_sleep", "sleep_5-7hrs_poor_quality", "irregular_pain_management", "medication_concerns"],
+      "concern_level": "severe"
+    },
+    "safety": {
+      "score": 18,
+      "max_score": 100,
+      "factors": ["financial_exploitation", "support_worker_predation", "isolation", "limited_advocacy_access"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 22,
+      "max_score": 100,
+      "factors": ["isolation_by_exploiter", "limited_social_network", "neurodivergent_barriers", "trust_damage"],
+      "concern_level": "severe"
+    },
+    "esteem": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["disability_stigma", "manipulation_self_blame", "reduced_autonomy", "limited_capacity_recognition"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["disability_limits", "survival_focus", "limited_choice_experience"],
+      "concern_level": "severe"
+    }
+  },
+  "total_wellbeing_score": 20,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["safety", "physiological"],
+  "recommended_interventions": [
+    "Financial recovery & protection",
+    "Support worker removal & system review",
+    "Pain management optimization",
+    "NDIS provider accountability review",
+    "Trusted advocate appointment",
+    "Trauma-informed disability support",
+    "Community reintegration with safe supports"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "35-55%",
+    "sleep_fragmentation": "Moderate-high (4-5 awakenings/night, pain-related)",
+    "resting_heart_rate": "75-90 bpm",
+    "activity_pattern": "Limited (1,000-4,000 steps/day on good days)",
+    "activity_variability": "High (pain-dependent)",
+    "weight_trend": "Stress-related fluctuations",
+    "stress_markers": "Elevated & reactive to exploitation stressors"
+  },
+  "risk_assessment": {
+    "suicide_risk": "moderate",
+    "self_harm_risk": "low",
+    "substance_abuse_risk": "low",
+    "health_deterioration_risk": "high",
+    "financial_destitution_risk": "high"
+  },
+  "notes": "Jordan's case illustrates systemic vulnerability of disabled people. The NDIS system designed to protect them has become vector for exploitation. Urgent intervention needed to: (1) stop financial predation, (2) remove corrupted support worker, (3) provide trauma-informed care, (4) rebuild trust in support systems. Pain management is secondary but important."
+}

@@ -15,7 +15,7 @@ loadWasm();
 // Register service worker to enable PWA installability and offline caching of app assets.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/docs/sw.js').then(reg => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
       console.log('ServiceWorker registered', reg.scope);
     }).catch(err => {
       console.warn('ServiceWorker registration failed:', err);

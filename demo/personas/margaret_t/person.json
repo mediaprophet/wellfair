@@ -1,0 +1,19 @@
+{
+  "id": "margaret_t",
+  "name": "Margaret T.",
+  "age": 78,
+  "gender": "female",
+  "location": "Perth, Australia",
+  "situation": "Elder abuse, financial exploitation, isolation",
+  "narrative": "Margaret is a widow with significant savings who moved in with her adult son's family for companionship. Her son and daughter-in-law gradually isolated her from friends, limited her access to money, and began making decisions without her consent. She's depressed, anxious, and doubts herself after months of gaslighting. She has minimal social contact beyond her abusers, no access to her own medical decisions, and extreme financial control. Her sleep is poor due to anxiety, and she's become increasingly sedentary.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["elder_abuse", "financial_exploitation", "isolation", "caregiver_abuse", "cognitive_decline"],
+  "welfare_context": {
+    "primary_challenge": "Safety & Autonomy Restoration",
+    "secondary_challenges": ["Social Reintegration", "Financial Recovery", "Mental Health"],
+    "intervention_stage": "Protective Intervention"
+  }
+}

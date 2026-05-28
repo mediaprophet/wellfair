@@ -1,0 +1,62 @@
+{
+  "person_id": "michael_r",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["inconsistent_sleep_6-7hrs", "irregular_meals", "physical_fatigue", "limited_hygiene"],
+      "concern_level": "critical"
+    },
+    "safety": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["homelessness", "financial_instability", "street_safety", "lack_of_support_network"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 10,
+      "max_score": 100,
+      "factors": ["family_separation", "children_court_order", "social_isolation", "grief"],
+      "concern_level": "critical"
+    },
+    "esteem": {
+      "score": 25,
+      "max_score": 100,
+      "factors": ["loss_of_provider_identity", "employment_instability", "shame", "low_self_worth"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 5,
+      "max_score": 100,
+      "factors": ["survival_mode", "no_capacity_for_growth", "lost_purpose"],
+      "concern_level": "severe"
+    }
+  },
+  "total_wellbeing_score": 15,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["physiological", "safety", "love_belonging"],
+  "recommended_interventions": [
+    "Crisis housing support",
+    "Mental health counseling for grief/trauma",
+    "Family mediation & reunification planning",
+    "Employment assistance & skills training",
+    "Social connection programs",
+    "Case management coordination"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "45-55%",
+    "sleep_fragmentation": "High (4-6 awakenings/night)",
+    "resting_heart_rate": "78-85 bpm",
+    "activity_pattern": "Highly variable (0-15,000 steps/day)",
+    "weight_trend": "Gradual decline",
+    "stress_markers": "Elevated and fluctuating"
+  },
+  "risk_assessment": {
+    "suicide_risk": "moderate",
+    "substance_abuse_risk": "moderate",
+    "health_deterioration_risk": "high",
+    "family_estrangement_risk": "high"
+  },
+  "notes": "Michael requires immediate crisis support for housing and mental health. Family reunification is a priority but requires therapeutic intervention first. Sleep deprivation is chronic and affecting cognition."
+}

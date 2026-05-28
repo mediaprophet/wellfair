@@ -1,0 +1,64 @@
+{
+  "person_id": "elena_v",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 18,
+      "max_score": 100,
+      "factors": ["severely_disrupted_sleep_3.5-5hrs", "nightmares_sleep_paralysis", "irregular_eating", "fatigue"],
+      "concern_level": "critical"
+    },
+    "safety": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["ongoing_threat_perception", "housing_instability", "financial_vulnerability", "isolation"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 25,
+      "max_score": 100,
+      "factors": ["social_withdrawal", "trust_damage", "limited_family_contact", "chosen_isolation"],
+      "concern_level": "severe"
+    },
+    "esteem": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["trauma_shame", "blame_internalization", "diminished_identity", "loss_of_confidence"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 10,
+      "max_score": 100,
+      "factors": ["survival_focus", "healing_goal_fragmented", "lost_future_vision"],
+      "concern_level": "severe"
+    }
+  },
+  "total_wellbeing_score": 19,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["physiological", "safety"],
+  "recommended_interventions": [
+    "Continued trauma-focused therapy (EMDR/CPT)",
+    "Secure housing (DV refuge or independent)",
+    "Sleep disorder assessment & treatment",
+    "Anxiety management & grounding techniques",
+    "Safety planning & legal protection",
+    "Income support & vocational rehabilitation",
+    "Peer support group (DV survivors)"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "35-50%",
+    "sleep_fragmentation": "Very high (6-8 awakenings/night, nightmare-driven)",
+    "rem_sleep": "Highly irregular (20-100 minutes/night)",
+    "resting_heart_rate": "80-95 bpm",
+    "activity_pattern": "Erratic & volatile (0-8,000 steps/day)",
+    "weight_trend": "Fluctuating significantly (+/- 2kg)",
+    "stress_markers": "Elevated & highly reactive"
+  },
+  "risk_assessment": {
+    "suicide_risk": "high",
+    "self_harm_risk": "moderate-high",
+    "substance_abuse_risk": "moderate",
+    "re-victimization_risk": "moderate"
+  },
+  "notes": "Elena is in active recovery but remains vulnerable. Her sleep patterns show classic trauma signature (suppressed REM, frequent arousals). Protective factors include therapy engagement and survivor support group participation. Housing stability is prerequisite for further progress."
+}

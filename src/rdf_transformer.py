@@ -211,7 +211,7 @@ def _add_provenance(
         (
             subj,
             URIRef(str(ns_map["prov"]) + "wasGeneratedBy"),
-            URIRef(f"urn:health:agent:{prov.get('generator', 'health-to-solid')}"),
+            URIRef(f"urn:health:agent:{prov.get('generator', 'wellfair')}"),
         ),
     )
     label = prov.get("source_label") or options.export_label

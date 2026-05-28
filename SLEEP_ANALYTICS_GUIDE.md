@@ -273,7 +273,7 @@ Planned features for next iterations:
 
 ## Credits
 
-Developed as part of the health-to-solid project for comprehensive sleep analytics integration with Solid-compatible personal health records.
+Developed as part of the wellfair project for comprehensive sleep analytics integration with Solid-compatible personal health records.
 
 ---
 

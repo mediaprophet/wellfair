@@ -1,10 +1,10 @@
-# health-to-solid Documentation
+# wellfair Documentation
 
 This documentation site is published to GitHub Pages from the `docs/` folder.
 
 ## Overview
 
-health-to-solid is a locally-hosted Personal Wellbeing Informatics Vault and RDF export pipeline developed independently by Timothy Charles Holborn.
+`wellfair` is the broader project for Personal Wellbeing Informatics and semantic data services. This site documents the project’s current capabilities and showcases the `health-to-solid` Samsung Health-to-RDF conversion demo.
 
 It ingests Samsung Health export data, normalizes it using a YAML-driven ontology, and exports Solid-compatible RDF.
 
@@ -26,6 +26,7 @@ streamlit run ui/app.py
 - Main repository README: [README.md](../README.md)
 - License: [LICENSE](../LICENSE)
 - Copyright: [COPYRIGHT.md](../COPYRIGHT.md)
+- WASM browser demo: [Run the demo](app.html)
 - Sleep analytics docs: [SLEEP_ANALYTICS_GUIDE.md](../SLEEP_ANALYTICS_GUIDE.md)
 - Quickstart: [SLEEP_ANALYTICS_QUICKSTART.md](../SLEEP_ANALYTICS_QUICKSTART.md)
 - Navigation update: [NAVIGATION_UPDATE.md](../NAVIGATION_UPDATE.md)

@@ -1,0 +1,64 @@
+{
+  "person_id": "robert_k",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["severe_sleep_disruption_3-4.5hrs", "untreated_cardiac_symptoms", "medication_neglect", "frailty"],
+      "concern_level": "critical"
+    },
+    "safety": {
+      "score": 12,
+      "max_score": 100,
+      "factors": ["medical_sabotage", "medication_access_control", "isolation", "no_emergency_access"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 25,
+      "max_score": 100,
+      "factors": ["caregiver_dependency", "relationship_control", "social_isolation", "limited_family_contact"],
+      "concern_level": "severe"
+    },
+    "esteem": {
+      "score": 20,
+      "max_score": 100,
+      "factors": ["dependency_shame", "loss_of_agency", "diminished_identity"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 10,
+      "max_score": 100,
+      "factors": ["end_of_life_focus", "no_control", "survival_priority"],
+      "concern_level": "critical"
+    }
+  },
+  "total_wellbeing_score": 16,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["physiological", "safety"],
+  "recommended_interventions": [
+    "URGENT: Medical assessment & hospitalization if needed",
+    "Cardiac medication review & management",
+    "Elder abuse intervention & law enforcement",
+    "Living situation change (safe placement)",
+    "Dignity & autonomy restoration",
+    "Family involvement if safe to do so",
+    "Palliative care consideration"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "30-40%",
+    "sleep_fragmentation": "Severe (5-7 awakenings/night, cardiac/anxiety-related)",
+    "heart_rate": "Highly irregular (60-100 bpm wide swings)",
+    "heart_rate_variability": "Poor (concerning for cardiac health)",
+    "activity_pattern": "Extremely low (< 2,000 steps/day, mobility-limited)",
+    "weight_trend": "Rapid loss from medical sabotage",
+    "stress_markers": "Elevated, cardiac stress indicators present"
+  },
+  "risk_assessment": {
+    "cardiac_event_risk": "very_high",
+    "death_risk": "high",
+    "suicide_risk": "low",
+    "health_crisis_risk": "critical"
+  },
+  "notes": "Robert is in MEDICAL EMERGENCY situation. His cardiac deterioration pattern suggests medical neglect/sabotage. This requires immediate intervention and potentially law enforcement involvement. He lacks capacity to recognize abuse situation. Cardiac stability is prerequisite for all other support."
+}

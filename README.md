@@ -1,42 +1,55 @@
-# health-to-solid
+# wellfair
 
-**Copyright:** © 2025–2026 **Timothy Charles Holborn** ([email](mailto:timothy.holborn@gmail.com), [LinkedIn](https://www.linkedin.com/in/ubiquitous/)). 
+**wellfair** is a locally-hosted Personal Wellbeing Informatics Vault and semantic data services platform developed independently by Timothy Charles Holborn.
 
-Desktop-first Python pipeline: **Samsung Health export** → **YAML-driven ontology** → **Solid-ready RDF** (Turtle + JSON-LD).
+This repository includes the `health-to-solid` capability for Samsung Health export ingestion, ontology-driven semantic mapping, and Solid-compatible RDF export. It also provides the foundation for broader wellfair extensions such as welfare analytics, privacy-aware provenance, and secure local-first data controls.
 
-This app serves as a Personal Wellbeing Informatics Vault for local RDF prototyping, analysis, and visualization.
+It ingests Samsung Health export data, normalizes it with a YAML-driven ontology, and emits Solid-compatible RDF (Turtle + JSON-LD) for local prototyping, analysis, and visualization.
 
-## Features
+> This is an entirely new application. It does not incorporate the original HealthPod codebase from ANU Software Innovation Institute / anusii.
 
-### Core Features
-- Load Samsung Health export folders (CSVs + optional `jsons/`)
-- **100% template-driven** RDF via `config/ontology_template.yaml` (reloadable at runtime)
-- Timezone-aware timestamps from `start_time` + `time_offset`
-- Solid-style pod output: `/health/{type}/{YYYY-MM}.ttl`
-- Charts and tables: weight, steps, heart rate
+## About Wellfair
 
-### 💤 World-Class Sleep Analytics Dashboard (NEW!)
-- **Sleep Quality Score** (0-100): AI-calculated metric combining duration, efficiency, and consistency
-- **Advanced Trend Analysis**: Detect improving/declining/stable patterns with daily change rates
-- **Personalized Insights**: Context-aware recommendations tailored to your sleep patterns
-- **Week-over-Week Comparison**: Track progress and improvements automatically
-- **Sleep Architecture Analysis**: REM/Deep/Light sleep distribution with optimal targets
-- **Hypnogram Visualization**: Detailed night-by-night sleep stage analysis
-- **Professional KPI Cards**: Real-time sleep metrics with visual indicators
+`wellfair` is the broader project identity for this repository. `health-to-solid` remains the core Samsung Health-to-RDF ingest pipeline, while `wellfair` expands the scope to include:
+- fair-terms wellbeing informatics and welfare-aware modeling
+- local-first data control, provenance, and optional decentralized exports
+- Sanctuary Mode for highly sensitive personal data
+- future browser/WASM and cross-platform runtime support
 
-For detailed sleep analytics documentation, see [SLEEP_ANALYTICS_GUIDE.md](SLEEP_ANALYTICS_GUIDE.md) and [SLEEP_ANALYTICS_QUICKSTART.md](SLEEP_ANALYTICS_QUICKSTART.md).
+## What it does
 
-### 🎯 Improved Navigation (NEW!)
-- **Cleaner Main Navigation**: Reduced to 5 core health data sections
-- **Dedicated Settings Menu**: Vault Administration moved to toggleable settings panel
-- **Better Information Architecture**: Administrative tasks separated from health exploration
+- Ingests Samsung Health export folders containing CSVs and optional `jsons/`
+- Normalizes records into a unified internal format
+- Maps health data to RDF using configurable ontology templates
+- Outputs Solid-style pod content with `/health/{type}/{YYYY-MM}.ttl`
+- Presents interactive dashboards and analysis via a Streamlit UI
+- Includes sleep analytics, personal health, mental health, location, life events, and vault administration modules
 
-For navigation details, see [NAVIGATION_UPDATE.md](NAVIGATION_UPDATE.md).
+## Key components
+
+- `src/`: Python parsing, normalization, RDF transformation, and export logic
+- `ui/`: Streamlit application and UI tabs for data exploration, analytics, and administration
+- `config/ontology_template.yaml`: editable ontology mappings and transform rules
+- `data/synthetic_samsung_export/`: self-contained synthetic Samsung Health export test set
+- `data/demo/gemini/samsung_export/`: demo export folder structure
+- `wellfare-core/`: Rust library crate for shared data processing and future WASM/portable runtime support
+- `tests/`: validation tests for synthetic data processing
+- `output/`: generated dataset exports and Solid pod artifacts
+
+## Current feature set
+
+- Samsung Health export ingestion with optional accompanying JSON payloads
+- Template-driven semantic mapping via YAML
+- Timezone-aware date/time normalization
+- Multiple health domains: sleep, steps, heart rate, weight, activity, and more
+- Streamlit UI organized for personal health, analytics, and vault management
+- Sleep analytics with score generation, trend analysis, and recommendation insights
+- Modular ontology strategy supporting schema.org, QUDT, PROV-O, and custom health properties
 
 ## Quick start
 
 ```bash
-cd health-to-solid   # or project root (c:\Projects\health)
+cd c:\Projects\health
 python -m venv .venv
 .venv\Scripts\activate   # Windows
 pip install -r requirements.txt
@@ -44,55 +57,48 @@ python scripts/generate_synthetic_export.py
 streamlit run ui/app.py
 ```
 
-Or on Unix:
+On Unix/macOS:
 
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
+## Recommended data setup
+
+- Use the sample export data in `data/synthetic_samsung_export/` for first-time testing
+- Use `data/demo/gemini/samsung_export/` for a more realistic Samsung export structure
+- Point the UI to the folder that contains `com.samsung.health.*.csv` and optional `jsons/`
+
 ## Project layout
 
-```
-├── config/ontology_template.yaml   # editable mappings
-├── 20250221_SamsungHealth/           # real Samsung export (default)
-├── data/synthetic_samsung_export/    # small synthetic test set
-├── src/                              # loader, normalizer, RDF, exporters
-├── ui/app.py                         # Streamlit UI
+```text
+├── config/ontology_template.yaml
+├── data/demo/gemini/samsung_export/
+├── data/demo/gemini/solid_pod/
+├── data/synthetic_samsung_export/
+├── output/
+├── scripts/generate_synthetic_export.py
+├── src/
 ├── tests/test_synthetic.py
-└── output/solid_pod/                 # generated on export
+├── ui/app.py
+├── wellfare-core/
+├── LICENSE
+└── COPYRIGHT.md
 ```
 
-## Ontology strategy (hybrid)
+## Extending the ontology
 
-| Layer | Role |
-|-------|------|
-| **schema.org** | Primary types (`SleepAction`, `ExerciseAction`, `QuantitativeValue`) |
-| **QUDT** | Units via `qudt-unit:` (Kilogram, BeatsPerMinute, …) |
-| **PROV-O** | `prov:wasDerivedFrom` on each observation |
-| **health:** | Samsung-specific properties + `health:semanticReference` |
-| **SNOMED / LOINC / FHIR** | Optional URI links in **clinical mode** (UI sidebar) — no full ontology import |
+Edit `config/ontology_template.yaml` to change mappings, add new data types, or override transform behavior.
 
-Add or change data types under `mappings:` in `config/ontology_template.yaml`. Supported transforms:
+Supported transform functions include:
 
-| Transform | Purpose |
-|-----------|---------|
-| `unix_ms_to_iso_with_offset` | `start_time` ms + `time_offset` → ISO datetime |
-| `minutes_to_iso_duration` | Minutes → `PT{n}M` |
+- `unix_ms_to_iso_with_offset`: convert `start_time` + `time_offset` to ISO datetime
+- `minutes_to_iso_duration`: convert minutes to `PT{n}M`
 
-## Real Samsung export
+See `config/ontology_template.yaml` for current mappings, aliases, and type definitions.
 
-Point the UI at your unzipped export folder. Default: **`20250221_SamsungHealth/`** at the project root (the app auto-finds the inner `samsunghealth_*` folder with CSVs + `jsons/`).
-
-CSV filenames follow `com.samsung.health.*.{timestamp}.csv` (and `com.samsung.shealth.*` variants). See `mapping_aliases` in the ontology template for tracker filename differences.
-
-## Future extensions
-
-- Pathology PDF loader → same normalized dict format
-- Google Timeline / environmental data
-- New YAML mapping blocks only — no core code changes
-
-## Tests
+## Testing
 
 ```bash
 python scripts/generate_synthetic_export.py
@@ -101,11 +107,9 @@ pytest tests/test_synthetic.py -v
 
 ## License
 
-This project is an entirely new application and does not incorporate the original HealthPod codebase.
+This project is licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)** license.
 
 Copyright © 2025–2026 Timothy Charles Holborn.
 
-Licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)** license.
-
-See `LICENSE` and `COPYRIGHT.md` for details.
+See `LICENSE` and `COPYRIGHT.md` for full details.
  

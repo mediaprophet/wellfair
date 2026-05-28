@@ -1,0 +1,19 @@
+{
+  "id": "elena_v",
+  "name": "Elena V.",
+  "age": 35,
+  "gender": "female",
+  "location": "Melbourne, Australia",
+  "situation": "PTSD, trauma recovery, housing instability",
+  "narrative": "Elena experienced intimate partner violence that escalated to a life-threatening assault. She fled with minimal possessions and has been in emergency accommodation for 8 months. She's in trauma-focused therapy but struggles with nightmares, hypervigilance, and severe anxiety. Her sleep is severely disrupted by nightmares and panic attacks. She has inconsistent access to her mental health support and avoids public spaces due to fear of her former partner.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["domestic_violence", "trauma", "ptsd", "housing_insecurity", "mental_health"],
+  "welfare_context": {
+    "primary_challenge": "Safety & Trauma Recovery",
+    "secondary_challenges": ["Stable Housing", "Mental Health Treatment", "Financial Independence"],
+    "intervention_stage": "Intensive Support"
+  }
+}

@@ -30,11 +30,12 @@ jobs:
 
       - name: Copy web frontend to docs
         run: |
-          cp -r web/* docs/ || true
+          cp -rn web/* docs/ || true
 
-      - name: Ensure README is available
+      - name: Copy repository docs assets into docs site
         run: |
-          cp README.md docs/index.md || true
+          cp README.md docs/README.md || true
+          cp COPYRIGHT.md docs/COPYRIGHT.md || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v1

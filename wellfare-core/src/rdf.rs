@@ -24,7 +24,7 @@ pub fn weight_to_turtle(records: &[WeightRecord]) -> String {
         out.push_str("    health:loincConcept loinc:29463-7 ;\n");
         out.push_str("    schema:name \"Body weight\" ;\n");
         out.push_str("    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;\n");
-        out.push_str("    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;\n");
+        out.push_str("    prov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> ;\n");
         out.push_str("    schema:description \"Samsung Health CSV export\" ;\n");
         out.push_str(&format!("    fhir:Observation.effectiveDateTime \"{}\"^^xsd:dateTime ;\n", rec.start_datetime.to_rfc3339()));
         out.push_str(&format!("    fhir:Observation.valueQuantity {} ;\n", rec.weight));
@@ -56,7 +56,7 @@ pub fn weight_to_turtle(records: &[WeightRecord]) -> String {
         // Add RDF-Star statement metadata
         out.push_str(&format!(
             "<< {} fhir:Observation.valueQuantity {} >> health:privacyMode \"MODE_B_PRIVILEGED\" ;\n\
-             \tprov:wasGeneratedBy <urn:health:agent:health-to-solid> .\n\n",
+             \tprov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> .\n\n",
             subj, rec.weight
         ));
     }
@@ -71,7 +71,7 @@ pub fn sleep_to_turtle(records: &[SleepRecord]) -> String {
         out.push_str("    health:snomedConcept snomed:248263006 ;\n");
         out.push_str("    schema:name \"Sleep session\" ;\n");
         out.push_str("    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;\n");
-        out.push_str("    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;\n");
+        out.push_str("    prov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> ;\n");
         out.push_str("    schema:description \"Samsung Health CSV export\" ;\n");
         out.push_str(&format!("    fhir:Observation.effectivePeriod.start \"{}\"^^xsd:dateTime ;\n", rec.start_datetime.to_rfc3339()));
         out.push_str(&format!("    fhir:Observation.effectivePeriod.end \"{}\"^^xsd:dateTime ;\n", rec.end_datetime.to_rfc3339()));
@@ -99,7 +99,7 @@ pub fn sleep_to_turtle(records: &[SleepRecord]) -> String {
         // Add RDF-Star statement for sleep efficiency annotation
         out.push_str(&format!(
             "<< {} health:sleepEfficiency {} >> health:privacyMode \"MODE_B_PRIVILEGED\" ;\n\
-             \tprov:wasGeneratedBy <urn:health:agent:health-to-solid> .\n\n",
+             \tprov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> .\n\n",
             subj, rec.efficiency
         ));
     }
@@ -115,7 +115,7 @@ pub fn heart_rate_to_turtle(records: &[HeartRateRecord]) -> String {
         out.push_str("    health:loincConcept loinc:8867-4 ;\n");
         out.push_str("    schema:name \"Heart rate\" ;\n");
         out.push_str("    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;\n");
-        out.push_str("    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;\n");
+        out.push_str("    prov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> ;\n");
         out.push_str("    schema:description \"Samsung Health CSV export\" ;\n");
         out.push_str(&format!("    fhir:Observation.effectiveDateTime \"{}\"^^xsd:dateTime ;\n", rec.start_datetime.to_rfc3339()));
         out.push_str(&format!("    fhir:Observation.valueQuantity {} ;\n", rec.heart_rate));
@@ -137,7 +137,7 @@ pub fn heart_rate_to_turtle(records: &[HeartRateRecord]) -> String {
         // Add RDF-Star statement for heart rate annotation
         out.push_str(&format!(
             "<< {} fhir:Observation.valueQuantity {} >> health:privacyMode \"MODE_B_PRIVILEGED\" ;\n\
-             \tprov:wasGeneratedBy <urn:health:agent:health-to-solid> .\n\n",
+             \tprov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> .\n\n",
             subj, rec.heart_rate
         ));
     }
@@ -153,7 +153,7 @@ pub fn steps_to_turtle(records: &[StepRecord]) -> String {
         out.push_str("    health:loincConcept loinc:55423-8 ;\n");
         out.push_str("    schema:name \"Daily step count\" ;\n");
         out.push_str("    prov:wasDerivedFrom <urn:health:source:samsung-health-export> ;\n");
-        out.push_str("    prov:wasGeneratedBy <urn:health:agent:health-to-solid> ;\n");
+        out.push_str("    prov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> ;\n");
         out.push_str("    schema:description \"Samsung Health CSV export\" ;\n");
         out.push_str(&format!("    fhir:Observation.effectivePeriod.start \"{}\"^^xsd:dateTime ;\n", rec.start_datetime.to_rfc3339()));
         out.push_str(&format!("    fhir:Observation.effectivePeriod.end \"{}\"^^xsd:dateTime ;\n", rec.end_datetime.to_rfc3339()));
@@ -170,7 +170,7 @@ pub fn steps_to_turtle(records: &[StepRecord]) -> String {
         // Add RDF-Star statement for step count annotation
         out.push_str(&format!(
             "<< {} fhir:Observation.valueQuantity {} >> health:privacyMode \"MODE_B_PRIVILEGED\" ;\n\
-             \tprov:wasGeneratedBy <urn:health:agent:health-to-solid> .\n\n",
+             \tprov:wasGeneratedBy <urn:wellfair:agent:health-to-solid> .\n\n",
             subj, rec.count
         ));
     }

@@ -327,4 +327,4 @@ The system is fully tested, documented, and ready for immediate deployment and u
 
 ---
 
-Developed with ❤️ for comprehensive sleep analytics in the health-to-solid ecosystem.
+Developed with ❤️ for comprehensive sleep analytics in the wellfair ecosystem.

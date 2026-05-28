@@ -1,0 +1,19 @@
+{
+  "id": "michael_r",
+  "name": "Michael R.",
+  "age": 42,
+  "gender": "male",
+  "location": "Sydney, Australia",
+  "situation": "Homelessness & family separation",
+  "narrative": "Michael was a tradesman until relationship breakdown and job loss led to homelessness. His children were taken into care by the state, which triggered severe stress and depression. He cycles through shelter stays and rough sleeping, with inconsistent access to meals and hygiene facilities. His health shows patterns of disrupted sleep, variable activity depending on work availability, and elevated stress markers.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["homelessness", "stress", "family_separation", "health_inequity", "housing_insecurity"],
+  "welfare_context": {
+    "primary_challenge": "Housing & Family Restoration",
+    "secondary_challenges": ["Employment", "Mental Health Support", "Social Connection"],
+    "intervention_stage": "Crisis Support"
+  }
+}

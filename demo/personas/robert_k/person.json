@@ -1,0 +1,19 @@
+{
+  "id": "robert_k",
+  "name": "Robert K.",
+  "age": 82,
+  "gender": "male",
+  "location": "Brisbane, Australia",
+  "situation": "Elder abuse by partner, medical sabotage",
+  "narrative": "Robert has lived with his partner for 30 years, but in recent years his partner has become controlling and neglectful. Robert has heart disease requiring careful medication management, but his partner refuses to help him take his medications properly and prevents him from seeing his cardiologist. He's frail, isolated, and experiencing serious health deterioration. He doesn't recognize the situation as abusive and feels he has no options. His sleep is severely disrupted by cardiac symptoms and anxiety.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["elder_abuse", "medical_neglect", "intimate_partner_violence", "cardiac_disease", "health_crisis"],
+  "welfare_context": {
+    "primary_challenge": "Medical Safety & Emergency Intervention",
+    "secondary_challenges": ["Abuse Recognition", "Health Stabilization", "Living Situation Change"],
+    "intervention_stage": "Crisis Emergency"
+  }
+}

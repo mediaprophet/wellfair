@@ -1,0 +1,65 @@
+{
+  "person_id": "rebecca_l",
+  "assessment_date": "2026-05-28",
+  "maslow_hierarchy": {
+    "physiological": {
+      "score": 15,
+      "max_score": 100,
+      "factors": ["extreme_sleep_fragmentation_3-4.5hrs", "hypervigilance_awakenings", "environmental_exposure", "nutrition_insecurity"],
+      "concern_level": "critical"
+    },
+    "safety": {
+      "score": 12,
+      "max_score": 100,
+      "factors": ["environmental_hazards", "no_secure_shelter", "isolation", "limited_emergency_access"],
+      "concern_level": "critical"
+    },
+    "love_belonging": {
+      "score": 8,
+      "max_score": 100,
+      "factors": ["severe_social_isolation", "trust_damage", "chosen_withdrawal", "relationship_avoidance"],
+      "concern_level": "critical"
+    },
+    "esteem": {
+      "score": 18,
+      "max_score": 100,
+      "factors": ["autonomy_as_identity", "grief_not_processed", "survival_identity", "limited_role_diversity"],
+      "concern_level": "severe"
+    },
+    "self_actualization": {
+      "score": 8,
+      "max_score": 100,
+      "factors": ["survival_mode", "autonomy_value", "no_growth_trajectory"],
+      "concern_level": "critical"
+    }
+  },
+  "total_wellbeing_score": 12,
+  "wellbeing_score_max": 100,
+  "critical_areas": ["physiological", "safety", "love_belonging"],
+  "recommended_interventions": [
+    "Trust-based outreach (no coercion)",
+    "Flexible housing options (respects autonomy)",
+    "Trauma-specialized mental health (trauma-informed)",
+    "Health screening & stabilization",
+    "Community connection on her terms",
+    "Skills for sustainable autonomy"
+  ],
+  "health_indicators": {
+    "sleep_efficiency": "25-40%",
+    "sleep_fragmentation": "Extreme (7-8+ awakenings/night, hypervigilance-driven)",
+    "deep_sleep": "Minimal (< 10 minutes/night)",
+    "rem_sleep": "Severely suppressed (< 30 minutes/night)",
+    "resting_heart_rate": "85-100 bpm",
+    "heart_rate_variability": "Poor",
+    "activity_pattern": "Periodic high activity (survival-related)",
+    "weight_trend": "Significant loss",
+    "stress_markers": "Chronic elevation"
+  },
+  "risk_assessment": {
+    "suicide_risk": "moderate-high",
+    "self_harm_risk": "moderate",
+    "substance_abuse_risk": "moderate",
+    "health_crisis_risk": "high"
+  },
+  "notes": "Rebecca's case illustrates the paradox of autonomy-seeking survivors. Her river living reflects both healing choice and continued trauma response. Intervention must respect her agency while addressing critical health risks. Complex PTSD is severe and untreated. Establishing trust is prerequisite for all support."
+}

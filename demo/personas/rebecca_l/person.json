@@ -1,0 +1,19 @@
+{
+  "id": "rebecca_l",
+  "name": "Rebecca L.",
+  "age": 41,
+  "gender": "female",
+  "location": "Queensland, Australia",
+  "situation": "Complex trauma, autonomy vs. safety, river living",
+  "narrative": "Rebecca experienced severe childhood abuse and domestic violence. After 15 years of control in her last relationship, she chose to leave and now lives semi-nomadically, camping by rivers and remote areas. She values her autonomy and freedom above stability, but this creates severe environmental stressors. She has untreated complex PTSD, severe hypervigilance, and chronic sleep deprivation. Her health markers reflect extreme trauma patterns and environmental exposure.",
+  "created_date": "2026-05-28",
+  "data_start_date": "2026-05-01",
+  "data_end_date": "2026-05-28",
+  "maslow_assessment": "maslow_assessment.json",
+  "use_case_tags": ["complex_trauma", "autonomy_seeking", "homelessness", "environmental_exposure", "survival_mode"],
+  "welfare_context": {
+    "primary_challenge": "Safety vs Autonomy Balance",
+    "secondary_challenges": ["Complex PTSD Treatment", "Health Stabilization", "Social Reintegration"],
+    "intervention_stage": "Trust-Building"
+  }
+}

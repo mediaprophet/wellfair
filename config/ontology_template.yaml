@@ -32,7 +32,7 @@ ontology_modes:
 # PROV-O defaults applied to every mapped observation (when enabled)
 provenance:
   was_derived_from: "urn:health:source:samsung-health-export"
-  generator: "health-to-solid"
+  generator: "wellfair"
   source_label: "Samsung Health CSV export"
 
 transforms:
