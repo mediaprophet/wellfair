@@ -23,6 +23,28 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// PWA install prompt handling
+let deferredPrompt = null;
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (installBtn) {
+    installBtn.style.display = 'inline-block';
+  }
+});
+
+if (installBtn) {
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('PWA install outcome:', outcome);
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+}
+
 const fileInput = document.getElementById('fileInput');
 const parseBtn = document.getElementById('parseBtn');
 const output = document.getElementById('output');

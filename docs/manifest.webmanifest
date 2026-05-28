@@ -6,5 +6,16 @@
   "background_color": "#ffffff",
   "theme_color": "#0b5fff",
   "description": "Client-side demo of health-to-solid parsing and RDF export using WebAssembly. Files remain local.",
-  "icons": []
+  "icons": [
+    {
+      "src": "/docs/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/docs/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
 }
