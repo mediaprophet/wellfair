@@ -230,16 +230,26 @@ def main():
                 else:
                     st.error("Invalid PIN")
     
+    # In demo/Pyodide environments the export path may not exist – fall back to mock data
+    _is_demo_profile = profile in ["gemini", "michael", "elena", "rebecca", "margaret", "robert", "jordan"]
     if not os.path.exists(export_path):
-        st.error(f"Export path not found: `{export_path}`")
-        st.info("Please set the correct path via CLI: `python -m streamlit run ui/app.py -- --export-path /path/to/export`")
-        st.stop()
-        
-    try:
-        normalized = cached_load(export_path, output_path)
-    except Exception as e:
-        st.error(f"Failed to load export data: {e}")
-        st.stop()
+        if not _is_demo_profile:
+            st.error(f"Export path not found: `{export_path}`")
+            st.info("Please set the correct path via CLI: `python -m streamlit run ui/app.py -- --export-path /path/to/export`")
+            st.stop()
+        else:
+            # Silently continue – mock_data already initialised above
+            normalized = {}
+    else:
+        try:
+            normalized = cached_load(export_path, output_path)
+        except Exception as e:
+            if _is_demo_profile:
+                st.warning(f"⚠️ Could not load wearable data ({e}). Running on demo data only.")
+                normalized = {}
+            else:
+                st.error(f"Failed to load export data: {e}")
+                st.stop()
 
     # Route based on navigation
     if show_settings:
