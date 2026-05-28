@@ -385,7 +385,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             const renderScene = new THREE.RenderPass(scene, camera);
             const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(container.clientWidth, container.clientHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0;
-            bloomPass.strength = isDark ? 1.8 : 0.8;
+            bloomPass.strength = isDark ? 1.0 : 0.6; // Reduced to prevent blow-out
             bloomPass.radius = 0.5;
 
             const filmPass = new THREE.FilmPass(
@@ -499,8 +499,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }},
                 transparent: true,
                 wireframe: false,
-                blending: THREE.AdditiveBlending,
-                side: THREE.DoubleSide
+                blending: THREE.NormalBlending,
+                side: THREE.DoubleSide,
+                depthWrite: false
             }});
             
             // Particles Material
@@ -808,6 +809,29 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             scene.add(spatialLabel);
 
             // ==========================================
+            // ORBITING HUD PANELS (Concept Art)
+            // ==========================================
+            function createHudPanel(title, value, metric) {{
+                const div = document.createElement('div');
+                div.className = 'spatial-label';
+                div.style.padding = '8px 12px';
+                div.style.background = 'rgba(0, 15, 25, 0.75)';
+                div.style.border = '1px solid rgba(0, 240, 255, 0.4)';
+                div.style.backdropFilter = 'blur(4px)';
+                div.style.pointerEvents = 'none';
+                div.innerHTML = `<div style="font-size:10px; color:#00f0ff; letter-spacing:1px">${{title}}</div>
+                                 <div style="font-size:24px; font-weight:700; color:#fff">${{value}}</div>
+                                 <div style="font-size:9px; color:#94a3b8; text-transform:uppercase">${{metric}}</div>`;
+                const obj = new THREE.CSS2DObject(div);
+                scene.add(obj);
+                return obj;
+            }}
+            
+            const hudStress = createHudPanel("STRESS", bioData.stress, bioData.stress > 70 ? "CRITICAL" : "NOMINAL");
+            const hudSleep = createHudPanel("SLEEP", bioData.sleepEfficiency + "%", "RECOVERY RATE");
+            const hudWellness = createHudPanel("WELLNESS", Math.round(wellbeing * 100) + "%", "MASLOW INDEX");
+
+            // ==========================================
             // RAYCASTING & CAMERA ANIMATION (GSAP)
             // ==========================================
             const raycaster = new THREE.Raycaster();
@@ -967,6 +991,13 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     }}
                     particleSystem.geometry.attributes.position.needsUpdate = true;
                 }}
+                
+                // Orbiting HUD Panels
+                const hudY = 3.5;
+                const hudR = 1.8;
+                hudStress.position.set(Math.cos(time * 0.3) * hudR, hudY, Math.sin(time * 0.3) * hudR);
+                hudSleep.position.set(Math.cos(time * 0.3 + 2.09) * hudR, hudY + 0.2 * Math.sin(time), Math.sin(time * 0.3 + 2.09) * hudR);
+                hudWellness.position.set(Math.cos(time * 0.3 + 4.18) * hudR, hudY + 0.2 * Math.cos(time), Math.sin(time * 0.3 + 4.18) * hudR);
 
                 // Render via Composer for Post-Processing
                 composer.render();
