@@ -3,25 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>wellfair — health-to-solid WASM Demo</title>
+  <title>Episteme:WellFair — Rust WASM Engine</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body { font-family: 'Outfit', sans-serif; background: #05020a; color: #e2e8f0; line-height: 1.6; padding: 2rem; }
+    main { max-width: 800px; margin: 0 auto; background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 12px; border: 1px solid rgba(0,240,255,0.2); }
+    h1 { color: #00f0ff; letter-spacing: 0.1em; }
+    h2 { color: #ff1e56; }
+    a { color: #00f0ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .banner { background: rgba(255,30,86,0.1); border-left: 4px solid #ff1e56; padding: 1rem; margin-bottom: 2rem; }
+  </style>
 </head>
 <body>
   <main>
-    <h1>wellfair — health-to-solid WASM Demo</h1>
-    <p>Upload a Samsung Health CSV file to parse it in the browser using the Rust core compiled to WASM.</p>
+    <h1>Episteme:WellFair — Core Rust Engine</h1>
+    
+    <div class="banner">
+      <strong>Note:</strong> You are viewing the low-level Rust WASM parsing engine. <br><br>
+      To experience the full <strong>Episteme:WellFair</strong> dashboard (featuring Maslow's Hierarchy modeling, the 3D Hologram, Sanctuary Mode, and Synthetic Personas), please visit the main app: <br>
+      <br>
+      <a href="../docs/app.html" style="font-weight: bold; font-size: 1.2rem;">Launch Full WellFair Dashboard 🚀</a>
+    </div>
 
-    <input id="fileInput" type="file" accept=".csv" />
-    <select id="csvType">
-      <option value="weight">Weight</option>
-      <option value="sleep">Sleep</option>
-      <option value="hr">Heart rate</option>
-      <option value="steps">Steps</option>
-    </select>
-    <button id="parseBtn">Parse CSV</button>
+    <h2>Direct WASM Processing Test</h2>
+    <p>This is a technical sandbox for the `wellfare-core` Rust crate. It processes Samsung Health CSVs directly in your browser using pure WebAssembly without utilizing the Python layer.</p>
 
-    <h2>Parsed output</h2>
-    <pre id="output">(no output)</pre>
+    <div style="margin: 2rem 0; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;">
+      <input id="fileInput" type="file" accept=".csv" style="margin-bottom: 1rem; display: block;" />
+      <select id="csvType" style="padding: 0.5rem; margin-right: 1rem; background: #0f172a; color: white; border: 1px solid #3b82f6;">
+        <option value="weight">Weight</option>
+        <option value="sleep">Sleep</option>
+        <option value="hr">Heart rate</option>
+        <option value="steps">Steps</option>
+      </select>
+      <button id="parseBtn" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer;">Parse CSV</button>
+    </div>
+
+    <h2>Parsed Output</h2>
+    <pre id="output" style="background: #000; padding: 1rem; border-radius: 8px; overflow-x: auto; color: #10b981;">(no output)</pre>
   </main>
 
   <script type="module" src="app.js"></script>

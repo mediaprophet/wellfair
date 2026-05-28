@@ -242,7 +242,9 @@ def main():
         st.stop()
 
     # Route based on navigation
-    if app_section == "❤️ Personal Health":
+    if show_settings:
+        render_vault_admin(dark_mode, normalized, export_path, template_path, output_path)
+    elif app_section == "❤️ Personal Health":
         render_personal_health(dark_mode, normalized)
     elif app_section == "💼 Case Management & Claims Vault":
         render_case_management(dark_mode, normalized)
@@ -272,10 +274,6 @@ def main():
         render_document_ingestion(dark_mode)
     elif app_section == "🤫 Sanctuary Mode":
         render_sanctuary_mode(dark_mode)
-        
-    # Optional settings panel
-    if show_settings:
-        render_vault_admin(dark_mode, normalized, export_path, template_path, output_path)
 
 if __name__ == "__main__":
     main()

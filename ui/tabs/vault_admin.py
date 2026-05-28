@@ -17,13 +17,14 @@ def render_vault_admin(dark_mode: bool, normalized: dict, export_path: str, temp
     st.divider()
     st.markdown("## ⚙️ Settings & Vault Administration")
     
-    tab_data, tab_ontology, tab_rdf, tab_preview, tab_solid, tab_future = st.tabs([
+    tab_data, tab_ontology, tab_rdf, tab_preview, tab_solid, tab_future, tab_system = st.tabs([
         "Data Overview",
         "Ontology Settings",
         "RDF Transform",
         "RDF Preview",
         "Solid Export",
         "Future Sources",
+        "System & Security"
     ])
 
     with tab_data:
@@ -340,3 +341,43 @@ def render_vault_admin(dark_mode: bool, normalized: dict, export_path: str, temp
             - Google Timeline → `schema:Place` + environmental sensors
             """
         )
+
+    with tab_system:
+        st.subheader("System & Security")
+        st.markdown("Manage vault security overrides, cache invalidation, and data purging.")
+        
+        st.divider()
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### 🧹 Cache Management")
+            if st.button("Purge Session Cache", type="primary"):
+                st.cache_data.clear()
+                st.success("Session cache purged! App will reload...")
+                st.rerun()
+                
+            if st.button("Purge Entire Vault Cache (DANGEROUS)"):
+                st.cache_data.clear()
+                import shutil
+                from pathlib import Path
+                cache_file = Path(output_path) / "local_cache.pkl"
+                if cache_file.exists():
+                    cache_file.unlink()
+                st.warning("All persistent caching deleted.")
+                st.rerun()
+                
+        with col2:
+            st.markdown("### 🤫 Sanctuary Mode Administration")
+            st.write("Sanctuary Mode obscures sensitive vault data (locations, abuse records, psychiatric info).")
+            
+            is_active = st.session_state.get("sanctuary_unlocked", False)
+            st.info(f"Sanctuary Mode is currently: **{'UNLOCKED (Sensitive Mode)' if is_active else 'LOCKED (Safe Mode)'}**")
+            
+            if is_active:
+                if st.button("Force Lock Sanctuary Vault"):
+                    st.session_state.sanctuary_unlocked = False
+                    st.rerun()
+            else:
+                if st.button("Force Unlock Sanctuary Vault (Bypass PIN)"):
+                    st.session_state.sanctuary_unlocked = True
+                    st.rerun()
