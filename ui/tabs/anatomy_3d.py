@@ -402,9 +402,9 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 ring.position.y = -0.5 - (i * 0.1);
                 
                 ring.userData = {{ 
-                    name: `Maslow: ${maslowLabels[i]}`, 
+                    name: `Maslow: ${{maslowLabels[i]}}`, 
                     desc: score < 50 ? "Critical Deficit Detected" : "Need Satisfied", 
-                    metric: `Score: ${score}/100` 
+                    metric: `Score: ${{score}}/100` 
                 }};
                 
                 sysMaslow.add(ring);
