@@ -34,6 +34,11 @@ def get_dashboard_metrics(normalized: dict) -> dict:
         if col_name:
             avg_steps = steps_df[col_name].dropna().mean()
             metrics["steps"]["value"] = f"{int(avg_steps):,} steps"
+    elif (steps_df := find_df_by_keyword(normalized, "pedometer_step_count")) is not None and not steps_df.empty:
+        col_name = "count" if "count" in steps_df.columns else ("step_count" if "step_count" in steps_df.columns else None)
+        if col_name:
+            avg_steps = steps_df[col_name].dropna().mean()
+            metrics["steps"]["value"] = f"{int(avg_steps):,} steps"
             
     sleep_df = find_df_by_datatype(normalized, "com.samsung.shealth.sleep")
     if sleep_df is not None and not sleep_df.empty:
