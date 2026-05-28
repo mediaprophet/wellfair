@@ -403,15 +403,15 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // ==========================================
             // HIGH-END SHADER MATERIALS
             // ==========================================
-            const matBone = new THREE.MeshStandardMaterial({{ color: 0xcccccc, metalness: 0.8, roughness: 0.2, transparent: true, opacity: 0.3 }});
-            const matMuscle = new THREE.MeshStandardMaterial({{ color: 0xff0033, wireframe: true, transparent: true, opacity: 0.15 }});
-            const matHeart = new THREE.MeshStandardMaterial({{ color: 0xff0000, emissive: 0xff1e56, emissiveIntensity: 2.0, transparent: true, opacity: 0.9 }});
-            const matBrain = new THREE.MeshStandardMaterial({{ color: 0x0088ff, emissive: 0x00f0ff, emissiveIntensity: 1.5, transparent: true, opacity: 0.85 }});
-            const matDigestive = new THREE.MeshStandardMaterial({{ color: 0x00ff00, emissive: 0x22cc22, emissiveIntensity: 0.5, transparent: true, opacity: 0.4, wireframe: true }});
-            const matLungs = new THREE.MeshStandardMaterial({{ color: 0x00aaff, emissive: 0x0088ff, emissiveIntensity: 0.8, transparent: true, opacity: 0.3 }});
-            const matEndocrine = new THREE.MeshStandardMaterial({{ color: 0xff00ff, emissive: 0xcc00ff, emissiveIntensity: 2.0 }});
-            const matLymph = new THREE.MeshStandardMaterial({{ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 1.0, wireframe: true, transparent: true, opacity: 0.2 }});
-            const matUro = new THREE.MeshStandardMaterial({{ color: 0xffff00, emissive: 0xaaaa00, emissiveIntensity: 1.0, transparent: true, opacity: 0.6 }});
+            const matBone = new THREE.MeshStandardMaterial({{ color: 0x00ffff, emissive: 0x00aaff, emissiveIntensity: 1.5, transparent: true, opacity: 0.8, wireframe: true }});
+            const matMuscle = new THREE.MeshStandardMaterial({{ color: 0xff0033, emissive: 0x880022, emissiveIntensity: 0.5, wireframe: true, transparent: true, opacity: 0.15 }});
+            const matHeart = new THREE.MeshStandardMaterial({{ color: 0x880000, emissive: 0xff0000, emissiveIntensity: 3.0, transparent: true, opacity: 0.95 }});
+            const matBrain = new THREE.MeshStandardMaterial({{ color: 0x4400ff, emissive: 0x8800ff, emissiveIntensity: 2.5, transparent: true, opacity: 0.9 }});
+            const matDigestive = new THREE.MeshStandardMaterial({{ color: 0x00ff00, emissive: 0x22cc22, emissiveIntensity: 1.0, transparent: true, opacity: 0.5, wireframe: true }});
+            const matLungs = new THREE.MeshStandardMaterial({{ color: 0x00aaff, emissive: 0x0088ff, emissiveIntensity: 1.2, transparent: true, opacity: 0.4 }});
+            const matEndocrine = new THREE.MeshStandardMaterial({{ color: 0xff00ff, emissive: 0xcc00ff, emissiveIntensity: 2.5, transparent: true, opacity: 0.8 }});
+            const matLymph = new THREE.MeshStandardMaterial({{ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 1.5, wireframe: true, transparent: true, opacity: 0.3 }});
+            const matUro = new THREE.MeshStandardMaterial({{ color: 0xffff00, emissive: 0xaaaa00, emissiveIntensity: 1.5, transparent: true, opacity: 0.7 }});
             
             // ==========================================
             // HOLOGRAPHIC SHADER (GLSL)
@@ -500,7 +500,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 transparent: true,
                 wireframe: false,
                 blending: THREE.NormalBlending,
-                side: THREE.DoubleSide,
+                side: THREE.FrontSide,
                 depthWrite: false
             }});
             
@@ -864,6 +864,35 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 const rect = container.getBoundingClientRect();
                 mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const interactables = [];
+                atlasGroup.traverse((child) => {{
+                    if (child.isMesh && child.visible && child.parent && child.parent.visible && child.userData && child.userData.name) interactables.push(child);
+                }});
+
+                const intersects = raycaster.intersectObjects(interactables, false);
+                
+                if (intersects.length > 0) {{
+                    const object = intersects[0].object;
+                    if (hoveredMesh !== object) {{
+                        if (hoveredMesh && hoveredMesh.material) {{
+                            hoveredMesh.material.emissiveIntensity = originalEmissiveInt; // Restore old
+                        }}
+                        hoveredMesh = object;
+                        if (object.material) {{
+                            originalEmissiveInt = object.material.emissiveIntensity || 0;
+                            object.material.emissiveIntensity = originalEmissiveInt * 2.0 + 1.0; // Highlight
+                        }}
+                        container.style.cursor = 'pointer';
+                    }}
+                }} else {{
+                    if (hoveredMesh) {{
+                        if(hoveredMesh.material) hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
+                        hoveredMesh = null;
+                        container.style.cursor = 'default';
+                    }}
+                }}
             }});
             
             container.addEventListener('click', () => {{
@@ -876,13 +905,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
                 const intersects = raycaster.intersectObjects(interactables, false);
                 
-                if (hoveredMesh) {{
-                    if(hoveredMesh.material) {{
-                        hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
-                    }}
-                    hoveredMesh = null;
-                    labelDiv.classList.remove('visible');
+                if (hoveredMesh && hoveredMesh.material) {{
+                    hoveredMesh.material.emissiveIntensity = originalEmissiveInt;
                 }}
+                labelDiv.classList.remove('visible');
 
                 if (intersects.length > 0) {{
                     const object = intersects[0].object;
