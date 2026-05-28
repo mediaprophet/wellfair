@@ -42,10 +42,13 @@ def parse_args():
     parser.add_argument("--template", type=str, default=str(DEFAULT_TEMPLATE_PATH), help="Path to ontology mapping template")
     parser.add_argument("--output", type=str, default=str(DEFAULT_OUTPUT_PATH), help="Output directory for RDF files")
     
-    # Check if run by streamlit and skip parsing if so
-    if "streamlit" in sys.argv[0]:
+    # Check if run by streamlit or pyodide and skip parsing if so
+    if "streamlit" in sys.argv[0] or "pyodide" in sys.modules:
         return parser.parse_args([])
-    return parser.parse_args()
+    try:
+        return parser.parse_args()
+    except SystemExit:
+        return parser.parse_args([])
 
 def main():
     args = parse_args()

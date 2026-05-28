@@ -22,7 +22,7 @@ Manage your personal demographics, pronouns, ancestry, and primary language. Tra
     # Initialize mock data in session state
     if "patient_profile" not in st.session_state:
         st.session_state.patient_profile = {
-            "full_name": "Timothy Charles Holborn",
+            "full_name": "John Doe",
             "date_of_birth": date(1980, 5, 20),
             "biological_sex": "Male",
             "pronouns": "He/Him",
@@ -32,7 +32,7 @@ Manage your personal demographics, pronouns, ancestry, and primary language. Tra
             "medicare_number": "1234 56789 1",
             "insurance_provider": "Medibank Private",
             "insurance_policy_number": "MP987654321",
-            "emergency_contact_name": "Sarah Holborn",
+            "emergency_contact_name": "Jane Doe",
             "emergency_contact_phone": "+61 400 123 456"
         }
         
@@ -122,7 +122,7 @@ Manage your personal demographics, pronouns, ancestry, and primary language. Tra
             # Draw intake sheet card
             st.markdown(
                 f"""<div class="premium-card" style="border-left: 4px solid #3b82f6; padding: 24px;">
-<h3 style="margin: 0 0 16px 0; color:#3b82f6; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 8px;"> Timothy Charles Holborn</h3>
+<h3 style="margin: 0 0 16px 0; color:#3b82f6; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 8px;"> John Doe</h3>
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.92rem;">
 <div><b>Date of Birth:</b> {prof["date_of_birth"].strftime('%B %d, %Y')}</div>
 <div><b>Biological Sex:</b> {prof["biological_sex"]}</div>
