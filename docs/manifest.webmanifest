@@ -1,0 +1,10 @@
+{
+  "name": "health-to-solid (WASM Demo)",
+  "short_name": "health-to-solid",
+  "start_url": "/docs/app.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b5fff",
+  "description": "Client-side demo of health-to-solid parsing and RDF export using WebAssembly. Files remain local.",
+  "icons": []
+}
