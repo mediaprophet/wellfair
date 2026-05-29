@@ -1,6 +1,8 @@
 pub mod models;
 pub mod parser;
 pub mod rdf;
+pub mod shapes;
+pub mod store;
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;
 

@@ -182,17 +182,18 @@ Decision gate: complete before committing to extension daemon architecture for N
 | Date | Phase | Status | Notes |
 |---|---|---|---|
 | 2026-05-29 | Setup | ✅ Done | v0.0.3-dev tagged, plan written |
-| — | 1.1 GLB fix | 🔲 Todo | |
-| — | 1.2 Placeholder mesh | 🔲 Todo | |
-| — | 2.1 oxigraph | 🔲 Todo | |
-| — | 2.2 SHACL shapes | 🔲 Todo | |
-| — | 2.3 HRA namespaces | 🔲 Todo | |
-| — | 3.1 hra_client.py | 🔲 Todo | |
-| — | 3.2 TTL cache | 🔲 Todo | |
-| — | 3.3 Mesh annotations | 🔲 Todo | |
-| — | 4. Extension framework | 🔲 Todo | |
+| 2026-05-29 | 1.1 GLB fix | ✅ Done | fetch→blob pipeline, multi-path probe, detailed error UI |
+| 2026-05-29 | 1.2 Placeholder mesh | ✅ Done | Wireframe human silhouette, swapped out on GLB load |
+| 2026-05-29 | 2.1 oxigraph | ✅ Done | store.rs — HealthStore, SPARQL query, WasmHealthStore WASM binding |
+| 2026-05-29 | 2.2 SHACL shapes | ✅ Done | shapes.rs — 6 SPARQL-ASK constraints + validate_health_turtle() WASM binding |
+| 2026-05-29 | 2.3 HRA namespaces | ✅ Done | rdf.rs — ccf:, uberon:, cl:, hra:, rdfs:, sh: added to prefix set |
+| 2026-05-29 | 3.1 hra_client.py | ✅ Done | SPARQL client, OrganAnnotation, ORGAN_UBERON_MAP, to_mesh_tooltip(), to_rdf_turtle() |
+| 2026-05-29 | 3.2 TTL cache | ✅ Done | JSON cache in data/hra_cache/, 30-day TTL |
+| 2026-05-29 | 3.3 Mesh annotations | 🔲 Todo | Wire hra_client into anatomy_3d.py bioData payload |
+| 2026-05-29 | 4. Extension framework | ✅ Done | base.py, registry.py, shacl_validator/, n3_reasoner/ (EYE + 4 rule files), local_llm/ |
 | — | 5. swipl-wasm eval | 🔲 Todo | |
-| — | 6. Local LLM | 🔲 Todo | |
+| — | 6. Wire hra_client → 3D viewer | 🔲 Todo | Pass mesh tooltip JSON into anatomy_3d.py |
+| ⚠️ | Rust native linker | 🔲 Blocked | MinGW + MSVC both broken on host. wasm-pack build may work. Needs mingw64 fix or VS BuildTools |
 
 ---
 

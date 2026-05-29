@@ -1,0 +1,47 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fhir:   <http://hl7.org/fhir/> .
+@prefix health: <https://health.example.org/ns#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+# Sleep observation shape — SHACL constraints only, no OWL class assertions.
+# A sleep record is described by what data it carries, not what kind of thing it is.
+
+health:SleepObservationShape
+    a sh:NodeShape ;
+    sh:targetClass fhir:Observation ;
+    rdfs:label "Sleep Observation Shape" ;
+    rdfs:comment "Validates sleep records without OWL class membership" ;
+
+    sh:property [
+        sh:path health:sleepEfficiency ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100 ;
+        sh:message "Sleep efficiency must be between 0 and 100 percent" ;
+        sh:severity sh:Violation ;
+    ] ;
+
+    sh:property [
+        sh:path fhir:Observation.valueQuantity ;
+        sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:message "Sleep duration must be greater than zero" ;
+        sh:severity sh:Violation ;
+    ] ;
+
+    sh:property [
+        sh:path health:deepSleepMinutes ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:message "Deep sleep minutes must be non-negative" ;
+        sh:severity sh:Warning ;
+    ] ;
+
+    sh:property [
+        sh:path health:remSleepMinutes ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:message "REM sleep minutes must be non-negative" ;
+        sh:severity sh:Warning ;
+    ] .

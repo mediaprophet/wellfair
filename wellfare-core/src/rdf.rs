@@ -2,16 +2,22 @@ use crate::models::{WeightRecord, SleepRecord, HeartRateRecord, StepRecord};
 
 pub fn generate_rdf_prefixes() -> String {
     format!(
-        "@prefix schema: <http://schema.org/> .\n\
-         @prefix health: <https://health.example.org/ns#> .\n\
-         @prefix qudt: <http://qudt.org/schema/qudt/> .\n\
-         @prefix qudt-unit: <http://qudt.org/vocab/unit/> .\n\
-         @prefix prov: <http://www.w3.org/ns/prov#> .\n\
-         @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n\
-         @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\
-         @prefix snomed: <http://snomed.info/id/> .\n\
-         @prefix loinc: <https://loinc.org/rdf/> .\n\
-         @prefix fhir: <http://hl7.org/fhir/> .\n\n"
+        "@prefix schema:   <http://schema.org/> .\n\
+         @prefix health:   <https://health.example.org/ns#> .\n\
+         @prefix qudt:     <http://qudt.org/schema/qudt/> .\n\
+         @prefix qudt-unit:<http://qudt.org/vocab/unit/> .\n\
+         @prefix prov:     <http://www.w3.org/ns/prov#> .\n\
+         @prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .\n\
+         @prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n\
+         @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .\n\
+         @prefix sh:       <http://www.w3.org/ns/shacl#> .\n\
+         @prefix snomed:   <http://snomed.info/id/> .\n\
+         @prefix loinc:    <https://loinc.org/rdf/> .\n\
+         @prefix fhir:     <http://hl7.org/fhir/> .\n\
+         @prefix ccf:      <http://purl.org/ccf/> .\n\
+         @prefix uberon:   <http://purl.obolibrary.org/obo/UBERON_> .\n\
+         @prefix cl:       <http://purl.obolibrary.org/obo/CL_> .\n\
+         @prefix hra:      <https://purl.humanatlas.io/> .\n\n"
     )
 }
 

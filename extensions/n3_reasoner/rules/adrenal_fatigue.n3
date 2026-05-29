@@ -1,0 +1,18 @@
+@prefix health: <https://health.example.org/ns#> .
+@prefix math:   <http://www.w3.org/2000/10/swap/math#> .
+@prefix log:    <http://www.w3.org/2000/10/swap/log#> .
+
+# Adrenal fatigue pattern:
+# Sustained short sleep (<5h) AND elevated resting HR (>90 BPM)
+# suggests HPA axis dysregulation / adrenal stress.
+{
+    ?person health:sleepHours ?h .
+    ?h math:lessThan 5 .
+    ?person health:restingHR ?hr .
+    ?hr math:greaterThan 90 .
+}
+=>
+{
+    ?person health:pattern health:AdrenalFatigueSuspected .
+    ?person health:patternConfidence "moderate" .
+} .

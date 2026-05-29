@@ -1,0 +1,16 @@
+@prefix health: <https://health.example.org/ns#> .
+@prefix math:   <http://www.w3.org/2000/10/swap/math#> .
+
+# Chronic sleep debt:
+# Average sleep efficiency <70% AND duration <6h
+{
+    ?person health:sleepEfficiency ?e .
+    ?e math:lessThan 70 .
+    ?person health:sleepHours ?h .
+    ?h math:lessThan 6 .
+}
+=>
+{
+    ?person health:pattern health:ChronicSleepDebt .
+    ?person health:patternConfidence "high" .
+} .

@@ -1,0 +1,34 @@
+@prefix health: <https://health.example.org/ns#> .
+@prefix math:   <http://www.w3.org/2000/10/swap/math#> .
+
+# Trauma cascade indicators:
+# High stress (>75) AND low Maslow safety score (<40) AND poor sleep (<5h)
+# suggests acute trauma response / hypervigilance pattern.
+{
+    ?person health:stressScore ?s .
+    ?s math:greaterThan 75 .
+    ?person health:maslowSafetyScore ?m .
+    ?m math:lessThan 40 .
+    ?person health:sleepHours ?h .
+    ?h math:lessThan 5 .
+}
+=>
+{
+    ?person health:pattern health:TraumaCascadeActive .
+    ?person health:patternConfidence "high" .
+    ?person health:recommendedAction "urgent-welfare-review" .
+} .
+
+# Systemic frailty:
+# Low activity (<2000 steps) AND BMI outlier AND elevated HR
+{
+    ?person health:dailySteps ?steps .
+    ?steps math:lessThan 2000 .
+    ?person health:restingHR ?hr .
+    ?hr math:greaterThan 85 .
+}
+=>
+{
+    ?person health:pattern health:SystemicFrailty .
+    ?person health:patternConfidence "moderate" .
+} .

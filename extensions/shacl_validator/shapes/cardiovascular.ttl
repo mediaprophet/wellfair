@@ -1,0 +1,36 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fhir:   <http://hl7.org/fhir/> .
+@prefix health: <https://health.example.org/ns#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+health:HeartRateObservationShape
+    a sh:NodeShape ;
+    sh:targetClass fhir:Observation ;
+    rdfs:label "Heart Rate Observation Shape" ;
+
+    sh:property [
+        sh:path fhir:Observation.valueQuantity ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 20 ;
+        sh:maxInclusive 300 ;
+        sh:message "Resting heart rate must be between 20 and 300 BPM" ;
+        sh:severity sh:Violation ;
+    ] ;
+
+    sh:property [
+        sh:path health:minHeartRate ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 20 ;
+        sh:message "Minimum heart rate must be at least 20 BPM" ;
+        sh:severity sh:Warning ;
+    ] ;
+
+    sh:property [
+        sh:path health:maxHeartRate ;
+        sh:datatype xsd:integer ;
+        sh:maxInclusive 300 ;
+        sh:message "Maximum heart rate must not exceed 300 BPM" ;
+        sh:severity sh:Warning ;
+    ] .

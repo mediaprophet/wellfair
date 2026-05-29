@@ -817,40 +817,134 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             scene.add(atlasGroup);
 
             // ==========================================
-            // ASSET URL RESOLVER
+            // GLB LOADING PIPELINE
+            // fetch() → ArrayBuffer → blob URL bypasses all Streamlit static-path
+            // confusion and works identically in local dev, Docker, and GitHub Pages.
             // ==========================================
             const FALLBACK_GLB = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
-            const STATIC_BASE = "/app/static/models";
-            function resolveAssetUrl(url) {{
-                if (!url) return FALLBACK_GLB;
-                if (url.startsWith("http://") || url.startsWith("https://")) return url;
-                if (url.startsWith("/app/static/")) return url;
-                // Relative paths like "vendor/hologram/..." or "models/hra/..." — map to static
-                const filename = url.split("/").pop();
-                if (url.includes("hra/") || url.includes("organ_")) return STATIC_BASE + "/hra/" + filename;
-                return STATIC_BASE + "/" + filename;
+
+            // Build an ordered list of candidate URLs to try for a local model filename.
+            // Streamlit can serve static files at several roots depending on how the app
+            // is launched; we probe them all and take the first 200 response.
+            function buildCandidateUrls(filename, subdir) {{
+                const sub = subdir ? subdir + "/" : "";
+                const origin = window.location.origin;  // e.g. http://localhost:8501
+                return [
+                    origin + "/app/static/models/" + sub + filename,
+                    "/app/static/models/" + sub + filename,
+                    origin + "/static/models/" + sub + filename,
+                    "./static/models/" + sub + filename,
+                ];
             }}
+
+            // Fetch a GLB as bytes, create a blob URL, then hand it to GLTFLoader.
+            // Falls back through candidateUrls in order, then to remoteUrl if all fail.
+            async function fetchAndLoadGLB(candidateUrls, remoteUrl, onLoad, onProgress, onError) {{
+                const tried = [];
+                for (const url of candidateUrls) {{
+                    try {{
+                        const resp = await fetch(url, {{ method: 'GET' }});
+                        if (!resp.ok) {{ tried.push(url + " (" + resp.status + ")"); continue; }}
+                        const buf = await resp.arrayBuffer();
+                        const blob = new Blob([buf], {{ type: 'model/gltf-binary' }});
+                        const blobUrl = URL.createObjectURL(blob);
+                        gltfLoader.load(blobUrl, (gltf) => {{
+                            URL.revokeObjectURL(blobUrl);
+                            onLoad(gltf, url);
+                        }}, onProgress, (err) => {{
+                            URL.revokeObjectURL(blobUrl);
+                            onError(err, tried);
+                        }});
+                        return;
+                    }} catch(e) {{ tried.push(url + " (network error)"); }}
+                }}
+                // All local paths failed — try remote fallback
+                if (remoteUrl) {{
+                    console.warn("[GLB] Local paths failed, falling back to remote:", remoteUrl, "\\nTried:", tried.join("\\n"));
+                    gltfLoader.load(remoteUrl, (gltf) => onLoad(gltf, remoteUrl), onProgress,
+                        (err) => onError(err, tried.concat([remoteUrl + " (remote fallback)"])));
+                }} else {{
+                    onError(new Error("All GLB sources exhausted"), tried);
+                }}
+            }}
+
+            // ==========================================
+            // SHARED GLTF / DRACO LOADER INSTANCES
+            // ==========================================
+            const gltfLoader = new THREE.GLTFLoader();
+            const dracoLoader = new THREE.DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            gltfLoader.setDRACOLoader(dracoLoader);
 
             // ==========================================
             // GLB AVATAR (SKIN LAYER)
             // ==========================================
             const sysSkin = createLayer('skin');
-            const gltfLoader = new THREE.GLTFLoader();
-            const dracoLoader = new THREE.DRACOLoader();
-            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-            gltfLoader.setDRACOLoader(dracoLoader);
-            // Default generic human avatar from Three.js examples if none provided
-            let avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
-            avatarUrl = resolveAssetUrl(avatarUrl);
-            
             let avatarModel = null;
             let avatarMixer = null;
 
-            gltfLoader.load(avatarUrl, (gltf) => {{
+            // Holographic wireframe placeholder — renders immediately while the real
+            // GLB streams in, so the scene is never empty during load.
+            const placeholderGeo = new THREE.BufferGeometry();
+            const placeholderVerts = new Float32Array([
+                // Head
+                -0.25,3.6,0, 0.25,3.6,0, 0.25,4.1,0, -0.25,4.1,0,
+                // Torso
+                -0.55,1.2,0, 0.55,1.2,0, 0.55,3.4,0, -0.55,3.4,0,
+                // Left arm
+                -0.55,1.2,0, -1.1,1.2,0, -1.1,-0.2,0, -0.55,-0.2,0,
+                // Right arm
+                0.55,1.2,0, 1.1,1.2,0, 1.1,-0.2,0, 0.55,-0.2,0,
+                // Left leg
+                -0.5,-0.2,0, -0.1,-0.2,0, -0.1,-3.0,0, -0.5,-3.0,0,
+                // Right leg
+                0.1,-0.2,0, 0.5,-0.2,0, 0.5,-3.0,0, 0.1,-3.0,0,
+            ]);
+            const placeholderIdx = new Uint16Array([
+                0,1,2, 0,2,3,        // head
+                4,5,6, 4,6,7,        // torso
+                8,9,10, 8,10,11,     // left arm
+                12,13,14, 12,14,15,  // right arm
+                16,17,18, 16,18,19,  // left leg
+                20,21,22, 20,22,23,  // right leg
+            ]);
+            placeholderGeo.setAttribute('position', new THREE.BufferAttribute(placeholderVerts, 3));
+            placeholderGeo.setIndex(new THREE.BufferAttribute(placeholderIdx, 1));
+            const placeholderMat = new THREE.MeshBasicMaterial({{
+                color: 0x00f0ff, wireframe: true, transparent: true, opacity: 0.35
+            }});
+            const placeholderMesh = new THREE.Mesh(placeholderGeo, placeholderMat);
+            placeholderMesh.scale.set(2.2, 2.2, 2.2);
+            placeholderMesh.position.y = 0;
+            sysSkin.add(placeholderMesh);
+
+            // Resolve avatar filename then kick off the fetch pipeline
+            let avatarFilename = null;
+            let avatarRemote = FALLBACK_GLB;
+            const rawAvatarUrl = bioData.avatarUrl || "";
+            if (rawAvatarUrl.startsWith("http://") || rawAvatarUrl.startsWith("https://")) {{
+                avatarRemote = rawAvatarUrl;
+            }} else if (rawAvatarUrl) {{
+                const fname = rawAvatarUrl.split("/").pop();
+                avatarFilename = fname;
+            }}
+            const avatarCandidates = avatarFilename
+                ? buildCandidateUrls(avatarFilename, "")
+                : [];
+
+            const loadingOverlay = document.getElementById("loading-overlay");
+            loadingOverlay.innerHTML = "Loading avatar&hellip;";
+
+            fetchAndLoadGLB(avatarCandidates, avatarRemote,
+                (gltf, resolvedUrl) => {{  // onLoad
                 avatarModel = gltf.scene;
 
-                // Scale depending on the model
-                if (avatarUrl.includes("readyplayer.me")) {{
+                // Remove wireframe placeholder now that real model is ready
+                sysSkin.remove(placeholderMesh);
+                placeholderMesh.geometry.dispose();
+
+                // Scale depending on the model source
+                if (resolvedUrl.includes("readyplayer.me")) {{
                     avatarModel.scale.set(3, 3, 3);
                     avatarModel.position.y = 0.5;
                 }} else {{
@@ -858,9 +952,8 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                     avatarModel.position.y = 0;
                 }}
 
-                // Debug: log bounding box so we can tune position/scale
                 const _bb = new THREE.Box3().setFromObject(avatarModel);
-                console.log("[Avatar] Loaded:", avatarUrl);
+                console.log("[Avatar] Loaded:", resolvedUrl);
                 console.log("[Avatar] BBox min:", _bb.min.x.toFixed(2), _bb.min.y.toFixed(2), _bb.min.z.toFixed(2));
                 console.log("[Avatar] BBox max:", _bb.max.x.toFixed(2), _bb.max.y.toFixed(2), _bb.max.z.toFixed(2));
                 
@@ -879,23 +972,20 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 // Recommended for mobile / WASM / low-memory environments.
                 // ============================================================
                 function loadTelemetryHologram() {{
-                    // HRA organ files served from /app/static/models/hra/
-                    // Only male variants available in this build; baseline used for skin layer.
                     const organs = [
-                        {{ key: "skin",           file: "baseline.glb",              role: "spatial_context", domain: null }},
-                        {{ key: "heart",          file: "organ_heart_m.glb",         role: "cardiovascular",  domain: "wearables" }},
-                        {{ key: "kidney_left",    file: "organ_kidney_l_m.glb",      role: "excretory",       domain: "pharmacy" }},
-                        {{ key: "kidney_right",   file: "organ_kidney_r_m.glb",      role: "excretory",       domain: "pharmacy" }},
-                        {{ key: "lung",           file: "organ_lung_m.glb",          role: "respiratory",     domain: "pathology" }},
-                        {{ key: "large_intestine",file: "organ_large_intestine_m.glb",role: "digestive",      domain: "pathology" }}
+                        {{ key: "skin",           file: "baseline.glb",               domain: null }},
+                        {{ key: "heart",          file: "organ_heart_m.glb",          domain: "wearables" }},
+                        {{ key: "kidney_left",    file: "organ_kidney_l_m.glb",       domain: "pharmacy" }},
+                        {{ key: "kidney_right",   file: "organ_kidney_r_m.glb",       domain: "pharmacy" }},
+                        {{ key: "lung",           file: "organ_lung_m.glb",           domain: "pathology" }},
+                        {{ key: "large_intestine",file: "organ_large_intestine_m.glb",domain: "pathology" }}
                     ];
 
                     organs.forEach(org => {{
-                        const url = STATIC_BASE + "/hra/" + org.file;
-                        const layerName = "holo_" + org.key;
-                        const sys = createLayer(layerName);
+                        const candidates = buildCandidateUrls(org.file, "hra");
+                        const sys = createLayer("holo_" + org.key);
 
-                        gltfLoader.load(url, (gltf) => {{
+                        fetchAndLoadGLB(candidates, null, (gltf) => {{
                             const model = gltf.scene;
                             model.scale.set(2.0, 2.0, 2.0);
                             model.position.y = 0;
@@ -919,9 +1009,10 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                                     child.userData = {{ name: org.key.toUpperCase(), domain: org.domain }};
                                 }}
                             }});
-
                             sys.add(model);
-                        }}, undefined, () => {{}});
+                        }}, undefined, (err, tried) => {{
+                            console.warn("[HRA Organ] Failed to load", org.file, "\\nTried:", tried);
+                        }});
                     }});
                 }}
 
@@ -997,15 +1088,19 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }}
 
                 sysSkin.add(avatarModel);
-                
-                // Hide loader
-                const overlay = document.getElementById("loading-overlay");
-                overlay.style.opacity = "0";
-                setTimeout(() => overlay.remove(), 500);
 
-            }}, undefined, (error) => {{
-                console.error("Error loading GLB avatar:", error);
-                document.getElementById("loading-overlay").innerText = "Failed to load Avatar GLB";
+                loadingOverlay.style.opacity = "0";
+                setTimeout(() => loadingOverlay.remove(), 500);
+
+            }, undefined,
+            (error, tried) => {{
+                console.error("[Avatar] Load failed:", error, "\\nTried:", tried);
+                loadingOverlay.innerHTML =
+                    "<div style='text-align:center;padding:20px'>" +
+                    "<div style='color:#ff4444;font-size:14px;margin-bottom:8px'>&#9888; Avatar GLB failed to load</div>" +
+                    "<div style='color:#94a3b8;font-size:11px;max-width:320px'>" +
+                    (tried ? tried.join("<br>") : error.toString()) +
+                    "</div></div>";
             }});
 
 

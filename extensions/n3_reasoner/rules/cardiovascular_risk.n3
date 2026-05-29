@@ -1,0 +1,27 @@
+@prefix health: <https://health.example.org/ns#> .
+@prefix math:   <http://www.w3.org/2000/10/swap/math#> .
+
+# Cardiovascular risk flags:
+# Elevated resting HR (>100 BPM) = tachycardia threshold
+{
+    ?person health:restingHR ?hr .
+    ?hr math:greaterThan 100 .
+}
+=>
+{
+    ?person health:pattern health:TachycardiaFlag .
+    ?person health:patternConfidence "high" .
+} .
+
+# Low activity + elevated HR = deconditioning risk
+{
+    ?person health:dailySteps ?steps .
+    ?steps math:lessThan 3000 .
+    ?person health:restingHR ?hr .
+    ?hr math:greaterThan 80 .
+}
+=>
+{
+    ?person health:pattern health:DeconditioningRisk .
+    ?person health:patternConfidence "moderate" .
+} .

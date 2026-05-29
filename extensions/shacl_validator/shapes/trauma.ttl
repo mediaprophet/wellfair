@@ -1,0 +1,41 @@
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix health: <https://health.example.org/ns#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+
+# Trauma assessment shape.
+# Describes data constraints on trauma-related health observations.
+# People are NOT typed as OWL class members; constraints describe what
+# a valid trauma record carries.
+
+health:TraumaAssessmentShape
+    a sh:NodeShape ;
+    sh:targetSubjectsOf health:traumaType ;
+    rdfs:label "Trauma Assessment Shape" ;
+    rdfs:comment "Validates trauma assessment records using RDFS/SHACL shapes" ;
+
+    sh:property [
+        sh:path health:traumaType ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "A trauma assessment must include a trauma type" ;
+        sh:severity sh:Violation ;
+    ] ;
+
+    sh:property [
+        sh:path health:stressScore ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100 ;
+        sh:message "Stress score must be between 0 and 100" ;
+        sh:severity sh:Violation ;
+    ] ;
+
+    sh:property [
+        sh:path health:maslowSafetyScore ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100 ;
+        sh:message "Maslow safety score must be between 0 and 100" ;
+        sh:severity sh:Warning ;
+    ] .
