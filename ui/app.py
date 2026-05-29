@@ -222,7 +222,11 @@ def main():
             st.rerun()
     else:
         with st.sidebar.expander("🔑 Unlock Sanctuary Mode"):
-            sanctuary_pin = st.text_input("Vault PIN", type="password", key="sidebar_sanctuary_pin")
+            # In demo/Pyodide environments the export path may not exist – fall back to mock data
+            _is_demo_profile = profile in ["gemini", "michael", "elena", "rebecca", "margaret", "robert", "jordan"]
+            pin_label = "Vault PIN (Demo PIN: 8888)" if _is_demo_profile else "Vault PIN"
+            
+            sanctuary_pin = st.text_input(pin_label, type="password", key="sidebar_sanctuary_pin")
             if st.button("Unlock Vault"):
                 if sanctuary_pin == "8888":
                     st.session_state.sanctuary_unlocked = True
