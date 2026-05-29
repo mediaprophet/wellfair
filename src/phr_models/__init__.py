@@ -12,7 +12,10 @@ from src.phr_models.study import (
     FormQuestion, DiagnosticForm, ClinicalInsight, ResearchPaper, SharedStudyPackage
 )
 
-from src.phr_models.psychiatric import *
+from src.phr_models.psychiatric import (
+    PsychiatricAssessmentBase, BDI2Assessment, AQ10Assessment,
+    DASS21Assessment, K10Assessment
+)
 from src.phr_models.psychology import (
     TherapyModality, TherapySessionNote, PsychologicalFormulation,
     AttachmentStyle, AttachmentStyleRecord, SubRosaCategory, SubRosaRecord
