@@ -2,8 +2,8 @@
 
 **Current Version: 0.0.3-dev** (29 May 2026)
 
-> **Human-centric. Your data. Your device. No cloud.**
-> WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: your own digital platform, running entirely on your own hardware, connected to the world on your terms.
+> **The untransferable code is you.**
+> WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.
 
 See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
@@ -14,16 +14,20 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
 
 **Episteme:WellFair** is a human-centric personal wellbeing vault — and an instance of a new category of software called a **P3-SWA**.
 
-### Human-centric design
+### The untransferable code
 
-Most digital systems treat the human as a *data subject*: a source of inputs, a row in a database, a profile to be analysed and monetised. WellFair takes the opposite position. **The human is the sovereign.** Data exists to serve the person it describes — not the platform that holds it.
+Around the year 2000, the internet hardened into an extraction model — one that treats human beings as data points to be harvested. The architectural response to this is what we call **the untransferable code**: genuine human agency, rooted in lived experience and the inalienable dignity of the natural person, cannot be extracted, commodified, or stolen. Any system that tries produces something hollow — it can verify a record, but it lacks the capacity to map the common sense needed to protect genuine human agency.
 
-This human-centric principle flows through every layer of the design:
+See: [*The Untransferable Code*](https://www.youtube.com/watch?v=HJJs-Ve-Dhg) — the philosophical foundation of this work.
 
-- **Maslow over metrics** — a sleep score or heart rate is understood in the context of safety, shelter, belonging, and psychological wellbeing, not in isolation
-- **Shapes, not classes** — people are described using SHACL/RDFS shapes rather than OWL class membership; assigning a human to an ontological class can strip nuance and dignity from lived experience
-- **Consent is modelled, not assumed** — Proxy Consent and Sanctuary Mode treat the person's right to control their own information as a first-class architectural requirement, not an afterthought
-- **The tool serves the person** — WellFair exists to give you infrastructure; it has no interest in your data itself
+WellFair is designed as **peace infrastructure**: an inalienable extension of the self, engineered to protect individuals from administrative violence by ensuring that the computational vault and the natural person it serves remain inseparable.
+
+This principle flows through every layer of the design:
+
+- **Maslow over metrics** — a sleep score or heart rate is understood in the context of safety, shelter, belonging, and psychological wellbeing; data points without lived context are hollow
+- **Shapes, not classes** — people are described using SHACL/RDFS shapes rather than OWL class membership; reducing a natural person to an ontological class strips the nuance and dignity of lived experience
+- **Consent is modelled, not assumed** — Proxy Consent and Sanctuary Mode treat the natural person's right to control their own information as a first-class architectural requirement, not an afterthought
+- **The tool serves the person** — WellFair exists to extend your capacity to act; it has no interest in your data itself
 
 ### The P3 concept
 
@@ -90,13 +94,14 @@ wellfare-core (Rust → WASM)              extensions/
 ```
 
 ### Core principles
-- **Human-centric** — the person is the sovereign; the system exists to serve them, not to extract from them
+- **The natural person is the ground truth** — lived experience cannot be reduced to transferable data; the system serves the person, not the other way around
+- **Peace infrastructure** — the vault is an inalienable extension of the self, not a service platform
 - **You are the platform (P3)** — your device is the server; there is no upstream provider
-- **WellFair is a P3A** — it exists to give you that infrastructure, not to be a platform itself
+- **WellFair is a P3A** — it exists to extend your capacity to act, not to be a platform itself
 - **Social Web, not social silo (P3-SWA)** — federation via Solid/WebID on your terms, not a walled garden
-- **No cloud** — your data never leaves your device unless you explicitly share it
-- **No OWL for people** — health subjects described with SHACL/RDFS shapes, not OWL class membership (which can dehumanise)
-- **N3Logic for reasoning** — causal/clinical rules, not OWL entailment
+- **No cloud** — your data never leaves your device unless you explicitly choose to share it
+- **No OWL for people** — natural persons described with SHACL/RDFS shapes, not OWL class membership; a human is not a class instance
+- **N3Logic for reasoning** — causal/clinical rules grounded in relational context, not abstract entailment
 - **Extensions are opt-in** — nothing loads until you trigger it; teardown() releases memory
 
 ---
