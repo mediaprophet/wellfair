@@ -75,10 +75,11 @@ from ui.tabs.case_management import render_case_management
 from ui.tabs.social_work import render_social_work
 from ui.tabs.profile_intake import render_profile_intake
 from ui.tabs.study_vault import render_study_vault
+from ui.tabs.dev_tools import render_dev_tools
 
 
 st.set_page_config(
-    page_title="Episteme:WellFair v0.0.2 – Personal Well-Fair Vault",
+    page_title="Episteme:WellFair v0.0.3-dev – Personal Well-Fair Vault",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",   # Better mobile experience — user can open sidebar when needed
@@ -190,7 +191,7 @@ def main():
          <div style='padding: 10px 0px 20px 0px;'>
              <h1 style='font-size: 2.2rem; font-weight: 800; margin: 0; background: linear-gradient(135deg, #14b8a6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;'>Episteme<br><span style='font-size: 1.7rem; font-weight: 700;'>:WellFair</span></h1>
              <p style='font-size: 0.72rem; font-weight: 600; color: #64748b; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;'>Personal Well-Fair Vault & Digital Services Ecosystem</p>
-             <p style='font-size: 0.65rem; color: #64748b; margin-top: 4px;'>v0.0.2 • 29 May 2026</p>
+             <p style='font-size: 0.65rem; color: #64748b; margin-top: 4px;'>v0.0.3-dev • 29 May 2026</p>
          </div>
     """, unsafe_allow_html=True)
     
@@ -252,7 +253,15 @@ def main():
     app_section_key = render_sidebar_nav(dark_mode, is_sanctuary)
     
     st.sidebar.divider()
-    
+
+    # Developer Tools — direct button outside nav group to avoid sidebar clipping
+    if st.sidebar.button("🔧 Dev Tools & Tests", key="nav_dev_tools", use_container_width=True):
+        from ui.utils.navigation import set_current_section
+        set_current_section("dev_tools")
+        st.rerun()
+
+    st.sidebar.divider()
+
     # Settings Toggle
     show_settings = st.sidebar.toggle("⚙️ Vault Administration", value=False)
     
@@ -319,6 +328,7 @@ def main():
         "agent_directory": lambda: render_agent_directory(dark_mode, normalized),
         "document_ingestion": lambda: render_document_ingestion(dark_mode),
         "sanctuary_mode": lambda: render_sanctuary_mode(dark_mode),
+        "dev_tools":       lambda: render_dev_tools(dark_mode),
     }
 
     if show_settings:

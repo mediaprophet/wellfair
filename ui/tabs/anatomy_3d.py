@@ -1092,7 +1092,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 loadingOverlay.style.opacity = "0";
                 setTimeout(() => loadingOverlay.remove(), 500);
 
-            }, undefined,
+            }}, undefined,
             (error, tried) => {{
                 console.error("[Avatar] Load failed:", error, "\\nTried:", tried);
                 loadingOverlay.innerHTML =

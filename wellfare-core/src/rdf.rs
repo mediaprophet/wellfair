@@ -22,7 +22,7 @@ pub fn generate_rdf_prefixes() -> String {
 }
 
 pub fn weight_to_turtle(records: &[WeightRecord]) -> String {
-    let mut out = String::new();
+    let mut out = generate_rdf_prefixes();
     for rec in records {
         let subj = format!("<urn:health:weight:{}>", rec.uuid);
         out.push_str(&format!("{} a fhir:Observation ;\n", subj));
@@ -70,7 +70,7 @@ pub fn weight_to_turtle(records: &[WeightRecord]) -> String {
 }
 
 pub fn sleep_to_turtle(records: &[SleepRecord]) -> String {
-    let mut out = String::new();
+    let mut out = generate_rdf_prefixes();
     for rec in records {
         let subj = format!("<urn:health:sleep:{}>", rec.uuid);
         out.push_str(&format!("{} a fhir:Observation ;\n", subj));
@@ -113,7 +113,7 @@ pub fn sleep_to_turtle(records: &[SleepRecord]) -> String {
 }
 
 pub fn heart_rate_to_turtle(records: &[HeartRateRecord]) -> String {
-    let mut out = String::new();
+    let mut out = generate_rdf_prefixes();
     for rec in records {
         let subj = format!("<urn:health:heart_rate:{}>", rec.uuid);
         out.push_str(&format!("{} a fhir:Observation ;\n", subj));
@@ -151,7 +151,7 @@ pub fn heart_rate_to_turtle(records: &[HeartRateRecord]) -> String {
 }
 
 pub fn steps_to_turtle(records: &[StepRecord]) -> String {
-    let mut out = String::new();
+    let mut out = generate_rdf_prefixes();
     for rec in records {
         let subj = format!("<urn:health:steps:{}>", rec.uuid);
         out.push_str(&format!("{} a fhir:Observation ;\n", subj));

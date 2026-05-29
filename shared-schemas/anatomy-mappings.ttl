@@ -1,0 +1,897 @@
+# =============================================================================
+# WellFair – Spatial-Semantic Anatomy Mappings
+# =============================================================================
+# Bridges Three.js mesh node names (from HuBMAP CCF GLBs and procedural
+# geometry) to authoritative biomedical ontology URIs.
+#
+# Mesh IDs match the .name property of nodes inside the HuBMAP CCF GLBs
+# as they appear in the Three.js scene graph (scene.getObjectByName()).
+# HuBMAP GLB naming follows: <Institution>_<Sex>_<Organ>[_<Laterality>]
+#
+# Ontologies used:
+#   FMA   – Foundational Model of Anatomy (structural definitions)
+#   UBERON– Uber-anatomy ontology (cross-species bridge; from HuBMAP manifest)
+#   SNOMED– SNOMED CT (clinical conditions and pathologies)
+#   HP    – Human Phenotype Ontology (phenotypic abnormalities)
+#   app:  – WellFair application schema (glue vocabulary)
+#
+# Sources:
+#   HuBMAP CCF 3D Reference Object Library (CC BY 4.0)
+#   https://github.com/hubmapconsortium/ccf-3d-reference-object-library
+# =============================================================================
+
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+
+@prefix fma:    <http://purl.org/sig/ont/fma/> .
+@prefix uberon: <http://purl.obolibrary.org/obo/UBERON_> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix hp:     <http://purl.obolibrary.org/obo/HP_> .
+
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix asset:  <https://wellfair.app/asset/> .
+@prefix cond:   <https://wellfair.app/condition/> .
+
+
+# =============================================================================
+# ONTOLOGY METADATA
+# =============================================================================
+
+<https://wellfair.app/ontology/anatomy-mappings>
+    a owl:Ontology ;
+    rdfs:label "WellFair Anatomy Mappings" ;
+    rdfs:comment "Maps WebGL mesh node IDs from HuBMAP CCF assets to FMA/UBERON anatomical URIs, and links clinical conditions to their implicated anatomical targets." ;
+    owl:versionInfo "0.1.0" .
+
+
+# =============================================================================
+# SCHEMA: CLASSES
+# =============================================================================
+
+app:3DMeshElement
+    a rdfs:Class ;
+    rdfs:label "3D Mesh Element" ;
+    rdfs:comment "A named node in a WebGL scene graph (Three.js) corresponding to an anatomical structure." .
+
+app:AnatomicalSystem
+    a rdfs:Class ;
+    rdfs:label "Anatomical System" ;
+    rdfs:comment "A named body system grouping one or more mesh elements (e.g. cardiovascular, nervous)." .
+
+app:ClinicalImplication
+    a rdfs:Class ;
+    rdfs:label "Clinical Implication" ;
+    rdfs:comment "A directional assertion that a given condition stresses or pathologically implicates one or more anatomical structures, with a severity weight." .
+
+
+# =============================================================================
+# SCHEMA: PROPERTIES
+# =============================================================================
+
+app:hasMeshId
+    a rdf:Property ;
+    rdfs:label "has mesh ID" ;
+    rdfs:comment "The Three.js scene node name (mesh.name) used by scene.getObjectByName()." ;
+    rdfs:domain app:3DMeshElement ;
+    rdfs:range  xsd:string .
+
+app:hasGlbFile
+    a rdf:Property ;
+    rdfs:label "has GLB file" ;
+    rdfs:comment "Local filename of the source GLB asset (relative to static/models/hra/)." ;
+    rdfs:domain app:3DMeshElement ;
+    rdfs:range  xsd:string .
+
+app:mapsToAnatomy
+    a rdf:Property ;
+    rdfs:label "maps to anatomy" ;
+    rdfs:comment "Links a mesh element to its FMA anatomical structure URI." ;
+    rdfs:domain app:3DMeshElement ;
+    rdfs:range  fma:Anatomical_structure .
+
+app:mapsToUberon
+    a rdf:Property ;
+    rdfs:label "maps to UBERON" ;
+    rdfs:comment "Cross-reference to UBERON identifier (from HuBMAP manifest)." ;
+    rdfs:domain app:3DMeshElement ;
+    rdfs:range  rdfs:Resource .
+
+app:inSystem
+    a rdf:Property ;
+    rdfs:label "in system" ;
+    rdfs:comment "Assigns a mesh element to a named anatomical system layer." ;
+    rdfs:domain app:3DMeshElement ;
+    rdfs:range  app:AnatomicalSystem .
+
+app:impliesPathologyIn
+    a rdf:Property ;
+    rdfs:label "implies pathology in" ;
+    rdfs:comment "Asserts that a clinical condition has documented pathological implications for a given anatomical structure." ;
+    rdfs:domain rdfs:Resource ;
+    rdfs:range  fma:Anatomical_structure .
+
+app:severityWeight
+    a rdf:Property ;
+    rdfs:label "severity weight" ;
+    rdfs:comment "Qualitative severity of the implication: high | medium | low." ;
+    rdfs:range  xsd:string .
+
+app:evidenceSource
+    a rdf:Property ;
+    rdfs:label "evidence source" ;
+    rdfs:comment "DOI or URL of the peer-reviewed study supporting this implication." ;
+    rdfs:range  xsd:anyURI .
+
+app:highlightColor
+    a rdf:Property ;
+    rdfs:label "highlight color" ;
+    rdfs:comment "Suggested hex color for WebGL emissive highlight at this severity." ;
+    rdfs:range  xsd:string .
+
+app:forCondition
+    a rdf:Property ;
+    rdfs:label "for condition" ;
+    rdfs:comment "Links a ClinicalImplication to the SNOMED-CT condition URI it describes." ;
+    rdfs:domain app:ClinicalImplication ;
+    rdfs:range  rdfs:Resource .
+
+
+# =============================================================================
+# ANATOMICAL SYSTEMS (Layer identifiers matching Three.js layer names)
+# =============================================================================
+
+asset:System_Cardiovascular
+    a app:AnatomicalSystem ;
+    rdfs:label "Cardiovascular System" ;
+    skos:notation "cardio" .          # matches layers['cardio'] in anatomy_3d.py
+
+asset:System_Nervous
+    a app:AnatomicalSystem ;
+    rdfs:label "Nervous System" ;
+    skos:notation "nervous" .
+
+asset:System_Endocrine
+    a app:AnatomicalSystem ;
+    rdfs:label "Endocrine System" ;
+    skos:notation "endocrine" .
+
+asset:System_Respiratory
+    a app:AnatomicalSystem ;
+    rdfs:label "Respiratory System" ;
+    skos:notation "respiratory" .
+
+asset:System_Urinary
+    a app:AnatomicalSystem ;
+    rdfs:label "Urinary System" ;
+    skos:notation "urinary" .
+
+asset:System_Digestive
+    a app:AnatomicalSystem ;
+    rdfs:label "Digestive System" ;
+    skos:notation "digestive" .
+
+asset:System_Immune
+    a app:AnatomicalSystem ;
+    rdfs:label "Immune / Lymphatic System" ;
+    skos:notation "immune" .
+
+asset:System_Skeletal
+    a app:AnatomicalSystem ;
+    rdfs:label "Skeletal System" ;
+    skos:notation "skeletal" .
+
+asset:System_Muscular
+    a app:AnatomicalSystem ;
+    rdfs:label "Muscular System" ;
+    skos:notation "muscular" .
+
+asset:System_Integumentary
+    a app:AnatomicalSystem ;
+    rdfs:label "Integumentary (Skin) System" ;
+    skos:notation "skin" .
+
+
+# =============================================================================
+# MESH MAPPINGS: CARDIOVASCULAR
+# HuBMAP assets: organ_heart_m.glb, organ_vasculature_m.glb
+# Internal node names derived from HuBMAP CCF GLB scene graph conventions.
+# =============================================================================
+
+asset:Mesh_Heart
+    a app:3DMeshElement ;
+    rdfs:label "Heart" ;
+    app:hasMeshId "VH_M_Heart" ;
+    app:hasGlbFile "organ_heart_m.glb" ;
+    app:mapsToAnatomy fma:Heart ;
+    app:mapsToUberon uberon:0000948 ;
+    app:inSystem asset:System_Cardiovascular .
+
+asset:Mesh_Blood_Vasculature
+    a app:3DMeshElement ;
+    rdfs:label "Blood Vasculature Network" ;
+    app:hasMeshId "VH_M_Blood_Vasculature" ;
+    app:hasGlbFile "organ_vasculature_m.glb" ;
+    app:mapsToAnatomy fma:Cardiovascular_system ;
+    app:mapsToUberon uberon:0004537 ;
+    app:inSystem asset:System_Cardiovascular .
+
+# Procedural geometry (anatomy_3d.py: sysCardio group)
+# These use programmatic Three.js mesh objects without HuBMAP source files.
+# To make them resolvable, assign .name in Three.js before adding to scene.
+asset:Mesh_Heart_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Heart (procedural)" ;
+    app:hasMeshId "proc_heart" ;
+    app:mapsToAnatomy fma:Heart ;
+    app:mapsToUberon uberon:0000948 ;
+    app:inSystem asset:System_Cardiovascular .
+
+asset:Mesh_Aorta_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Aorta (procedural)" ;
+    app:hasMeshId "proc_aorta" ;
+    app:mapsToAnatomy fma:Aorta ;
+    app:inSystem asset:System_Cardiovascular .
+
+# Sub-vessel mappings (resolved by SPARQL for condition implications)
+asset:Mesh_Renal_Artery_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Renal Artery" ;
+    app:hasMeshId "VH_M_Renal_Artery_L" ;
+    app:mapsToAnatomy fma:Left_renal_artery ;
+    app:inSystem asset:System_Cardiovascular .
+
+asset:Mesh_Renal_Artery_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Renal Artery" ;
+    app:hasMeshId "VH_M_Renal_Artery_R" ;
+    app:mapsToAnatomy fma:Right_renal_artery ;
+    app:inSystem asset:System_Cardiovascular .
+
+asset:Mesh_Coronary_Artery_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Coronary Artery" ;
+    app:hasMeshId "VH_M_Coronary_L" ;
+    app:mapsToAnatomy fma:Left_coronary_artery ;
+    app:inSystem asset:System_Cardiovascular .
+
+asset:Mesh_Coronary_Artery_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Coronary Artery" ;
+    app:hasMeshId "VH_M_Coronary_R" ;
+    app:mapsToAnatomy fma:Right_coronary_artery ;
+    app:inSystem asset:System_Cardiovascular .
+
+
+# =============================================================================
+# MESH MAPPINGS: NERVOUS SYSTEM
+# HuBMAP asset: organ_brain_m.glb (Allen_M_Brain.glb)
+# =============================================================================
+
+asset:Mesh_Brain
+    a app:3DMeshElement ;
+    rdfs:label "Brain" ;
+    app:hasMeshId "Allen_M_Brain" ;
+    app:hasGlbFile "organ_brain_m.glb" ;
+    app:mapsToAnatomy fma:Brain ;
+    app:mapsToUberon uberon:0000955 ;
+    app:inSystem asset:System_Nervous .
+
+asset:Mesh_Brain_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Cerebral Cortex (procedural)" ;
+    app:hasMeshId "proc_brain" ;
+    app:mapsToAnatomy fma:Cerebral_cortex ;
+    app:inSystem asset:System_Nervous .
+
+asset:Mesh_Spinal_Cord_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Spinal Cord (procedural)" ;
+    app:hasMeshId "proc_spinal_cord" ;
+    app:mapsToAnatomy fma:Spinal_cord ;
+    app:inSystem asset:System_Nervous .
+
+
+# =============================================================================
+# MESH MAPPINGS: ENDOCRINE SYSTEM
+# Procedural geometry from anatomy_3d.py (sysEndo group)
+# =============================================================================
+
+asset:Mesh_Pancreas_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Pancreas (procedural)" ;
+    app:hasMeshId "proc_pancreas" ;
+    app:mapsToAnatomy fma:Pancreas ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Pancreas_Head
+    a app:3DMeshElement ;
+    rdfs:label "Head of Pancreas" ;
+    app:hasMeshId "proc_pancreas_head" ;
+    app:mapsToAnatomy fma:Head_of_pancreas ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Pancreas_Body
+    a app:3DMeshElement ;
+    rdfs:label "Body of Pancreas" ;
+    app:hasMeshId "proc_pancreas_body" ;
+    app:mapsToAnatomy fma:Body_of_pancreas ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Adrenal_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Adrenal Gland (procedural)" ;
+    app:hasMeshId "proc_adrenal_l" ;
+    app:mapsToAnatomy fma:Left_adrenal_gland ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Adrenal_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Adrenal Gland (procedural)" ;
+    app:hasMeshId "proc_adrenal_r" ;
+    app:mapsToAnatomy fma:Right_adrenal_gland ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Thyroid
+    a app:3DMeshElement ;
+    rdfs:label "Thyroid Gland (procedural)" ;
+    app:hasMeshId "proc_thyroid" ;
+    app:mapsToAnatomy fma:Thyroid_gland ;
+    app:inSystem asset:System_Endocrine .
+
+asset:Mesh_Pituitary
+    a app:3DMeshElement ;
+    rdfs:label "Pituitary Gland (procedural)" ;
+    app:hasMeshId "proc_pituitary" ;
+    app:mapsToAnatomy fma:Pituitary_gland ;
+    app:inSystem asset:System_Endocrine .
+
+
+# =============================================================================
+# MESH MAPPINGS: RESPIRATORY
+# HuBMAP asset: organ_lung_m.glb (3d-vh-m-lung.glb)
+# =============================================================================
+
+asset:Mesh_Lung_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Lung" ;
+    app:hasMeshId "VH_M_Lung_L" ;
+    app:hasGlbFile "organ_lung_m.glb" ;
+    app:mapsToAnatomy fma:Left_lung ;
+    app:mapsToUberon uberon:0002048 ;
+    app:inSystem asset:System_Respiratory .
+
+asset:Mesh_Lung_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Lung" ;
+    app:hasMeshId "VH_M_Lung_R" ;
+    app:hasGlbFile "organ_lung_m.glb" ;
+    app:mapsToAnatomy fma:Right_lung ;
+    app:mapsToUberon uberon:0002048 ;
+    app:inSystem asset:System_Respiratory .
+
+asset:Mesh_Lung_Left_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Left Lung (procedural)" ;
+    app:hasMeshId "proc_lung_l" ;
+    app:mapsToAnatomy fma:Left_lung ;
+    app:inSystem asset:System_Respiratory .
+
+asset:Mesh_Lung_Right_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Right Lung (procedural)" ;
+    app:hasMeshId "proc_lung_r" ;
+    app:mapsToAnatomy fma:Right_lung ;
+    app:inSystem asset:System_Respiratory .
+
+
+# =============================================================================
+# MESH MAPPINGS: URINARY SYSTEM
+# HuBMAP assets: organ_kidney_l_m.glb, organ_kidney_r_m.glb
+# =============================================================================
+
+asset:Mesh_Kidney_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Kidney" ;
+    app:hasMeshId "VH_M_Kidney_L" ;
+    app:hasGlbFile "organ_kidney_l_m.glb" ;
+    app:mapsToAnatomy fma:Left_kidney ;
+    app:mapsToUberon uberon:0004538 ;
+    app:inSystem asset:System_Urinary .
+
+asset:Mesh_Kidney_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Kidney" ;
+    app:hasMeshId "VH_M_Kidney_R" ;
+    app:hasGlbFile "organ_kidney_r_m.glb" ;
+    app:mapsToAnatomy fma:Right_kidney ;
+    app:mapsToUberon uberon:0004539 ;
+    app:inSystem asset:System_Urinary .
+
+asset:Mesh_Kidney_Left_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Left Kidney (procedural)" ;
+    app:hasMeshId "proc_kidney_l" ;
+    app:mapsToAnatomy fma:Left_kidney ;
+    app:inSystem asset:System_Urinary .
+
+
+# =============================================================================
+# MESH MAPPINGS: DIGESTIVE SYSTEM
+# HuBMAP assets: organ_large_intestine_m.glb, organ_gallbladder_m.glb
+# =============================================================================
+
+asset:Mesh_Large_Intestine
+    a app:3DMeshElement ;
+    rdfs:label "Large Intestine" ;
+    app:hasMeshId "SBU_M_Intestine_Large" ;
+    app:hasGlbFile "organ_large_intestine_m.glb" ;
+    app:mapsToAnatomy fma:Large_intestine ;
+    app:mapsToUberon uberon:0000059 ;
+    app:inSystem asset:System_Digestive .
+
+asset:Mesh_Gallbladder
+    a app:3DMeshElement ;
+    rdfs:label "Gallbladder" ;
+    app:hasMeshId "VH_M_Gallbladder" ;
+    app:hasGlbFile "organ_gallbladder_m.glb" ;
+    app:mapsToAnatomy fma:Gallbladder ;
+    app:mapsToUberon uberon:0002110 ;
+    app:inSystem asset:System_Digestive .
+
+asset:Mesh_Stomach_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Stomach (procedural)" ;
+    app:hasMeshId "proc_stomach" ;
+    app:mapsToAnatomy fma:Stomach ;
+    app:inSystem asset:System_Digestive .
+
+asset:Mesh_Small_Intestine_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Small Intestine (procedural)" ;
+    app:hasMeshId "proc_small_intestine" ;
+    app:mapsToAnatomy fma:Small_intestine ;
+    app:inSystem asset:System_Digestive .
+
+asset:Mesh_Liver_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Liver (procedural)" ;
+    app:hasMeshId "proc_liver" ;
+    app:mapsToAnatomy fma:Liver ;
+    app:inSystem asset:System_Digestive .
+
+
+# =============================================================================
+# MESH MAPPINGS: IMMUNE / LYMPHATIC SYSTEM
+# HuBMAP asset: organ_lymph_node_m.glb
+# =============================================================================
+
+asset:Mesh_Lymph_Node
+    a app:3DMeshElement ;
+    rdfs:label "Lymph Node" ;
+    app:hasMeshId "NIH_M_Lymph_Node" ;
+    app:hasGlbFile "organ_lymph_node_m.glb" ;
+    app:mapsToAnatomy fma:Lymph_node ;
+    app:mapsToUberon uberon:0000029 ;
+    app:inSystem asset:System_Immune .
+
+asset:Mesh_Spleen_Procedural
+    a app:3DMeshElement ;
+    rdfs:label "Spleen (procedural)" ;
+    app:hasMeshId "proc_spleen" ;
+    app:mapsToAnatomy fma:Spleen ;
+    app:inSystem asset:System_Immune .
+
+
+# =============================================================================
+# MESH MAPPINGS: SKELETAL SYSTEM (all procedural in anatomy_3d.py)
+# Major joints are the primary targets for conditions like EDS, arthritis.
+# =============================================================================
+
+asset:Mesh_Skull
+    a app:3DMeshElement ;
+    rdfs:label "Skull (procedural)" ;
+    app:hasMeshId "proc_skull" ;
+    app:mapsToAnatomy fma:Skull ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Vertebral_Column
+    a app:3DMeshElement ;
+    rdfs:label "Vertebral Column (procedural)" ;
+    app:hasMeshId "proc_vertebral_column" ;
+    app:mapsToAnatomy fma:Vertebral_column ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Rib_Cage
+    a app:3DMeshElement ;
+    rdfs:label "Rib Cage (procedural)" ;
+    app:hasMeshId "proc_rib_cage" ;
+    app:mapsToAnatomy fma:Thoracic_cage ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Shoulder_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Shoulder Joint (procedural)" ;
+    app:hasMeshId "proc_joint_shoulder_l" ;
+    app:mapsToAnatomy fma:Left_shoulder_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Shoulder_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Shoulder Joint (procedural)" ;
+    app:hasMeshId "proc_joint_shoulder_r" ;
+    app:mapsToAnatomy fma:Right_shoulder_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Hip_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Hip Joint (procedural)" ;
+    app:hasMeshId "proc_joint_hip_l" ;
+    app:mapsToAnatomy fma:Left_hip_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Hip_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Hip Joint (procedural)" ;
+    app:hasMeshId "proc_joint_hip_r" ;
+    app:mapsToAnatomy fma:Right_hip_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Knee_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Knee Joint (procedural)" ;
+    app:hasMeshId "proc_joint_knee_l" ;
+    app:mapsToAnatomy fma:Left_knee_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Knee_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Knee Joint (procedural)" ;
+    app:hasMeshId "proc_joint_knee_r" ;
+    app:mapsToAnatomy fma:Right_knee_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Ankle_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Ankle Joint (procedural)" ;
+    app:hasMeshId "proc_joint_ankle_l" ;
+    app:mapsToAnatomy fma:Left_ankle_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Ankle_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Ankle Joint (procedural)" ;
+    app:hasMeshId "proc_joint_ankle_r" ;
+    app:mapsToAnatomy fma:Right_ankle_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Wrist_Left
+    a app:3DMeshElement ;
+    rdfs:label "Left Wrist Joint (procedural)" ;
+    app:hasMeshId "proc_joint_wrist_l" ;
+    app:mapsToAnatomy fma:Left_wrist_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Joint_Wrist_Right
+    a app:3DMeshElement ;
+    rdfs:label "Right Wrist Joint (procedural)" ;
+    app:hasMeshId "proc_joint_wrist_r" ;
+    app:mapsToAnatomy fma:Right_wrist_joint ;
+    app:inSystem asset:System_Skeletal .
+
+asset:Mesh_Pelvic_Floor
+    a app:3DMeshElement ;
+    rdfs:label "Pelvic Floor (procedural)" ;
+    app:hasMeshId "proc_pelvic_floor" ;
+    app:mapsToAnatomy fma:Pelvic_diaphragm ;
+    app:inSystem asset:System_Skeletal .
+
+
+# =============================================================================
+# CONDITION → ANATOMY IMPLICATION SETS
+#
+# These triples are the primary input consumed by the SWI-Prolog reasoning
+# engine and the SPARQL mesh resolver. Each implication block links a SNOMED
+# condition to the FMA anatomical structures it pathologically stresses, with
+# a severity weight.
+#
+# Prolog rules compiled from these blocks take the form:
+#   implication_target(User, <fma-uri>, Severity) :-
+#       user_fact(User, <snomed-uri>), <biomarker conditions>.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DIABETES MELLITUS TYPE 2 (SNOMED: 44054006)
+# Major systemic microvascular and macrovascular complications.
+# -----------------------------------------------------------------------------
+
+cond:Diabetes_T2_Implication_Retina
+    a app:ClinicalImplication ;
+    rdfs:label "Diabetic retinopathy – retinal microvasculature" ;
+    app:forCondition snomed:44054006 ;
+    app:impliesPathologyIn fma:Retina ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Diabetes_T2_Implication_Kidney
+    a app:ClinicalImplication ;
+    rdfs:label "Diabetic nephropathy – renal filtration units" ;
+    app:forCondition snomed:44054006 ;
+    app:impliesPathologyIn fma:Left_kidney, fma:Right_kidney,
+                            fma:Left_renal_artery, fma:Right_renal_artery ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Diabetes_T2_Implication_Pancreas
+    a app:ClinicalImplication ;
+    rdfs:label "Beta-cell dysfunction – islets of Langerhans" ;
+    app:forCondition snomed:44054006 ;
+    app:impliesPathologyIn fma:Pancreas ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Diabetes_T2_Implication_Peripheral_Vascular
+    a app:ClinicalImplication ;
+    rdfs:label "Peripheral arterial disease – distal vasculature" ;
+    app:forCondition snomed:44054006 ;
+    app:impliesPathologyIn fma:Cardiovascular_system ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+cond:Diabetes_T2_Implication_Nervous
+    a app:ClinicalImplication ;
+    rdfs:label "Peripheral neuropathy – distal nerve fibres" ;
+    app:forCondition snomed:44054006 ;
+    app:impliesPathologyIn fma:Spinal_cord ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# ESSENTIAL HYPERTENSION (SNOMED: 59621000)
+# -----------------------------------------------------------------------------
+
+cond:Hypertension_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Left ventricular hypertrophy – myocardium" ;
+    app:forCondition snomed:59621000 ;
+    app:impliesPathologyIn fma:Heart, fma:Left_coronary_artery, fma:Right_coronary_artery ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Hypertension_Implication_Kidney
+    a app:ClinicalImplication ;
+    rdfs:label "Hypertensive nephropathy – renal arterioles" ;
+    app:forCondition snomed:59621000 ;
+    app:impliesPathologyIn fma:Left_kidney, fma:Right_kidney,
+                            fma:Left_renal_artery, fma:Right_renal_artery ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Hypertension_Implication_Brain
+    a app:ClinicalImplication ;
+    rdfs:label "Cerebrovascular risk – cerebral arteries" ;
+    app:forCondition snomed:59621000 ;
+    app:impliesPathologyIn fma:Brain, fma:Cerebral_cortex ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+cond:Hypertension_Implication_Aorta
+    a app:ClinicalImplication ;
+    rdfs:label "Aortic wall stress – aortic root" ;
+    app:forCondition snomed:59621000 ;
+    app:impliesPathologyIn fma:Aorta ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# EHLERS-DANLOS SYNDROME – HYPERMOBILE TYPE (SNOMED: 398114001 / HP:0001382)
+# Systemic connective tissue disorder; joint and vascular targets.
+# -----------------------------------------------------------------------------
+
+cond:EDS_Implication_Joints_Major
+    a app:ClinicalImplication ;
+    rdfs:label "Generalized joint hypermobility – all major joints" ;
+    app:forCondition snomed:398114001 ;
+    app:impliesPathologyIn
+        fma:Left_shoulder_joint,  fma:Right_shoulder_joint,
+        fma:Left_hip_joint,       fma:Right_hip_joint,
+        fma:Left_knee_joint,      fma:Right_knee_joint,
+        fma:Left_ankle_joint,     fma:Right_ankle_joint,
+        fma:Left_wrist_joint,     fma:Right_wrist_joint ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:EDS_Implication_Spine
+    a app:ClinicalImplication ;
+    rdfs:label "Spinal instability – vertebral ligament laxity" ;
+    app:forCondition snomed:398114001 ;
+    app:impliesPathologyIn fma:Vertebral_column ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:EDS_Implication_Vascular
+    a app:ClinicalImplication ;
+    rdfs:label "Arterial fragility – vascular EDS risk" ;
+    app:forCondition snomed:398114001 ;
+    app:impliesPathologyIn fma:Aorta, fma:Cardiovascular_system ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+cond:EDS_Implication_Pelvic
+    a app:ClinicalImplication ;
+    rdfs:label "Pelvic floor dysfunction – ligament laxity" ;
+    app:forCondition snomed:398114001 ;
+    app:impliesPathologyIn fma:Pelvic_diaphragm ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# CHRONIC KIDNEY DISEASE (SNOMED: 709044004)
+# -----------------------------------------------------------------------------
+
+cond:CKD_Implication_Kidney
+    a app:ClinicalImplication ;
+    rdfs:label "Progressive nephron loss – renal parenchyma" ;
+    app:forCondition snomed:709044004 ;
+    app:impliesPathologyIn fma:Left_kidney, fma:Right_kidney ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:CKD_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Cardiorenal syndrome – uremic cardiomyopathy" ;
+    app:forCondition snomed:709044004 ;
+    app:impliesPathologyIn fma:Heart ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# ATHEROSCLEROSIS (SNOMED: 38716007)
+# -----------------------------------------------------------------------------
+
+cond:Atherosclerosis_Implication_Coronary
+    a app:ClinicalImplication ;
+    rdfs:label "Coronary artery plaque burden" ;
+    app:forCondition snomed:38716007 ;
+    app:impliesPathologyIn fma:Left_coronary_artery, fma:Right_coronary_artery, fma:Heart ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Atherosclerosis_Implication_Renal
+    a app:ClinicalImplication ;
+    rdfs:label "Renal artery stenosis" ;
+    app:forCondition snomed:38716007 ;
+    app:impliesPathologyIn fma:Left_renal_artery, fma:Right_renal_artery ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+cond:Atherosclerosis_Implication_Cerebral
+    a app:ClinicalImplication ;
+    rdfs:label "Carotid and cerebral artery disease" ;
+    app:forCondition snomed:38716007 ;
+    app:impliesPathologyIn fma:Brain ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# HYPOTHYROIDISM (SNOMED: 40930008)
+# -----------------------------------------------------------------------------
+
+cond:Hypothyroidism_Implication_Thyroid
+    a app:ClinicalImplication ;
+    rdfs:label "Reduced thyroid hormone synthesis" ;
+    app:forCondition snomed:40930008 ;
+    app:impliesPathologyIn fma:Thyroid_gland ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Hypothyroidism_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Bradycardia and reduced cardiac output" ;
+    app:forCondition snomed:40930008 ;
+    app:impliesPathologyIn fma:Heart ;
+    app:severityWeight "low" ;
+    app:highlightColor "#ffffaa" .
+
+
+# -----------------------------------------------------------------------------
+# HYPERTHYROIDISM (SNOMED: 34486009)
+# -----------------------------------------------------------------------------
+
+cond:Hyperthyroidism_Implication_Thyroid
+    a app:ClinicalImplication ;
+    rdfs:label "Thyroid hyperfunction and goitre" ;
+    app:forCondition snomed:34486009 ;
+    app:impliesPathologyIn fma:Thyroid_gland ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:Hyperthyroidism_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Tachycardia and atrial fibrillation risk" ;
+    app:forCondition snomed:34486009 ;
+    app:impliesPathologyIn fma:Heart ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# CHRONIC OBSTRUCTIVE PULMONARY DISEASE / COPD (SNOMED: 13645005)
+# -----------------------------------------------------------------------------
+
+cond:COPD_Implication_Lung
+    a app:ClinicalImplication ;
+    rdfs:label "Alveolar destruction and air trapping" ;
+    app:forCondition snomed:13645005 ;
+    app:impliesPathologyIn fma:Left_lung, fma:Right_lung ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:COPD_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Cor pulmonale – right ventricular strain" ;
+    app:forCondition snomed:13645005 ;
+    app:impliesPathologyIn fma:Heart ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+
+# -----------------------------------------------------------------------------
+# POST-TRAUMATIC STRESS DISORDER (SNOMED: 47505003)
+# Neurological and endocrine targets from HPA-axis dysregulation.
+# -----------------------------------------------------------------------------
+
+cond:PTSD_Implication_Brain
+    a app:ClinicalImplication ;
+    rdfs:label "Hippocampal volume reduction and amygdala hyperactivation" ;
+    app:forCondition snomed:47505003 ;
+    app:impliesPathologyIn fma:Brain, fma:Cerebral_cortex ;
+    app:severityWeight "high" ;
+    app:highlightColor "#ff3333" .
+
+cond:PTSD_Implication_Adrenal
+    a app:ClinicalImplication ;
+    rdfs:label "HPA-axis dysregulation – cortisol dysrhythmia" ;
+    app:forCondition snomed:47505003 ;
+    app:impliesPathologyIn fma:Left_adrenal_gland, fma:Right_adrenal_gland ;
+    app:severityWeight "medium" ;
+    app:highlightColor "#ffaa00" .
+
+cond:PTSD_Implication_Heart
+    a app:ClinicalImplication ;
+    rdfs:label "Autonomic dysregulation – elevated resting heart rate" ;
+    app:forCondition snomed:47505003 ;
+    app:impliesPathologyIn fma:Heart ;
+    app:severityWeight "low" ;
+    app:highlightColor "#ffffaa" .
+
+
+# =============================================================================
+# SEVERITY WEIGHT DEFINITIONS (for Prolog and visualiser)
+# =============================================================================
+
+app:SeverityHigh
+    a rdfs:Resource ;
+    skos:notation "high" ;
+    rdfs:label "High severity" ;
+    rdfs:comment "Primary target; strong causal evidence. Render red (#ff3333) at emissiveIntensity 0.9." .
+
+app:SeverityMedium
+    a rdfs:Resource ;
+    skos:notation "medium" ;
+    rdfs:label "Medium severity" ;
+    rdfs:comment "Secondary target; indirect or cumulative mechanism. Render amber (#ffaa00) at emissiveIntensity 0.6." .
+
+app:SeverityLow
+    a rdfs:Resource ;
+    skos:notation "low" ;
+    rdfs:label "Low severity" ;
+    rdfs:comment "Tertiary or conditional target; contextual risk. Render yellow (#ffffaa) at emissiveIntensity 0.3." .

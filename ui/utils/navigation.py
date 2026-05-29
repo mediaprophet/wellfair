@@ -62,6 +62,7 @@ def render_sidebar_nav(dark_mode: bool = False, is_sanctuary: bool = False) -> s
         if group_label == "SANCTUARY" and not is_sanctuary:
             continue
 
+
         st.sidebar.markdown(
             f"<div style='font-size:0.65rem;font-weight:700;color:{label_color};"
             f"text-transform:uppercase;letter-spacing:0.1em;"
