@@ -1,6 +1,6 @@
 # Episteme:WellFair
 
-**Current Version: 0.0.3-dev** (29 May 2026)
+**Current Version: 0.0.4-dev** (30 May 2026)
 
 > **The untransferable code is you.**
 > WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.

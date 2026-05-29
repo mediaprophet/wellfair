@@ -1,7 +1,7 @@
 """WellFair version information."""
 
-__version__ = "0.0.3-dev"
-__release_date__ = "2026-05-29"
+__version__ = "0.0.4-dev"
+__release_date__ = "2026-05-30"
 
 VERSION_INFO = {
     "version": __version__,

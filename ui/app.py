@@ -79,7 +79,7 @@ from ui.tabs.dev_tools import render_dev_tools
 
 
 st.set_page_config(
-    page_title="Episteme:WellFair v0.0.3-dev – Personal Well-Fair Vault",
+    page_title="Episteme:WellFair v0.0.4-dev – Personal Well-Fair Vault",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed",   # Better mobile experience — user can open sidebar when needed
@@ -191,7 +191,7 @@ def main():
          <div style='padding: 10px 0px 20px 0px;'>
              <h1 style='font-size: 2.2rem; font-weight: 800; margin: 0; background: linear-gradient(135deg, #14b8a6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;'>Episteme<br><span style='font-size: 1.7rem; font-weight: 700;'>:WellFair</span></h1>
              <p style='font-size: 0.72rem; font-weight: 600; color: #64748b; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;'>Personal Well-Fair Vault & Digital Services Ecosystem</p>
-             <p style='font-size: 0.65rem; color: #64748b; margin-top: 4px;'>v0.0.3-dev • 29 May 2026</p>
+             <p style='font-size: 0.65rem; color: #64748b; margin-top: 4px;'>v0.0.4-dev • 30 May 2026</p>
          </div>
     """, unsafe_allow_html=True)
     
