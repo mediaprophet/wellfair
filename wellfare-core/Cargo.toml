@@ -1,6 +1,6 @@
 [package]
 name = "wellfare-core"
-version = "0.0.1-dev"
+version = "0.0.3-dev"
 edition = "2024"
 
 [lib]
