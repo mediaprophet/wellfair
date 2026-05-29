@@ -24,6 +24,7 @@ Thumbs.db
 # Large 3rd-party 3D reference asset libraries (very large, not needed for core app)
 /ccf-3d-reference-object-library-main/
 
-# Generated Stlite PWA bundle (very large, built artifact - do not commit)
-docs/app.html
+# Generated Stlite PWA bundle (very large, built artifact - do not commit the *old* huge version)
+# The current lean version (~8MB) is committed so GitHub Pages can serve it.
+# docs/app.html
 docs/app.tmp.html

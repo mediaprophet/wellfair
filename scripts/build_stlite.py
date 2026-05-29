@@ -1,5 +1,6 @@
 import os
 import json
+import ast
 import base64
 from pathlib import Path
 
@@ -19,14 +20,6 @@ def main():
             print(f"Using hologram manifest with {len(hologram_whitelist)} allowed assets.")
         except Exception as e:
             print(f"Warning: Could not parse hologram manifest: {e}")
-    HOLOGRAM_MANIFEST = root / "vendor" / "hologram" / "manifest.json"
-    hologram_whitelist = None
-    if HOLOGRAM_MANIFEST.exists():
-        try:
-            hologram_whitelist = set(json.loads(HOLOGRAM_MANIFEST.read_text(encoding="utf-8")))
-            print(f"Using hologram manifest with {len(hologram_whitelist)} allowed assets.")
-        except Exception as e:
-            print(f"Warning: Could not read hologram manifest: {e}")
     
     stlite_files = {}
     
@@ -48,6 +41,17 @@ def main():
                 if rel_path not in hologram_whitelist:
                     continue
 
+            # Additional size optimizations for smaller PWA bundles
+            # Exclude large demo data files that are not essential for core PWA demo
+            if rel_path.startswith("data/demo/") and (rel_path.endswith(".pkl") or "full" in rel_path.lower()):
+                continue
+            # Skip very large individual files unless they are critical 3D assets (pre-read check)
+            try:
+                if path.stat().st_size > 10 * 1024 * 1024 and not rel_path.startswith("vendor/hologram/"):
+                    continue
+            except Exception:
+                pass
+
             content = path.read_bytes()
             try:
                 stlite_files[rel_path] = content.decode("utf-8")
@@ -67,18 +71,63 @@ def main():
         "src/phr_models/pathology.py",
         "ui/app.py",
         "ui/utils/__init__.py",
+        "ui/utils/navigation.py",
+        "ui/utils/components.py",
         "ui/tabs/document_ingestion.py",
         "ui/tabs/personal_health.py",
         "ui/tabs/anatomy_3d.py",
     ]
 
-    missing = [m for m in CRITICAL_MODULES if m not in stlite_files]
-    if missing:
-        print("WARNING: The following critical modules are MISSING from the Stlite bundle:")
-        for m in missing:
+    # Dynamically scan important __init__.py files for relative imports.
+    # This automatically catches new submodules/packages without manual updates.
+    # Add more package roots here as the project grows (especially anything imported via `from .xxx import`).
+    INIT_FILES_TO_INTROSPECT = [
+        "ui/utils/__init__.py",
+        "src/phr_models/__init__.py",
+    ]
+
+    for init_path in INIT_FILES_TO_INTROSPECT:
+        if init_path not in stlite_files:
+            continue
+        try:
+            tree = ast.parse(stlite_files[init_path], filename=init_path)
+            package_root = init_path.rsplit("/", 1)[0]  # e.g. "ui/utils" or "src/phr_models"
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.level > 0 and node.module:
+                    module_name = node.module
+                    # e.g. from .foo import bar  →  "package_root/foo.py"
+                    rel_path = f"{package_root}/{module_name.replace('.', '/')}.py"
+                    if rel_path not in CRITICAL_MODULES:
+                        CRITICAL_MODULES.append(rel_path)
+
+                    # Also add the __init__.py variant in case it's a package
+                    pkg_init = f"{package_root}/{module_name.replace('.', '/')}/__init__.py"
+                    if pkg_init not in CRITICAL_MODULES:
+                        CRITICAL_MODULES.append(pkg_init)
+        except Exception as e:
+            print(f"Warning: Could not parse {init_path} for imports: {e}")
+
+    # Validate that for every critical module we expect either the .py file or the package __init__.py
+    actual_missing = []
+    for m in CRITICAL_MODULES:
+        if m in stlite_files:
+            continue
+        # For package-style paths (e.g. ui/utils/data_access/__init__.py), also accept the single-file version
+        if m.endswith("/__init__.py"):
+            single_file = m.replace("/__init__.py", ".py")
+            if single_file in stlite_files:
+                continue
+        actual_missing.append(m)
+
+    if actual_missing:
+        print("ERROR: The following critical modules are MISSING from the Stlite bundle:")
+        for m in actual_missing:
             print(f"     - {m}")
         print("   The WASM demo will fail to import these at runtime (ModuleNotFoundError).")
         print("   Make sure the files exist on disk and re-run this script.")
+        # Fail the build so broken bundles are never shipped
+        exit(1)
     else:
         print(f"OK: All {len(CRITICAL_MODULES)} critical modules present in bundle.")
 
@@ -205,24 +254,30 @@ def main():
       #pwa-update-btn {{
         display: none; /* Hidden by default until an update is ready */
         position: fixed;
-        bottom: 84px;
-        right: 24px;
-        z-index: 9999999;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99999999;
         background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
         color: white;
         border: none;
-        border-radius: 50px;
-        padding: 14px 28px;
+        border-radius: 9999px;
+        padding: 12px 24px;
         font-family: 'Outfit', sans-serif;
         font-weight: 700;
-        font-size: 16px;
+        font-size: 15px;
         letter-spacing: 0.05em;
-        box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+        box-shadow: 0 8px 30px rgba(20, 184, 166, 0.5);
         cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        animation: pulseUpdate 2s infinite;
         display: flex;
         align-items: center;
         gap: 8px;
+        white-space: nowrap;
+      }}
+      @keyframes pulseUpdate {{
+        0%, 100% {{ box-shadow: 0 8px 30px rgba(20, 184, 166, 0.5); }}
+        50% {{ box-shadow: 0 8px 40px rgba(20, 184, 166, 0.8); transform: translateX(-50%) scale(1.02); }}
       }}
       #pwa-update-btn:hover {{
         transform: translateY(-2px);
@@ -231,6 +286,7 @@ def main():
       #pwa-update-btn:active {{
         transform: translateY(1px);
       }}
+
     </style>
   </head>
   <body>
@@ -339,7 +395,9 @@ def main():
             newWorker = reg.installing;
             newWorker.addEventListener('statechange', () => {{
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {{
-                // New update available
+                // New update available - show both banner (more visible) and button
+                const banner = document.getElementById('update-banner');
+                if (banner) banner.style.display = 'flex';
                 updateBtn.style.display = 'flex';
               }}
             }});
@@ -356,6 +414,8 @@ def main():
 
         updateBtn.addEventListener('click', () => {{
           updateBtn.style.display = 'none';
+          const banner = document.getElementById('update-banner');
+          if (banner) banner.style.display = 'none';
           if (newWorker) {{
             newWorker.postMessage({{ type: 'SKIP_WAITING' }});
           }}
