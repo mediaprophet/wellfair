@@ -6,13 +6,19 @@ from pathlib import Path
 def main():
     root = Path(__file__).parent.parent
     # Only bundle what is actually required for the app + the curated lightweight 3D assets.
-    # We deliberately exclude "docs" (especially docs/models/) because it contains large .glb files
-    # that would bloat the PWA bundle to multiple gigabytes.
+    # Heavy 3D models must live in vendor/hologram/ (and be listed in manifest.json if present).
     directories = ["ui", "src", "config", "data/demo", "vendor"]
 
-    # Optional: 3D hologram asset manifest.
-    # If a file called vendor/hologram/manifest.json exists, we will only include files listed in it
-    # from the vendor/hologram/ folder. This gives fine-grained control over what 3D models ship.
+    # 3D hologram asset manifest (strongly recommended for keeping the PWA small).
+    # Generate this automatically by running: python scripts/prepare_hologram_models.py
+    HOLOGRAM_MANIFEST = root / "vendor" / "hologram" / "manifest.json"
+    hologram_whitelist = None
+    if HOLOGRAM_MANIFEST.exists():
+        try:
+            hologram_whitelist = set(json.loads(HOLOGRAM_MANIFEST.read_text(encoding="utf-8")))
+            print(f"Using hologram manifest with {len(hologram_whitelist)} allowed assets.")
+        except Exception as e:
+            print(f"Warning: Could not parse hologram manifest: {e}")
     HOLOGRAM_MANIFEST = root / "vendor" / "hologram" / "manifest.json"
     hologram_whitelist = None
     if HOLOGRAM_MANIFEST.exists():
@@ -37,10 +43,10 @@ def main():
 
             rel_path = str(path.relative_to(root)).replace("\\", "/")
 
-            # Respect hologram manifest if present
+            # Only include curated hologram assets if a manifest is present
             if hologram_whitelist is not None and rel_path.startswith("vendor/hologram/"):
                 if rel_path not in hologram_whitelist:
-                    continue  # Skip assets not explicitly allowed
+                    continue
 
             content = path.read_bytes()
             try:
@@ -77,6 +83,15 @@ def main():
         print(f"OK: All {len(CRITICAL_MODULES)} critical modules present in bundle.")
 
     print(f"   Total files packaged: {len(stlite_files)}")
+
+    # Post-build size audit for 3D assets (helps catch accidental bloat)
+    hologram_size = 0
+    for rel_path, content in stlite_files.items():
+        if rel_path.startswith("vendor/hologram/") and not rel_path.endswith(".json"):
+            size = len(content) if isinstance(content, str) else len(content.get("data", b""))
+            hologram_size += size
+    if hologram_size > 0:
+        print(f"   Curated hologram assets total: {hologram_size / (1024*1024):.1f} MB (before base64)")
 
     # Warn about large assets that will inflate the PWA bundle
     large_assets = []
@@ -353,6 +368,10 @@ def main():
     
     output_path = root / "docs" / "app.html"
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # GitHub Pages needs .nojekyll so it doesn't try to process the site with Jekyll
+    nojekyll = output_path.parent / ".nojekyll"
+    nojekyll.touch(exist_ok=True)
 
     # Very robust write for huge files on Windows.
     # Write to a temp file first, then replace. This avoids many locking issues.
