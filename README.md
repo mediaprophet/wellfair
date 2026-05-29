@@ -3,7 +3,7 @@
 **Current Version: 0.0.3-dev** (29 May 2026)
 
 > **Your data. Your device. No cloud.**
-> WellFair makes you a **P3 — Personal Platform Provider**: your own digital platform, running entirely on your own hardware.
+> WellFair is a **P3-SWA** — a Personal Platform Provider App for the Social Web: your own digital platform, running entirely on your own hardware, connected to the world on your terms.
 
 See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
@@ -12,15 +12,23 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
 
 ## What is WellFair?
 
-**Episteme:WellFair** is a personal wellbeing vault built on the principle that every person should be their own **P3 — Personal Platform Provider**.
+**Episteme:WellFair** is a personal wellbeing vault — and an instance of a new category of software called a **P3-SWA**.
 
-The dominant model of digital health asks you to hand your data to a corporation, which then becomes the platform provider: they store it, analyse it, and decide what you can see. WellFair inverts that. You are the platform. Your phone or computer is the server. Your data never leaves unless you choose to share it.
+### The P3 concept
 
-WellFair gives you the infrastructure to act as your own P3:
-- Ingest your health data (Samsung Health exports, documents, assessments)
-- Store it as structured, semantically-linked RDF — a format designed for interoperability, not lock-in
-- Query and reason over it locally using SPARQL and N3Logic rules
-- Share selectively, via Solid-compatible pod structure, on your own terms
+| Term | Meaning |
+|---|---|
+| **P3** | *Personal Platform Provider* — a person who acts as their own digital platform, rather than relying on a corporation to hold and mediate their data |
+| **P3A** | *Personal Platform Provider App* — software that gives a person the infrastructure to be their own P3: local storage, local compute, local reasoning |
+| **P3-SWA** | *Personal Platform Provider — Social Web App* — a P3A that also participates in the Social Web (Solid, ActivityPub/Fediverse, WebID), so the vault can federate and share selectively without becoming a silo |
+
+The dominant model of digital health makes corporations the platform provider: they ingest your data, control how you see it, and monetise it. WellFair inverts that. **You are the platform.** Your phone or computer is the server. Your data is yours — and when you choose to share it (with a doctor, a carer, a researcher), you do so on your own terms through open, decentralised protocols.
+
+WellFair as a P3-SWA gives you:
+- **Local compute** — ingest, reason over, and query your health data entirely on-device
+- **Semantic interoperability** — data stored as RDF (Turtle/Solid) so it can speak to any system that understands linked data, without lock-in
+- **Selective federation** — share specific records via Solid-compatible pod structure; Proxy Consent logic controls who sees what
+- **Social Web participation** — your vault is a node, not a user account on someone else's node
 
 Developed independently by Timothy Charles Holborn, WellFair also maps physiological data against **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate isn't just a number — it's understood in the context of safety, shelter, relationships, and psychological wellbeing.
 
@@ -70,6 +78,8 @@ wellfare-core (Rust → WASM)              extensions/
 
 ### Core principles
 - **You are the platform (P3)** — your device is the server; there is no upstream provider
+- **WellFair is a P3A** — it exists to give you that infrastructure, not to be a platform itself
+- **Social Web, not social silo (P3-SWA)** — federation via Solid/WebID on your terms, not a walled garden
 - **No cloud** — your data never leaves your device unless you explicitly share it
 - **No OWL for people** — health subjects described with SHACL/RDFS shapes, not OWL class membership (which can dehumanise)
 - **N3Logic for reasoning** — causal/clinical rules, not OWL entailment
