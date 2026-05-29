@@ -126,9 +126,44 @@ def main():
         height: 20px;
         fill: currentColor;
       }}
+      #pwa-update-btn {{
+        display: none; /* Hidden by default until an update is ready */
+        position: fixed;
+        bottom: 84px;
+        right: 24px;
+        z-index: 9999999;
+        background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 28px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: 0.05em;
+        box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }}
+      #pwa-update-btn:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(20, 184, 166, 0.6);
+      }}
+      #pwa-update-btn:active {{
+        transform: translateY(1px);
+      }}
     </style>
   </head>
   <body>
+    <button id="pwa-update-btn" style="display: none;">
+      <svg class="install-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+      </svg>
+      Update Available
+    </button>
     <button id="pwa-install-btn" style="display: none;">
       <svg class="install-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
@@ -199,6 +234,39 @@ def main():
         deferredPrompt = null;
         console.log('PWA was installed');
       }});
+
+      // PWA Update Logic
+      const updateBtn = document.getElementById('pwa-update-btn');
+      let newWorker;
+
+      if ('serviceWorker' in navigator) {{
+        navigator.serviceWorker.register('sw.js').then(reg => {{
+          reg.addEventListener('updatefound', () => {{
+            newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {{
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {{
+                // New update available
+                updateBtn.style.display = 'flex';
+              }}
+            }});
+          }});
+        }});
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {{
+          if (!refreshing) {{
+            refreshing = true;
+            window.location.reload();
+          }}
+        }});
+
+        updateBtn.addEventListener('click', () => {{
+          updateBtn.style.display = 'none';
+          if (newWorker) {{
+            newWorker.postMessage({{ type: 'SKIP_WAITING' }});
+          }}
+        }});
+      }}
     </script>
   </body>
 </html>
