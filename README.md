@@ -1,8 +1,9 @@
 # Episteme:WellFair
 
-**Current Version: 0.0.2** (29 May 2026)
+**Current Version: 0.0.3-dev** (29 May 2026)
 
-See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for details.
+See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
+See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap (WASM core, oxigraph SPARQL, HRA client, extension framework).
 
 **Episteme:WellFair** is a locally-hosted Personal Wellbeing Informatics Vault designed to help individuals own, analyze, and protect their wellbeing story across clinical, social, legal, and lived-context dimensions. 
 
