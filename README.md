@@ -2,7 +2,7 @@
 
 **Current Version: 0.0.3-dev** (29 May 2026)
 
-> **The untransferable code is you.**
+> **WellFair: Welfare, wellness & Fairness, Fair Terms.**
 > WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.
 
 See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
