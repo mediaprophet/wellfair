@@ -4,12 +4,21 @@ import os
 
 import streamlit as st
 from pathlib import Path
+import sys
+import traceback
 
 # Add project root to sys.path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
 from src.utils import ROOT, DEFAULT_EXPORT_PATH, DEFAULT_TEMPLATE_PATH, DEFAULT_OUTPUT_PATH, PROJECT_ROOT, check_cache_status
+
+try:
+    import src.phr_models.imaging
+except Exception as e:
+    st.error(f"CRITICAL IMAGING IMPORT ERROR: {type(e).__name__} - {e}")
+    st.code(traceback.format_exc())
+    st.stop()
 from ui.utils import inject_css, cached_load, init_mock_data
 from ui.tabs.personal_health import render_personal_health
 from ui.tabs.pathology import render_pathology
