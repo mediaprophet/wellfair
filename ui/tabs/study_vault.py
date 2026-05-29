@@ -5,18 +5,17 @@ import plotly.express as px
 import hashlib
 from datetime import datetime, date, timedelta
 from src.phr_models.profile import EpistemicStatus, AllergyConditionNode
+from ui.utils.components import render_info_banner
 
 def render_study_vault(dark_mode: bool):
     st.markdown("## 🔬 Study & Research Vault")
     
-    st.markdown(
-        """<div class="premium-card" style="border-left: 5px solid #0891b2; margin-bottom: 20px;">
-<h4 style="margin: 0; color: #0891b2;">🔬 Clinical Literature Analysis & Diagnostic Forms</h4>
-<p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-Digitise standardized diagnostic intake questionnaires, parse and evaluate medical literature, establish local clinical hypotheses, and securely share signed study packages with practitioners.
-</p>
-</div>""",
-        unsafe_allow_html=True
+    render_info_banner(
+        title="Clinical Literature Analysis & Diagnostic Forms",
+        body="Digitise standardized diagnostic intake questionnaires, parse and evaluate medical literature, establish local clinical hypotheses, and securely share signed study packages with practitioners.",
+        accent_color="#0891b2",
+        icon="🔬",
+        dark_mode=dark_mode,
     )
     
     # 10 Questions for K10

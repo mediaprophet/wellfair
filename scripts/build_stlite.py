@@ -5,7 +5,22 @@ from pathlib import Path
 
 def main():
     root = Path(__file__).parent.parent
-    directories = ["ui", "src", "config", "data/demo"]
+    # Only bundle what is actually required for the app + the curated lightweight 3D assets.
+    # We deliberately exclude "docs" (especially docs/models/) because it contains large .glb files
+    # that would bloat the PWA bundle to multiple gigabytes.
+    directories = ["ui", "src", "config", "data/demo", "vendor"]
+
+    # Optional: 3D hologram asset manifest.
+    # If a file called vendor/hologram/manifest.json exists, we will only include files listed in it
+    # from the vendor/hologram/ folder. This gives fine-grained control over what 3D models ship.
+    HOLOGRAM_MANIFEST = root / "vendor" / "hologram" / "manifest.json"
+    hologram_whitelist = None
+    if HOLOGRAM_MANIFEST.exists():
+        try:
+            hologram_whitelist = set(json.loads(HOLOGRAM_MANIFEST.read_text(encoding="utf-8")))
+            print(f"Using hologram manifest with {len(hologram_whitelist)} allowed assets.")
+        except Exception as e:
+            print(f"Warning: Could not read hologram manifest: {e}")
     
     stlite_files = {}
     
@@ -19,9 +34,14 @@ def main():
                 continue
             if path.name.endswith(".pyc") or path.name == ".DS_Store":
                 continue
-                
+
             rel_path = str(path.relative_to(root)).replace("\\", "/")
-            
+
+            # Respect hologram manifest if present
+            if hologram_whitelist is not None and rel_path.startswith("vendor/hologram/"):
+                if rel_path not in hologram_whitelist:
+                    continue  # Skip assets not explicitly allowed
+
             content = path.read_bytes()
             try:
                 stlite_files[rel_path] = content.decode("utf-8")
@@ -57,6 +77,19 @@ def main():
         print(f"OK: All {len(CRITICAL_MODULES)} critical modules present in bundle.")
 
     print(f"   Total files packaged: {len(stlite_files)}")
+
+    # Warn about large assets that will inflate the PWA bundle
+    large_assets = []
+    for rel, content in stlite_files.items():
+        size = len(content) if isinstance(content, str) else len(content.get("data", ""))
+        if size > 5 * 1024 * 1024:  # > 5 MB
+            large_assets.append((rel, size / (1024*1024)))
+
+    if large_assets:
+        print("\n⚠️  WARNING: The following large assets are included in the bundle:")
+        for rel, mb in sorted(large_assets, key=lambda x: -x[1]):
+            print(f"     {rel}  ({mb:.1f} MB)")
+        print("   These will significantly increase the download size of the PWA.")
 
     files_json = json.dumps(stlite_files).replace("<", "\\u003c")
 
@@ -203,7 +236,24 @@ def main():
         <div class="loader-text">Initializing Holographic Engine...</div>
     </div>
     <div id="root"></div>
+
+    <!-- Device File Sources UI (visible on installed PWA) -->
+    <div id="device-sources-bar" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #111113; border-top: 1px solid #27272a; padding: 8px 12px; z-index: 999999; font-family: system-ui, sans-serif;">
+      <div style="max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span style="color: #a1a1aa; font-size: 13px;">📁 Device Data Sources</span>
+        <button id="device-choose-folder" style="background: #27272a; color: white; border: 1px solid #3f3f46; padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">
+          Choose Export Folder on Phone
+        </button>
+        <span id="device-status" style="color: #4ade80; font-size: 12px;"></span>
+        <button id="device-import-btn" style="display:none; background: #14b8a6; color: black; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+          Import &amp; Sync to Vault
+        </button>
+      </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.js"></script>
+    <!-- WellFair Device File System Bridge + UI (for installed PWA) -->
+    <script src="device-bridge.js"></script>
+    <script src="device-ui.js"></script>
     <script>
       const files = {files_json};
       
@@ -263,6 +313,7 @@ def main():
         console.log('PWA was installed');
       }});
 
+      // Device UI is now handled by docs/device-ui.js (loaded externally)
       // PWA Update Logic
       const updateBtn = document.getElementById('pwa-update-btn');
       let newWorker;
@@ -301,8 +352,24 @@ def main():
 """
     
     output_path = root / "docs" / "app.html"
-    output_path.write_text(html, encoding="utf-8")
-    print(f"Successfully wrote {output_path}")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Very robust write for huge files on Windows.
+    # Write to a temp file first, then replace. This avoids many locking issues.
+    temp_path = output_path.with_suffix(".tmp.html")
+    with open(temp_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(html)
+
+    if output_path.exists():
+        try:
+            output_path.unlink()
+        except PermissionError:
+            print("Warning: Old app.html is locked. You may need to close any browser tab viewing it.")
+
+    temp_path.replace(output_path)
+
+    final_size = output_path.stat().st_size / (1024 * 1024)
+    print(f"Successfully wrote {output_path} ({final_size:.1f} MB)")
 
 if __name__ == "__main__":
     main()

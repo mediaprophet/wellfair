@@ -73,7 +73,7 @@ Track health events, pathology timelines, and dependent clinical workflows. The 
                 "prereq": "task-2",
                 "produces_artifact": True,
                 "artifact_name": "Specimen_Blood_01",
-                "delay_sla": 48,  # 48 hours expected delay
+                "delay_sla": 48,
             },
             {
                 "id": "ev-3",
@@ -85,20 +85,6 @@ Track health events, pathology timelines, and dependent clinical workflows. The 
                 "status": "Awaiting Results",
                 "category": "Results Ingestion",
                 "prereq": "ev-2",
-                "produces_artifact": True,
-                "artifact_name": "DiagnosticReport_Lipids",
-                "delay_sla": None,
-            },
-            {
-                "id": "task-3",
-                "title": "Prepare Symptoms List",
-                "actor": "Patient (Self)",
-                "start": now + timedelta(days=1, hours=22),
-                "end": now + timedelta(days=2),
-                "date": now + timedelta(days=1, hours=22),
-                "status": "Pending",
-                "category": "Tasks & Preparations",
-                "prereq": "ev-3",
                 "produces_artifact": False,
                 "delay_sla": None,
             },
@@ -114,9 +100,89 @@ Track health events, pathology timelines, and dependent clinical workflows. The 
                 "prereq": "task-3",
                 "produces_artifact": False,
                 "delay_sla": None,
-            }
+            },
         ]
-        
+
+    # Inject structured assessments (questionnaires + pathology reports from PDFs) into the timeline
+    # Smart injection: only add items that aren't already present (prevents duplicates on reruns)
+    from ui.utils import get_all_structured_assessments
+
+    existing_ids = {event.get("id") for event in st.session_state.timeline_events}
+
+    for item in get_all_structured_assessments():
+        if isinstance(item, dict) and "date_taken" in item:
+            event_id = f"assess-{item.get('id', id(item))}"
+            if event_id in existing_ids:
+                continue
+
+            try:
+                date_val = datetime.fromisoformat(item["date_taken"]) if isinstance(item.get("date_taken"), str) else item.get("date_taken")
+            except Exception:
+                date_val = datetime.now()
+
+            st.session_state.timeline_events.append({
+                "id": event_id,
+                "title": f"{item.get('type', 'Assessment')} - Score {item.get('total_score', item.get('score', ''))}",
+                "actor": "Patient (Self)",
+                "start": date_val,
+                "end": date_val,
+                "date": date_val,
+                "status": "Completed",
+                "category": "Assessment / Questionnaire",
+                "prereq": None,
+                "produces_artifact": True,
+                "delay_sla": None,
+            })
+            existing_ids.add(event_id)
+
+        elif hasattr(item, "date_issued"):  # Pathology report object
+            event_id = f"path-{item.id}"
+            if event_id in existing_ids:
+                continue
+
+            st.session_state.timeline_events.append({
+                "id": event_id,
+                "title": f"Pathology Report ({len(getattr(item, 'observations', []))} tests)",
+                "actor": "Pathology Lab",
+                "start": item.date_issued,
+                "end": item.date_issued,
+                "date": item.date_issued,
+                "status": "Completed",
+                "category": "Pathology",
+                "prereq": None,
+                "produces_artifact": True,
+                "delay_sla": None,
+            })
+            existing_ids.add(event_id)
+
+            st.session_state.timeline_events.append({
+                "id": f"assess-{item.get('id', id(item))}",
+                "title": f"{item.get('type', 'Assessment')} - Score {item.get('total_score', item.get('score', ''))}",
+                "actor": "Patient (Self)",
+                "start": date_val,
+                "end": date_val,
+                "date": date_val,
+                "status": "Completed",
+                "category": "Assessment / Questionnaire",
+                "prereq": None,
+                "produces_artifact": True,
+                "delay_sla": None,
+            })
+        elif hasattr(item, "date_issued"):  # Pathology report object
+            st.session_state.timeline_events.append({
+                "id": f"path-{item.id}",
+                "title": f"Pathology Report ({len(getattr(item, 'observations', []))} tests)",
+                "actor": "Pathology Lab",
+                "start": item.date_issued,
+                "end": item.date_issued,
+                "date": item.date_issued,
+                "status": "Completed",
+                "category": "Pathology",
+                "prereq": None,
+                "produces_artifact": True,
+                "delay_sla": None,
+            })
+
     events = st.session_state.timeline_events
     
     t_view, t_workflows, t_sla, t_log = st.tabs([
@@ -130,6 +196,17 @@ Track health events, pathology timelines, and dependent clinical workflows. The 
     with t_view:
         st.markdown("### 📅 Temporal Event & Task History")
         st.write("Chronological view of observations, appointments, tasks, and procedures in your RDF-Star graph.")
+        
+        # Refresh button for structured vault data (questionnaires + pathology from PDFs)
+        col_refresh, _ = st.columns([1, 3])
+        with col_refresh:
+            if st.button("🔄 Refresh from Vault Data", key="refresh_timeline_vault"):
+                # Remove any previously injected structured events
+                st.session_state.timeline_events = [
+                    ev for ev in st.session_state.timeline_events 
+                    if not (str(ev.get("id", "")).startswith("assess-") or str(ev.get("id", "")).startswith("path-"))
+                ]
+                st.rerun()  # Re-run the page so the smart injection at the top adds latest data
         
         # Period Evaluator Selector
         st.markdown("#### 🔍 Time Range Evaluator")

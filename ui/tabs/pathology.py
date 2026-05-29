@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from src.phr_models.pathology import DiagnosticReport, PathologyObservation, DiagnosticReportStatus
 from src.phr_models.proxy_consent import PrivacyMode
+from ui.utils.components import render_info_banner, render_simple_metric_card
 
 def get_gauge_html(value: float, low: float | None, high: float | None) -> str:
     """Renders a custom HTML/CSS reference range slider gauge."""
@@ -116,16 +117,13 @@ def render_pathology(dark_mode: bool):
     st.markdown("## 🔬 Lab & Pathology Results")
     
     st.markdown(
-        """
-        <div class="premium-card" style="border-left: 5px solid #0d9488; margin-bottom: 20px;">
-            <h4 style="margin: 0; color: #0d9488;">🧪 Diagnostic & Lab Observational Informatics</h4>
-            <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-                Track clinically validated laboratory results, pathology panels, and custom bio-measurements. Use the trending engine to map values chronologically and verify references. All records adhere to strict privacy controls.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        render_info_banner(
+            title="Diagnostic & Lab Observational Informatics",
+            body="Track clinically validated laboratory results, pathology panels, and custom bio-measurements. Use the trending engine to map values chronologically and verify references. All records adhere to strict privacy controls.",
+            accent_color="#0d9488",
+            icon="🧪",
+            dark_mode=dark_mode,
+        )
     
     # Initialize reports list if missing
     if "diagnostic_reports" not in st.session_state:
@@ -154,37 +152,22 @@ def render_pathology(dark_mode: bool):
         latest_glucose = f"{val} {unit}"
         
     with c_met1:
-        st.markdown(
-            f"""
-            <div class="premium-card">
-                <div class="metric-title">Diagnostic Reports</div>
-                <div class="metric-value">{len(reports)} Reports</div>
-                <div class="metric-subtitle">{total_obs} Total test observations</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        render_simple_metric_card(
+            title="Diagnostic Reports",
+            value=f"{len(reports)} Reports",
+            subtitle=f"{total_obs} Total test observations",
         )
     with c_met2:
-        st.markdown(
-            f"""
-            <div class="premium-card">
-                <div class="metric-title">Fasting Blood Glucose</div>
-                <div class="metric-value">{latest_glucose}</div>
-                <div class="metric-subtitle">Latest glycemic biochemistry</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        render_simple_metric_card(
+            title="Fasting Blood Glucose",
+            value=latest_glucose,
+            subtitle="Latest glycemic biochemistry",
         )
     with c_met3:
-        st.markdown(
-            f"""
-            <div class="premium-card">
-                <div class="metric-title">Protected Diagnostics</div>
-                <div class="metric-value">{sensitive_tests} Secured</div>
-                <div class="metric-subtitle">Strict Privacy Mode A activated</div>
-            </div>
-            """,
-            unsafe_allow_html=True
+        render_simple_metric_card(
+            title="Protected Diagnostics",
+            value=f"{sensitive_tests} Secured",
+            subtitle="Strict Privacy Mode A activated",
         )
         
     tab_timeline, tab_trends, tab_add = st.tabs([

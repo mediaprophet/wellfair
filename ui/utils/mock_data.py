@@ -24,6 +24,34 @@ from src.phr_models.psychiatry import ObservationContext
 
 
 def init_mock_data():
+    profile = st.query_params.get("profile", "gemini").lower()
+    
+    if "patient_profile" not in st.session_state or st.session_state.get("_mock_data_profile") != profile:
+        sex_map = {
+            "margaret": "Female",
+            "elena": "Female",
+            "rebecca": "Female",
+            "michael": "Male",
+            "robert": "Male",
+            "jordan": "Male",
+            "gemini": "Intersex"
+        }
+        st.session_state.patient_profile = {
+            "full_name": profile.capitalize(),
+            "date_of_birth": datetime(1980, 5, 20).date(),
+            "biological_sex": sex_map.get(profile, "Male"),
+            "pronouns": "She/Her" if sex_map.get(profile) == "Female" else "He/Him",
+            "gender_identity": profile.capitalize(),
+            "ancestry_lineage": "Anglo-Celtic / Western European",
+            "primary_language": "English",
+            "medicare_number": "1234 56789 1",
+            "insurance_provider": "Medibank Private",
+            "insurance_policy_number": "MP987654321",
+            "emergency_contact_name": "Emergency Contact",
+            "emergency_contact_phone": "+61 400 123 456"
+        }
+        st.session_state._mock_data_profile = profile
+
     if "related_persons" not in st.session_state:
         st.session_state.related_persons = [
             RelatedPerson(

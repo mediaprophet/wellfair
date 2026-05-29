@@ -2,24 +2,19 @@ from datetime import datetime
 import streamlit as st
 
 from ui.utils import find_df_by_datatype
+from ui.utils.components import render_info_banner, render_kpi_row
 from src.phr_models.proxy_consent import PrivacyMode
 from src.phr_models.cases import CaseFile, CaseTask, CaseCategory, CaseStatus
 
 def render_case_management(dark_mode: bool, normalized: dict):
     st.markdown("## 💼 Case Management & Claims Vault")
     
-    st.markdown(
-        """
-        <div class="premium-card" style="border-left: 5px solid #0d9488; margin-bottom: 20px;">
-            <h4 style="margin: 0; color: #0d9488;">📂 Case Files & Claims Engine</h4>
-            <p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-                Group symptoms, Samsung Health measurements, clinical documentation, and tasks under self-sovereign <b>Case Files</b>. 
-                Use these to support a health hypothesis, belief, or diagnostic requirement (e.g., Sleep Apnea evaluation, routine checks, or interval lab tests). 
-                All Case Files default to <b>Strict Privacy Mode (Mode A)</b>.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
+    render_info_banner(
+        title="Case Files & Claims Engine",
+        body='Group symptoms, Samsung Health measurements, clinical documentation, and tasks under self-sovereign <b>Case Files</b>. Use these to support a health hypothesis, belief, or diagnostic requirement (e.g., Sleep Apnea evaluation, routine checks, or interval lab tests). All Case Files default to <b>Strict Privacy Mode (Mode A)</b>.',
+        accent_color="#0d9488",
+        icon="📂",
+        dark_mode=dark_mode,
     )
     
     cases = st.session_state.get("case_files", [])
@@ -37,22 +32,11 @@ def render_case_management(dark_mode: bool, normalized: dict):
         (k3, "Pending Tasks", str(open_tasks), "📝", "#ef4444"),
         (k4, "Completed Tasks", str(completed_tasks), "✅", "#10b981"),
     ]
-    for col, title, value, emoji, color in kpi_data:
-        with col:
-            st.markdown(
-                f"""
-                <div class="premium-card" style="border-left: 5px solid {color};">
-                    <div class="flex-center">
-                        <div class="icon-circle" style="background: {color}22; color: {color};">{emoji}</div>
-                        <div>
-                            <div class="metric-title">{title}</div>
-                            <div class="metric-value">{value}</div>
-                        </div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+    kpis = [
+        {"title": title, "value": str(value), "subtitle": "", "emoji": emoji, "color": color}
+        for _, title, value, emoji, color in kpi_data
+    ]
+    render_kpi_row(kpis, dark_mode=dark_mode)
             
     st.divider()
     

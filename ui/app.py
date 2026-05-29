@@ -32,7 +32,32 @@ def _ensure_project_on_path() -> None:
 _ensure_project_on_path()
 
 from src.utils import ROOT, DEFAULT_EXPORT_PATH, DEFAULT_TEMPLATE_PATH, DEFAULT_OUTPUT_PATH, PROJECT_ROOT, check_cache_status
-from ui.utils import inject_css, cached_load, init_mock_data
+from ui.utils import (
+    inject_css,
+    cached_load,
+    init_mock_data,
+    auto_load_structured_data,
+    auto_save_structured_data,
+)
+
+DEVICE_DATA_DIR = "/device_data"
+
+def has_device_data() -> bool:
+    """Check if files were injected from the phone's file system via the PWA bridge."""
+    try:
+        return os.path.isdir(DEVICE_DATA_DIR) and len(os.listdir(DEVICE_DATA_DIR)) > 0
+    except Exception:
+        return False
+
+def get_device_data_files() -> list[str]:
+    try:
+        if has_device_data():
+            return [os.path.join(DEVICE_DATA_DIR, f) for f in os.listdir(DEVICE_DATA_DIR)]
+    except Exception:
+        pass
+    return []
+from ui.utils.navigation import render_sidebar_nav, get_nav_items
+import os
 from ui.tabs.personal_health import render_personal_health
 from ui.tabs.pathology import render_pathology
 from ui.tabs.mental_health import render_mental_health
@@ -53,10 +78,10 @@ from ui.tabs.study_vault import render_study_vault
 
 
 st.set_page_config(
-    page_title="Episteme:WellFair – A Personal Well-Fair Vault & Digital Services Ecosystem",
+    page_title="Episteme:WellFair v0.0.2 – Personal Well-Fair Vault",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",   # Better mobile experience — user can open sidebar when needed
 )
 
 def parse_args():
@@ -77,24 +102,36 @@ def main():
     args = parse_args()
     
     # Profile selection
+    profile_options = ["gemini", "developer_real", "production", "michael", "elena", "rebecca", "margaret", "robert", "jordan"]
+    profile_labels = {
+        "gemini": "♊ gemini (Demo Dev Profile)",
+        "developer_real": "🛠️ developer_real (Real Data)",
+        "production": "🔒 production (Production)",
+        "michael": "👤 Michael R. (Demo)",
+        "elena": "👤 Elena V. (Demo)",
+        "rebecca": "👤 Rebecca L. (Demo)",
+        "margaret": "👤 Margaret T. (Demo)",
+        "robert": "👤 Robert K. (Demo)",
+        "jordan": "👤 Jordan M. (Demo)"
+    }
+
+    # Add device data source if available (from installed PWA file system bridge)
+    if has_device_data():
+        profile_options = ["device"] + profile_options
+        profile_labels["device"] = "📱 Device Exports (Phone Storage)"
+
     profile = st.sidebar.selectbox(
         "Environment Profile",
-        options=["gemini", "developer_real", "production", "michael", "elena", "rebecca", "margaret", "robert", "jordan"],
+        options=profile_options,
         index=0,
-        format_func=lambda x: {
-            "gemini": "♊ gemini (Demo Dev Profile)",
-            "developer_real": "🛠️ developer_real (Real Data)",
-            "production": "🔒 production (Production)",
-            "michael": "👤 Michael R. (Demo)",
-            "elena": "👤 Elena V. (Demo)",
-            "rebecca": "👤 Rebecca L. (Demo)",
-            "margaret": "👤 Margaret T. (Demo)",
-            "robert": "👤 Robert K. (Demo)",
-            "jordan": "👤 Jordan M. (Demo)"
-        }[x]
+        format_func=lambda x: profile_labels.get(x, x)
     )
     
-    if profile == "gemini":
+    if profile == "device" and has_device_data():
+        # Use files injected from the phone via the PWA File System Access bridge
+        export_path = DEVICE_DATA_DIR
+        output_path = str(PROJECT_ROOT / "data" / "demo" / "device" / "solid_pod")
+    elif profile == "gemini":
         export_path = str(PROJECT_ROOT / "data" / "demo" / "gemini" / "samsung_export")
         output_path = str(PROJECT_ROOT / "data" / "demo" / "gemini" / "solid_pod")
     elif profile in ["michael", "elena", "rebecca", "margaret", "robert", "jordan"]:
@@ -136,11 +173,24 @@ def main():
     
     # Initialize mock datastore early
     init_mock_data()
+
+    # Restore persisted vault data (questionnaires, pathology reports, etc.)
+    auto_load_structured_data()
+
+    # Show device data source status (PWA + Android file system access)
+    if has_device_data():
+        device_files = get_device_data_files()
+        st.sidebar.success(f"📱 Device imports ready: {len(device_files)} files in /device_data")
+        if st.sidebar.button("Use Device Exports as Source", type="secondary"):
+            # This allows the rest of the app to treat /device_data as the export root
+            st.session_state["device_data_mode"] = True
+            st.rerun()
     
     st.sidebar.markdown("""
          <div style='padding: 10px 0px 20px 0px;'>
              <h1 style='font-size: 2.2rem; font-weight: 800; margin: 0; background: linear-gradient(135deg, #14b8a6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;'>Episteme<br><span style='font-size: 1.7rem; font-weight: 700;'>:WellFair</span></h1>
              <p style='font-size: 0.72rem; font-weight: 600; color: #64748b; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;'>Personal Well-Fair Vault & Digital Services Ecosystem</p>
+             <p style='font-size: 0.65rem; color: #64748b; margin-top: 4px;'>v0.0.2 • 29 May 2026</p>
          </div>
     """, unsafe_allow_html=True)
     
@@ -198,37 +248,8 @@ def main():
     
     st.sidebar.divider()
     
-    # Navigation
-    st.sidebar.subheader("Navigation")
-    nav_options = [
-        "❤️ Personal Health",
-        "💼 Case Management & Claims Vault",
-        "📋 Profile & Medical Intake",
-        "📖 Study & Research Vault",
-        "🔬 Lab & Pathology Results",
-        "📅 Semantic Timeline & Calendar",
-        "🧠 Mental Health & Wellbeing",
-        "📝 Assessments",
-        "🧬 3D Biometric Hologram",
-        "🏛️ Life Events & Socioeconomic Wellbeing",
-        "🤝 Social Work & Assistance",
-        "📍 Location & Environmental Triggers",
-        "👥 Agent Directory, Delegation & Cases",
-        "📥 Document Ingestion & Claims"
-    ]
-    if is_sanctuary:
-        nav_options.append("🤫 Sanctuary Mode")
-        
-    app_section = st.sidebar.radio(
-        "Go to",
-        options=nav_options,
-        index=len(nav_options)-1 if is_sanctuary and not st.session_state.get("sanctuary_mode_redirected", False) else 0,
-        label_visibility="collapsed"
-    )
-    if is_sanctuary:
-        st.session_state.sanctuary_mode_redirected = True
-    else:
-        st.session_state.pop("sanctuary_mode_redirected", None)
+    # New premium navigation (button-driven, stable keys, excellent mobile support)
+    app_section_key = render_sidebar_nav(dark_mode, is_sanctuary)
     
     st.sidebar.divider()
     
@@ -256,15 +277,19 @@ def main():
                 else:
                     st.error("Invalid PIN")
     
-    # In demo/Pyodide environments the export path may not exist – fall back to mock data
+    # Device data from phone is treated as real user data
+    _is_device_profile = profile == "device"
     _is_demo_profile = profile in ["gemini", "michael", "elena", "rebecca", "margaret", "robert", "jordan"]
+
     if not os.path.exists(export_path):
-        if not _is_demo_profile:
+        if _is_device_profile:
+            st.error("Device data folder is empty or not accessible.")
+            st.stop()
+        elif not _is_demo_profile:
             st.error(f"Export path not found: `{export_path}`")
             st.info("Please set the correct path via CLI: `python -m streamlit run ui/app.py -- --export-path /path/to/export`")
             st.stop()
         else:
-            # Silently continue – mock_data already initialised above
             normalized = {}
     else:
         try:
@@ -277,39 +302,30 @@ def main():
                 st.error(f"Failed to load export data: {e}")
                 st.stop()
 
-    # Route based on navigation
+    # === Clean section router (stable keys from navigation.py) ===
+    SECTION_RENDERERS = {
+        "personal_health": lambda: render_personal_health(dark_mode, normalized),
+        "case_management": lambda: render_case_management(dark_mode, normalized),
+        "profile_intake": lambda: render_profile_intake(dark_mode, normalized),
+        "study_vault": lambda: render_study_vault(dark_mode),
+        "pathology": lambda: render_pathology(dark_mode),
+        "calendar_timeline": lambda: render_calendar_timeline(dark_mode),
+        "mental_health": lambda: render_mental_health(dark_mode, normalized),
+        "assessments": lambda: render_psychiatric_assessments(dark_mode),
+        "anatomy_3d": lambda: render_anatomy_3d(dark_mode, normalized),
+        "life_events": lambda: render_life_events(dark_mode),
+        "social_work": lambda: render_social_work(dark_mode),
+        "location": lambda: render_location(dark_mode),
+        "agent_directory": lambda: render_agent_directory(dark_mode, normalized),
+        "document_ingestion": lambda: render_document_ingestion(dark_mode),
+        "sanctuary_mode": lambda: render_sanctuary_mode(dark_mode),
+    }
+
     if show_settings:
         render_vault_admin(dark_mode, normalized, export_path, template_path, output_path)
-    elif app_section == "❤️ Personal Health":
-        render_personal_health(dark_mode, normalized)
-    elif app_section == "💼 Case Management & Claims Vault":
-        render_case_management(dark_mode, normalized)
-    elif app_section == "📋 Profile & Medical Intake":
-        render_profile_intake(dark_mode, normalized)
-    elif app_section == "📖 Study & Research Vault":
-        render_study_vault(dark_mode)
-    elif app_section == "🔬 Lab & Pathology Results":
-        render_pathology(dark_mode)
-    elif app_section == "📅 Semantic Timeline & Calendar":
-        render_calendar_timeline(dark_mode)
-    elif app_section == "🧠 Mental Health & Wellbeing":
-        render_mental_health(dark_mode, normalized)
-    elif app_section == "📝 Assessments":
-        render_psychiatric_assessments(dark_mode)
-    elif app_section == "🧬 3D Biometric Hologram":
-        render_anatomy_3d(dark_mode, normalized)
-    elif app_section == "🏛️ Life Events & Socioeconomic Wellbeing":
-        render_life_events(dark_mode)
-    elif app_section == "🤝 Social Work & Assistance":
-        render_social_work(dark_mode)
-    elif app_section == "📍 Location & Environmental Triggers":
-        render_location(dark_mode)
-    elif app_section == "👥 Agent Directory, Delegation & Cases":
-        render_agent_directory(dark_mode, normalized)
-    elif app_section == "📥 Document Ingestion & Claims":
-        render_document_ingestion(dark_mode)
-    elif app_section == "🤫 Sanctuary Mode":
-        render_sanctuary_mode(dark_mode)
+    else:
+        renderer = SECTION_RENDERERS.get(app_section_key, SECTION_RENDERERS["personal_health"])
+        renderer()
 
 if __name__ == "__main__":
     main()

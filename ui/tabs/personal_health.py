@@ -11,7 +11,8 @@ from ui.utils import (
     extract_timeline_events,
     plot_dataset_chart,
     find_df_by_keyword,
-    find_df_by_datatype
+    find_df_by_datatype,
+    render_kpi_row,
 )
 from src.sleep_analytics import (
     SleepMetrics, SleepTrendAnalysis, SleepInsights, SleepPatterns
@@ -23,35 +24,26 @@ def render_personal_health(dark_mode: bool, normalized: dict):
     with tab_dashboard:
         st.markdown("## ❤️ Personal Health Dashboard")
         metrics = get_dashboard_metrics(normalized)
-        cols = st.columns(4)
-        
+
         kpi_configs = [
             ("steps", "Steps Tracker", "👣", "#3b82f6"),
             ("sleep", "Sleep Summary", "💤", "#8b5cf6"),
             ("weight", "Body Weight", "⚖️", "#10b981"),
             ("heart_rate", "Heart Rate", "💓", "#ef4444")
         ]
-        
-        for i, (key, title, emoji, color) in enumerate(kpi_configs):
-            with cols[i]:
-                m_data = metrics.get(key, {"value": "No Data", "subtitle": "N/A"})
-                st.markdown(
-                    textwrap.dedent(f"""
-                    <div class="premium-card" style="border-left: 5px solid {color};">
-                        <div class="flex-center">
-                            <div class="icon-circle" style="background: {color}22; color: {color};">
-                                {emoji}
-                            </div>
-                            <div>
-                                <div class="metric-title">{title}</div>
-                                <div class="metric-value">{m_data["value"]}</div>
-                                <div class="metric-subtitle">{m_data["subtitle"]}</div>
-                            </div>
-                        </div>
-                    </div>
-                    """),
-                    unsafe_allow_html=True
-                )
+
+        kpis = []
+        for key, title, emoji, color in kpi_configs:
+            m_data = metrics.get(key, {"value": "No Data", "subtitle": "N/A"})
+            kpis.append({
+                "title": title,
+                "value": str(m_data["value"]),
+                "subtitle": m_data["subtitle"],
+                "emoji": emoji,
+                "color": color,
+            })
+
+        render_kpi_row(kpis, dark_mode=dark_mode)
                 
         st.markdown("### 📈 Core Health Trends")
         

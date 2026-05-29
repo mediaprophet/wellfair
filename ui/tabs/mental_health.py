@@ -23,6 +23,20 @@ def render_mental_health(dark_mode: bool, normalized: dict):
         """,
         unsafe_allow_html=True
     )
+
+    # Show recently captured structured assessments / pathology (from PDF + interactive forms)
+    recent = st.session_state.get("recent_assessments", [])
+    structured_path = st.session_state.get("structured_pathology_reports", [])
+    if recent or structured_path:
+        with st.expander("📊 Recently Captured Structured Data (from Assessments & PDFs)", expanded=False):
+            if recent:
+                st.markdown("**Recent Questionnaire Submissions**")
+                for r in recent[-3:]:
+                    st.markdown(f"- **{r.get('date')}** — {r.get('type')} — Score: **{r.get('score')}**")
+            if structured_path:
+                st.markdown("**Recent Structured Pathology (from PDFs)**")
+                for rep in structured_path[-2:]:
+                    st.markdown(f"- Report {str(rep.id)[:8]}… — {len(rep.observations)} observations on {rep.date_issued.date()}")
     
     tab_mood, tab_psychology, tab_sleep = st.tabs(["🧠 Mood & Observations", "🧪 Psychology", "💤 Sleep Analytics"])
     with tab_mood:

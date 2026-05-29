@@ -151,6 +151,36 @@ def inject_css(dark: bool) -> None:
         div[data-testid="stRadio"] label div[role="presentation"] {{
             display: none !important;
         }}
+
+        /* Modern Sidebar Navigation Buttons (replaces old radio) */
+        section[data-testid="stSidebar"] button {{
+            background: {input_bg} !important;
+            border: 1px solid {input_border} !important;
+            border-radius: 12px !important;
+            padding: 13px 16px !important;
+            font-family: 'Outfit', sans-serif !important;
+            font-size: 0.96rem !important;
+            font-weight: 500 !important;
+            color: {label_color} !important;
+            text-align: left !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            margin-bottom: 4px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }}
+
+        section[data-testid="stSidebar"] button:hover {{
+            background: {"rgba(20, 184, 166, 0.12)" if dark else "rgba(20, 184, 166, 0.08)"} !important;
+            border-color: {HEALTH_COLORS["primary"]} !important;
+            transform: translateX(3px);
+        }}
+
+        section[data-testid="stSidebar"] button[kind="primary"] {{
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.22), rgba(59, 130, 246, 0.18)) !important;
+            border-color: {HEALTH_COLORS["primary"]} !important;
+            color: {HEALTH_COLORS["secondary"]} !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 14px rgba(20, 184, 166, 0.25);
+        }}
         
         /* Metric Styles */
         .metric-title {{
@@ -244,6 +274,84 @@ def inject_css(dark: bool) -> None:
             overflow: hidden;
             box-shadow: {shadow};
             border: 1px solid {card_border_top};
+        }}
+
+        /* ============================================
+           RESPONSIVE / MOBILE EXCELLENCE
+           ============================================ */
+        @media (max-width: 768px) {{
+            /* Make the whole app feel native on phones/tablets */
+            .stApp {{
+                font-size: 15px;
+            }}
+
+            /* Sidebar becomes a proper mobile drawer */
+            section[data-testid="stSidebar"] {{
+                width: 100% !important;
+                max-width: 300px !important;
+                background-color: {"rgba(11, 15, 25, 0.95)" if dark else "rgba(248, 250, 252, 0.97)"} !important;
+            }}
+
+            /* Navigation buttons — larger touch targets, better contrast */
+            section[data-testid="stSidebar"] button {{
+                min-height: 48px !important;
+                font-size: 0.98rem !important;
+                padding: 12px 16px !important;
+                margin-bottom: 6px !important;
+                border-radius: 12px !important;
+            }}
+
+            /* Fix the dreaded "white text on mobile" problem */
+            section[data-testid="stSidebar"] button,
+            section[data-testid="stSidebar"] * {{
+                color: {text_color} !important;
+            }}
+
+            /* Premium cards breathe better on small screens */
+            .premium-card {{
+                padding: 18px 16px !important;
+                margin-bottom: 16px !important;
+                border-radius: 16px !important;
+            }}
+
+            /* Reduce heading sizes on mobile */
+            h1 {{ font-size: 1.65rem !important; }}
+            h2 {{ font-size: 1.35rem !important; }}
+            h3 {{ font-size: 1.15rem !important; }}
+
+            /* KPI grids and columns stack more gracefully */
+            [data-testid="stHorizontalBlock"] {{
+                gap: 12px !important;
+            }}
+
+            /* Make metric values slightly smaller but still impactful */
+            .metric-value {{
+                font-size: 2.0rem !important;
+            }}
+        }}
+
+        @media (max-width: 480px) {{
+            /* Ultra-small phones (iPhone SE, etc.) */
+            .premium-card {{
+                padding: 14px 12px !important;
+            }}
+
+            section[data-testid="stSidebar"] button {{
+                min-height: 52px !important;
+                font-size: 1.0rem !important;
+            }}
+
+            .metric-value {{
+                font-size: 1.75rem !important;
+            }}
+        }}
+
+        /* When user forces dark mode or Sanctuary is active, ensure nav text is always readable */
+        @media (max-width: 768px) {{
+            [data-testid="stSidebar"] [kind="secondary"] {{
+                background-color: rgba(255,255,255,0.06) !important;
+                color: #e2e8f0 !important;
+            }}
         }}
         </style>
         """,

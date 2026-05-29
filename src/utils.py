@@ -190,3 +190,180 @@ def save_uploaded_pdf(uploaded_file, subdir="psychiatric") -> str:
         f.write(uploaded_file.getbuffer())
 
     return target_path.as_uri()
+
+
+# ---------------------------------------------------------------------------
+# PDF Text Extraction & Structured Parsing Utilities
+# ---------------------------------------------------------------------------
+
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None  # Will degrade gracefully in environments without pypdf
+
+
+def extract_text_from_pdf(pdf_path: str | Path) -> str:
+    """
+    Extract raw text from a PDF file.
+    Works with both local paths and (in future) in-memory uploads.
+    """
+    if PdfReader is None:
+        return "[PDF text extraction not available - pypdf not installed]"
+
+    path = Path(pdf_path)
+    if not path.exists():
+        return ""
+
+    try:
+        reader = PdfReader(str(path))
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        return text.strip()
+    except Exception as e:
+        return f"[Error extracting PDF text: {e}]"
+
+
+def parse_pathology_report(text: str) -> list[dict]:
+    """
+    Improved regex-based parser for common pathology report formats (especially Australian labs).
+    Handles many variations seen in Laverty, DHM, Sonic, etc. reports.
+    """
+    import re
+
+    observations = []
+
+    # Expanded patterns for real-world Australian pathology reports
+    patterns = [
+        # "Fasting Blood Glucose   5.4   mmol/L   (3.0 - 6.0)" or "(3.0-6.0)"
+        r"([A-Za-z][A-Za-z\s\-\(\),]+?)\s+(\d+\.?\d*)\s*([a-zA-Z/%]+)\s*\(?\s*([\d.<>]+)\s*[-–]\s*([\d.<>]+)\)?",
+
+        # "Total Cholesterol: 6.1 mmol/L   Reference: < 5.5"
+        r"([A-Za-z][A-Za-z\s\-\(\),]+?):\s*(\d+\.?\d*)\s*([a-zA-Z/%]+)\s*(?:Reference|Ref|Range)?[:\s]*[<≤]?\s*([\d.]+)",
+
+        # "HbA1c   48   mmol/mol   (20-42)"
+        r"([A-Za-z][A-Za-z0-9\s\-\(\)]+?)\s+(\d+\.?\d*)\s*([a-zA-Z/%]+)\s*\(?\s*([\d.]+)\s*[-–]\s*([\d.]+)\)?",
+
+        # Handle "< 5.0" or "> 100" as the value
+        r"([A-Za-z][A-Za-z\s\-\(\),]+?)\s*[<≤>]\s*(\d+\.?\d*)\s*([a-zA-Z/%]+)",
+    ]
+
+    for pattern in patterns:
+        for match in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE):
+            groups = match.groups()
+            obs = {}
+
+            try:
+                test_name = groups[0].strip().rstrip(":").strip()
+                value_str = groups[1].replace("<", "").replace(">", "").strip()
+                unit = groups[2].strip()
+
+                obs = {
+                    "test_name": test_name,
+                    "value": float(value_str),
+                    "unit": unit,
+                }
+
+                # Handle reference range if present
+                if len(groups) >= 5 and groups[3] and groups[4]:
+                    low = groups[3].replace("<", "").replace(">", "").strip()
+                    high = groups[4].replace("<", "").replace(">", "").strip()
+                    if low:
+                        obs["reference_range_low"] = float(low)
+                    if high:
+                        obs["reference_range_high"] = float(high)
+                elif len(groups) == 4 and groups[3]:
+                    high = groups[3].replace("<", "").replace(">", "").strip()
+                    if high:
+                        obs["reference_range_high"] = float(high)
+
+                observations.append(obs)
+            except (ValueError, IndexError):
+                continue
+
+    # Deduplicate by normalized test name
+    seen = set()
+    unique = []
+    for o in observations:
+        key = o["test_name"].lower().strip()
+        if key not in seen:
+            seen.add(key)
+            unique.append(o)
+
+    return unique
+
+
+def generate_rdf_for_pathology_report(report: "DiagnosticReport") -> str:
+    """Generate basic Turtle RDF for a DiagnosticReport and its observations."""
+    try:
+        from rdflib import Graph, URIRef, Literal, Namespace
+        from rdflib.namespace import RDF, XSD
+
+        HEALTH = Namespace("urn:health:schema:")
+        g = Graph()
+
+        subj = URIRef(f"urn:health:diagnostic:{report.id}")
+        g.add((subj, RDF.type, HEALTH.DiagnosticReport))
+        g.add((subj, HEALTH.dateIssued, Literal(str(report.date_issued.date()), datatype=XSD.date)))
+
+        for obs in report.observations:
+            obs_subj = URIRef(f"urn:health:observation:{obs.id}")
+            g.add((subj, HEALTH.hasObservation, obs_subj))
+            g.add((obs_subj, RDF.type, HEALTH.PathologyObservation))
+            g.add((obs_subj, HEALTH.testName, Literal(obs.test_name)))
+            g.add((obs_subj, HEALTH.value, Literal(obs.value)))
+            g.add((obs_subj, HEALTH.unit, Literal(obs.unit)))
+            if obs.reference_range_low is not None:
+                g.add((obs_subj, HEALTH.referenceLow, Literal(obs.reference_range_low)))
+            if obs.reference_range_high is not None:
+                g.add((obs_subj, HEALTH.referenceHigh, Literal(obs.reference_range_high)))
+
+        return g.serialize(format="turtle")
+    except Exception as e:
+        return f"# RDF generation failed: {e}"
+
+
+def generate_rdf_for_questionnaire(record: dict) -> str:
+    """Generate Turtle RDF for a questionnaire submission (supports multiple completions)."""
+    try:
+        from rdflib import Graph, URIRef, Literal, Namespace
+        from rdflib.namespace import RDF, XSD
+
+        HEALTH = Namespace("urn:health:schema:")
+        g = Graph()
+
+        qid = record.get("id", "unknown")
+        subj = URIRef(f"urn:health:questionnaire:{qid}")
+
+        g.add((subj, RDF.type, HEALTH.PsychiatricQuestionnaire))
+        g.add((subj, HEALTH.assessmentType, Literal(record.get("type", "Unknown"))))
+        g.add((subj, HEALTH.dateTaken, Literal(record.get("date_taken"))))
+        g.add((subj, HEALTH.totalScore, Literal(record.get("total_score", 0))))
+
+        if record.get("notes"):
+            g.add((subj, HEALTH.notes, Literal(record["notes"])))
+
+        for q, val in record.get("scores", {}).items():
+            if val is not None:
+                g.add((subj, URIRef(f"{HEALTH}{q}"), Literal(val)))
+
+        return g.serialize(format="turtle")
+    except Exception as e:
+        return f"# RDF generation failed: {e}"
+
+
+# ---------------------------------------------------------------------------
+# Vault Persistence Helpers for Structured Assessments
+# ---------------------------------------------------------------------------
+
+def save_structured_assessment(record: dict, assessment_type: str = "questionnaire"):
+    """Persist a structured assessment (questionnaire or pathology) to session vault."""
+    key = "vault_questionnaires" if assessment_type == "questionnaire" else "vault_pathology_reports"
+    if key not in st.session_state:
+        st.session_state[key] = []
+    st.session_state[key].append(record)
+
+
+def get_all_structured_assessments():
+    """Return all persisted structured assessments for timeline / RDF use."""
+    questionnaires = st.session_state.get("vault_questionnaires", [])
+    pathology = st.session_state.get("vault_pathology_reports", [])
+    return questionnaires + pathology

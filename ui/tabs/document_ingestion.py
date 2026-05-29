@@ -1,11 +1,13 @@
 from datetime import datetime
 import streamlit as st
 import time
+import uuid
 
 from src.phr_models.claims import (
     InformationSource, AuthorType, ContentPackage, ClinicalClaim, TrustLevel
 )
 from src.phr_models.pathology import DiagnosticReport, PathologyObservation, DiagnosticReportStatus
+from src.utils import extract_text_from_pdf, parse_pathology_report
 from src.phr_models.proxy_consent import PrivacyMode
 from src.phr_models.psychiatric import DASS21Assessment, K10Assessment
 from src.phr_models.imaging import MedicalImagingStudy, ImagingModality, ImagingSeries
@@ -49,69 +51,95 @@ def render_document_ingestion(dark_mode: bool):
                 st.error("Please upload a file to process (or use mock data).")
             else:
                 with st.spinner("Extracting text and mapping semantic claims using AI..."):
-                    time.sleep(1.5)  # Simulate processing delay
-                    
-                    # Mocking the extraction pipeline based on standard Pathology
+                    time.sleep(0.8)
+
+                    extracted_text = ""
+                    parsed_obs = []
+
+                    # Try real extraction if we have a PDF
+                    if uploaded_file and uploaded_file.type == "application/pdf":
+                        # Save temporarily for extraction
+                        tmp_path = Path("data/assessments/temp_upload.pdf")
+                        tmp_path.parent.mkdir(parents=True, exist_ok=True)
+                        tmp_path.write_bytes(uploaded_file.getbuffer())
+                        extracted_text = extract_text_from_pdf(tmp_path)
+                        parsed_obs = parse_pathology_report(extracted_text)
+                        tmp_path.unlink(missing_ok=True)
+
+                    # Real extraction path for Pathology
                     if "Pathology" in doc_type:
-                        mock_source = InformationSource(
+                        source = InformationSource(
                             id=f"src-{int(time.time())}",
                             author_type=AuthorType(author_t),
                             author_name="Automated Lab System",
                             organization=org,
-                            credentials="NATA Accredited 12345",
+                            credentials="NATA Accredited",
                             date_recorded=datetime.now()
                         )
-                        
-                        mock_claims = [
-                            ClinicalClaim(
-                                id=f"claim-{int(time.time())}-1",
-                                source_document_id=mock_source.id,
-                                domain="Pathology",
-                                claim_text="Fasting Blood Glucose: 5.4 mmol/L (Range 3.0-5.4)",
-                                extracted_data={
-                                    "test_name": "Blood Glucose (Fasting)",
-                                    "value": 5.4,
-                                    "unit": "mmol/L",
-                                    "reference_range_low": 3.0,
-                                    "reference_range_high": 5.4
-                                },
-                                privacy_mode=PrivacyMode.MODE_B_PRIVILEGED
-                            ),
-                            ClinicalClaim(
-                                id=f"claim-{int(time.time())}-2",
-                                source_document_id=mock_source.id,
-                                domain="Pathology",
-                                claim_text="Total Cholesterol: 6.1 mmol/L (Range < 5.5)",
-                                extracted_data={
-                                    "test_name": "Total Cholesterol",
-                                    "value": 6.1,
-                                    "unit": "mmol/L",
-                                    "reference_range_high": 5.5
-                                },
-                                privacy_mode=PrivacyMode.MODE_B_PRIVILEGED
-                            ),
-                            ClinicalClaim(
-                                id=f"claim-{int(time.time())}-3",
-                                source_document_id=mock_source.id,
-                                domain="Psychiatry",  # Out of scope for a lab
-                                claim_text="Patient exhibits signs of severe depression.",
-                                extracted_data={"symptom": "Depression"},
-                                privacy_mode=PrivacyMode.MODE_B_PRIVILEGED
+
+                        claims = []
+
+                        if parsed_obs:
+                            # Create real structured observations
+                            observations = []
+                            for obs in parsed_obs[:12]:  # limit for sanity
+                                try:
+                                    observations.append(PathologyObservation(
+                                        id=str(uuid.uuid4()),
+                                        test_name=obs["test_name"],
+                                        value=obs["value"],
+                                        unit=obs.get("unit", ""),
+                                        reference_range_low=obs.get("reference_range_low"),
+                                        reference_range_high=obs.get("reference_range_high"),
+                                    ))
+                                except Exception:
+                                    pass
+
+                            # Create proper DiagnosticReport
+                            report = DiagnosticReport(
+                                id=str(uuid.uuid4()),
+                                patient_id="current-user",
+                                date_issued=datetime.now(),
+                                pdf_attachment_uri=f"vault://docs/{uploaded_file.name}.enc",
+                                observations=observations,
                             )
-                        ]
-                        
+
+                            # Also create a ClinicalClaim for the ingestion pipeline
+                            claims.append(ClinicalClaim(
+                                id=f"claim-{int(time.time())}",
+                                source_document_id=source.id,
+                                domain="Pathology",
+                                claim_text=f"Pathology report processed - {len(observations)} observations extracted",
+                                extracted_data={
+                                    "report_id": report.id,
+                                    "observation_count": len(observations),
+                                    "tests": [o.test_name for o in observations]
+                                },
+                                privacy_mode=PrivacyMode.MODE_B_PRIVILEGED
+                            ))
+
+                            # Proper persistence
+                            from src.utils import save_structured_assessment, auto_save_structured_data
+                            save_structured_assessment(report.model_dump(), "pathology")
+                            auto_save_structured_data()
+
+                            if "structured_pathology_reports" not in st.session_state:
+                                st.session_state.structured_pathology_reports = []
+                            st.session_state.structured_pathology_reports.append(report)
+
+                        # Create the package (with real or fallback data)
+                        raw_text_preview = extracted_text[:600] if extracted_text else "No text extracted"
                         package = ContentPackage(
                             id=f"pkg-{int(time.time())}",
                             original_file_name=uploaded_file.name,
                             upload_date=datetime.now(),
-                            source=mock_source,
-                            raw_extracted_text="MOCK RAW TEXT: Fasting Blood Glucose 5.4 mmol/L. Total Cholesterol 6.1 mmol/L. Patient exhibits signs of severe depression.",
-                            claims=mock_claims
+                            source=source,
+                            raw_extracted_text=raw_text_preview,
+                            claims=claims or []  # allow empty for now
                         )
-                        
                         package.evaluate_claims()
                         st.session_state.pending_packages.append(package)
-                        st.success("Extraction complete! See pending packages to review and commit.")
+                        st.success(f"Pathology report processed. {len(parsed_obs)} observations extracted." if parsed_obs else "Document processed.")
                         st.rerun()
 
                     elif "Questionnaire" in doc_type:

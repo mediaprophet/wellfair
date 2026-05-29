@@ -11,15 +11,16 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     # HuBMAP Human Reference Atlas (HRA) models – CC BY 4.0
     # Source: https://github.com/hubmapconsortium/ccf-3d-reference-object-library
     # Attribution: HuBMAP Consortium / Indiana University
-    # Run scripts/download_hra_models.py to populate docs/models/hra/
+    # Curated lightweight hologram models (for mobile/WASM) live in vendor/hologram/
+    # Run: python scripts/prepare_hologram_models.py  (needs the CCF library locally)
     DEMO_AVATARS = {
-        "Healthy Baseline": "models/hra/baseline.glb",
+        "Healthy Baseline": "vendor/hologram/male_skin.glb",  # preferred lightweight skin shell
         "Michael (Homeless / Family Separation)": "models/hra/baseline.glb",
-        "Elena (Trauma Survivor)": "models/hra/baseline.glb",
-        "Rebecca (Birth Trauma / PTSD)": "models/hra/baseline.glb",
-        "Margaret (Elder Abuse / Neglect)": "models/hra/baseline.glb",
-        "Robert (Elder Neglect)": "models/hra/baseline.glb",
-        "Jordan (NDIS Exploitation)": "models/hra/baseline.glb"
+        "Elena (Trauma Survivor)": "vendor/hologram/female_skin.glb",
+        "Rebecca (Birth Trauma / PTSD)": "vendor/hologram/female_skin.glb",
+        "Margaret (Elder Abuse / Neglect)": "vendor/hologram/female_skin.glb",
+        "Robert (Elder Neglect)": "vendor/hologram/male_skin.glb",
+        "Jordan (NDIS Exploitation)": "vendor/hologram/male_skin.glb"
     }
 
     col1, col2 = st.columns([2, 2])
@@ -117,7 +118,14 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         "trauma": trauma_target,
         "avatarUrl": avatar_url,
         "xRay": x_ray_mode,
-        "isSanctuary": is_sanctuary
+        "isSanctuary": is_sanctuary,
+        "isMobile": False,
+        # Telemetry domain mapping for the new lightweight hologram models
+        "healthDomains": {
+            "wearables": ["heart"],           # HR, HRV, SpO2, ECG
+            "pharmacy": ["liver", "kidney_left", "kidney_right"],
+            "pathology": ["lung", "large_intestine"]
+        }
     }
     
     bio_json_safe = json.dumps(bio_context).replace("<", "\\u003c")
@@ -130,7 +138,20 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
         <meta charset="utf-8">
         <style>
             body {{ margin: 0; padding: 0; overflow: hidden; background: transparent; font-family: 'Outfit', sans-serif; user-select: none; }}
-            #canvas-container {{ width: 100%; height: 800px; position: relative; background: radial-gradient(circle at 50% 50%, { "#1a0f2e" if dark_mode else "#e2e8f0" }, { "#05020a" if dark_mode else "#cbd5e1" }); border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 100px rgba(0,0,0,0.5); }}
+            #canvas-container {{ 
+                width: 100%; 
+                height: min(820px, 82vh); 
+                position: relative; 
+                background: radial-gradient(circle at 50% 50%, { "#1a0f2e" if dark_mode else "#e2e8f0" }, { "#05020a" if dark_mode else "#cbd5e1" }); 
+                border-radius: 16px; 
+                overflow: hidden; 
+                box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+            }}
+            
+            /* Mobile-first responsive behavior for the 3D hologram */
+            @media (max-width: 768px) {{
+                #canvas-container {{ height: 62vh; min-height: 420px; border-radius: 12px; }}
+            }}
             
             /* Premium Glassmorphism UI */
             .glass-panel {{
@@ -153,6 +174,29 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 z-index: 10;
                 max-height: 700px;
                 overflow-y: auto;
+            }}
+            
+            /* Mobile: Convert layer controls into a compact bottom sheet */
+            @media (max-width: 768px) {{
+                #layer-controls {{
+                    top: auto;
+                    bottom: 12px;
+                    left: 12px;
+                    right: 12px;
+                    width: auto;
+                    max-height: 38vh;
+                    padding: 14px 16px;
+                    border-radius: 18px;
+                    backdrop-filter: blur(30px);
+                }}
+                .panel-title {{
+                    margin-bottom: 10px;
+                    font-size: 11px;
+                }}
+                .toggle-row {{
+                    margin-bottom: 8px;
+                    font-size: 0.92rem;
+                }}
             }}
             
             /* Custom Scrollbar */
@@ -362,6 +406,11 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             
             <!-- Reset Camera -->
             <button id="btn-reset-cam" class="glass-panel">Reset View</button>
+            
+            <!-- Mobile-friendly toggle for layer panel -->
+            <button id="btn-toggle-layers" class="glass-panel" style="display:none; top:12px; right:12px; padding:8px 14px; font-size:13px; z-index:20;">
+                ☰ Layers
+            </button>
         </div>
 
         <script>
@@ -408,6 +457,18 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             controls.target.copy(defaultControlsTarget);
             controls.maxDistance = 15;
             controls.minDistance = 2;
+
+            // Mobile optimizations
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+            if (isMobile) {
+                controls.enablePan = false;           // Simpler on touch
+                controls.rotateSpeed = 0.7;
+                controls.zoomSpeed = 1.1;
+                // Reduce heavy post-processing on mobile for performance + battery
+                bloomPass.strength = 0.65;
+                filmPass.uniforms.nIntensity.value = 0.15;
+                filmPass.uniforms.sIntensity.value = 0.01;
+            }
 
             const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.2 : 0.6);
             scene.add(ambient);
@@ -763,18 +824,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             gltfLoader.setDRACOLoader(dracoLoader);
             // Default generic human avatar from Three.js examples if none provided
             let avatarUrl = bioData.avatarUrl || "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
-            
-            // Resolve local paths based on environment
-            if (avatarUrl.startsWith("models/")) {{
-                const hostname = window.location.hostname;
-                // If running in local streamlit iframe (localhost)
-                if (hostname === "localhost" || hostname === "127.0.0.1") {{
-                    avatarUrl = "http://localhost:8000/" + avatarUrl;
-                }} else {{
-                    // If running in Stlite on Github Pages
-                    avatarUrl = "https://mediaprophet.github.io/wellfair/" + avatarUrl;
-                }}
-            }}
+            avatarUrl = resolveAssetUrl(avatarUrl);
             
             let avatarModel = null;
             let avatarMixer = null;
@@ -799,6 +849,64 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }} else if (bioData.trauma === "financial_stress") {{
                     avatarModel.rotation.x = 0.15; // Tense/Slouch
                 }}
+
+                // ============================================================
+                // LIGHTWEIGHT TELEMETRY HOLOGRAM (New Modular Approach)
+                // Loads only the prioritized organs from vendor/hologram/ (curated lightweight set)
+                // Recommended for mobile / WASM / low-memory environments.
+                // ============================================================
+                function loadTelemetryHologram() {
+                    const base = "vendor/hologram/";
+                    const sex = (bioData.persona || "").toLowerCase().includes("female") ? "female" : "male";
+                    const organs = [
+                        { key: "skin", role: "spatial_context", domain: null },
+                        { key: "heart", role: "cardiovascular", domain: "wearables" },
+                        { key: "liver", role: "metabolic", domain: "pharmacy" },
+                        { key: "kidney_left", role: "excretory", domain: "pharmacy" },
+                        { key: "kidney_right", role: "excretory", domain: "pharmacy" },
+                        { key: "lung", role: "respiratory", domain: "pathology" },
+                        { key: "large_intestine", role: "digestive", domain: "pathology" }
+                    ];
+
+                    organs.forEach(org => {
+                        const url = resolveAssetUrl(base + sex + "_" + org.key + ".glb");
+                        const layerName = "holo_" + org.key;
+                        const sys = createLayer(layerName);
+
+                        gltfLoader.load(url, (gltf) => {
+                            const model = gltf.scene;
+                            model.scale.set(2.0, 2.0, 2.0);
+                            model.position.y = 0;
+
+                            let targetMat = null;
+                            if (org.key === "heart") targetMat = matHeart;
+                            else if (org.key === "liver") targetMat = matEndocrine;
+                            else if (org.key.includes("kidney")) targetMat = matUro;
+                            else if (org.key === "lung") targetMat = matLungs;
+                            else if (org.key === "large_intestine") targetMat = matDigestive;
+                            else if (org.key === "skin") {
+                                targetMat = new THREE.MeshStandardMaterial({
+                                    color: 0x88aaff, emissive: 0x334466, emissiveIntensity: 0.3,
+                                    transparent: true, opacity: 0.18
+                                });
+                            }
+
+                            model.traverse(child => {
+                                if (child.isMesh && targetMat) {
+                                    child.material = targetMat.clone();
+                                    child.userData = { name: org.key.toUpperCase(), domain: org.domain };
+                                }
+                            });
+
+                            sys.add(model);
+                        }, undefined, () => {});
+                    });
+                }
+
+                const useLightweight = isMobile || bioData.useLightweightHologram === true;
+                if (useLightweight) {
+                    setTimeout(loadTelemetryHologram, 180);
+                }
 
                 // ============================================================
                 // Semantic HRA Mesh Traversal
@@ -959,6 +1067,20 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }});
                 btnResetCam.style.display = "none";
             }});
+
+            // Mobile: Layer panel bottom sheet toggle
+            const btnToggleLayers = document.getElementById('btn-toggle-layers');
+            const layerPanel = document.getElementById('layer-controls');
+            if (isMobile && btnToggleLayers && layerPanel) {
+                btnToggleLayers.style.display = 'block';
+                let layersVisible = true;
+                btnToggleLayers.addEventListener('click', () => {
+                    layersVisible = !layersVisible;
+                    layerPanel.style.display = layersVisible ? 'block' : 'none';
+                    btnToggleLayers.textContent = layersVisible ? '✕ Close' : '☰ Layers';
+                });
+                // Start with layers visible on mobile for discoverability
+            }
 
             container.addEventListener('pointermove', (event) => {{
                 const rect = container.getBoundingClientRect();

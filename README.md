@@ -1,5 +1,9 @@
 # Episteme:WellFair
 
+**Current Version: 0.0.2** (29 May 2026)
+
+See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for details.
+
 **Episteme:WellFair** is a locally-hosted Personal Wellbeing Informatics Vault designed to help individuals own, analyze, and protect their wellbeing story across clinical, social, legal, and lived-context dimensions. 
 
 Developed independently by Timothy Charles Holborn, WellFair transcends traditional health trackers by harmonizing Rust, Python, WebAssembly (WASM), and semantic web standards (Solid/RDF) into a human-first, local-first vault. 

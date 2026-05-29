@@ -5,37 +5,20 @@ from src.phr_models.profile import (
     EpistemicStatus, PatientProfile, DisabilitySupport, AllergyConditionNode,
     DwellingType, SleepSecurityLevel, SocialFoundationsRecord, WalkaboutProfile
 )
+from ui.utils.components import render_info_banner
 
 def render_profile_intake(dark_mode: bool, normalized: dict):
     st.markdown("## 📋 Sovereign Profile & Medical Intake")
     
-    st.markdown(
-        """<div class="premium-card" style="border-left: 5px solid #3b82f6; margin-bottom: 20px;">
-<h4 style="margin: 0; color: #3b82f6;">📋 Sovereign Intake Credentials & Epistemic Audit</h4>
-<p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-Manage your personal demographics, pronouns, ancestry, and primary language. Track disability accessibility support needs, and audit pre-existing conditions and allergies with linked evidence.
-</p>
-</div>""",
-        unsafe_allow_html=True
+    render_info_banner(
+        title="Sovereign Intake Credentials & Epistemic Audit",
+        body="Manage your personal demographics, pronouns, ancestry, and primary language. Track disability accessibility support needs, and audit pre-existing conditions and allergies with linked evidence.",
+        accent_color="#3b82f6",
+        icon="📋",
+        dark_mode=dark_mode,
     )
     
-    # Initialize mock data in session state
-    if "patient_profile" not in st.session_state:
-        st.session_state.patient_profile = {
-            "full_name": "John Doe",
-            "date_of_birth": date(1980, 5, 20),
-            "biological_sex": "Male",
-            "pronouns": "He/Him",
-            "gender_identity": "Male",
-            "ancestry_lineage": "Anglo-Celtic / Western European",
-            "primary_language": "English",
-            "medicare_number": "1234 56789 1",
-            "insurance_provider": "Medibank Private",
-            "insurance_policy_number": "MP987654321",
-            "emergency_contact_name": "Jane Doe",
-            "emergency_contact_phone": "+61 400 123 456"
-        }
-        
+    # Note: patient_profile is initialized upstream in mock_data.py or loaded from vault
     if "disability_supports" not in st.session_state:
         st.session_state.disability_supports = [
             {

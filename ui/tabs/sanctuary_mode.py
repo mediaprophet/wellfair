@@ -4,19 +4,18 @@ import hashlib
 from datetime import datetime, timedelta
 import pandas as pd
 
+from ui.utils.components import render_info_banner, render_alert_card
+
 def render_sanctuary_mode(dark_mode: bool):
     # Vault Unlocked Check
     if not st.session_state.get("sanctuary_unlocked", False):
         st.markdown("<h2 style='color: #a855f7;'>🛡️ Episteme:WellFair Sanctuary Vault</h2>", unsafe_allow_html=True)
-        st.markdown(
-            """<div class="premium-card" style="border-left: 5px solid #a855f7; padding: 20px;">
-<h4 style="margin: 0; color: #a855f7;">🔒 Encrypted Isolation Layer</h4>
-<p style="font-size: 0.95rem; color: #64748b; margin-top: 10px; line-height: 1.5;">
-This environment contains highly privileged, isolated clinical observations, logs, and assertions. 
-Entering the correct secondary credential unlocks the Sanctuary vault. Standard decoy PINs will display wellness records, maintaining plausible deniability.
-</p>
-</div>""",
-            unsafe_allow_html=True
+        render_info_banner(
+            title="Encrypted Isolation Layer",
+            body="This environment contains highly privileged, isolated clinical observations, logs, and assertions. Entering the correct secondary credential unlocks the Sanctuary vault. Standard decoy PINs will display wellness records, maintaining plausible deniability.",
+            accent_color="#a855f7",
+            icon="🔒",
+            dark_mode=dark_mode,
         )
         
         col1, col2 = st.columns([1, 1])
@@ -33,14 +32,12 @@ Entering the correct secondary credential unlocks the Sanctuary vault. Standard 
 
     # FULL SANCTUARY MODE DISPLAY
     st.markdown("<h2 style='color: #f43f5e;'>🤫 Sanctuary Mode: Privileged Vault</h2>", unsafe_allow_html=True)
-    st.markdown(
-        """<div class="premium-card" style="border-left: 5px solid #f43f5e; padding: 15px; margin-bottom: 20px; background: rgba(244, 63, 94, 0.02);">
-<h4 style="margin: 0; color: #f43f5e;">⚡ Safe Haven Active</h4>
-<p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-All communications are routed via ephemeral mixnet handshakes. RDF-Star assertions written in this vault are masked from standard directory indexes.
-</p>
-</div>""",
-        unsafe_allow_html=True
+    render_info_banner(
+        title="Safe Haven Active",
+        body="All communications are routed via ephemeral mixnet handshakes. RDF-Star assertions written in this vault are masked from standard directory indexes.",
+        accent_color="#f43f5e",
+        icon="⚡",
+        dark_mode=dark_mode,
     )
     
     # Initialize Sanctuary Session State Lists if not present
@@ -227,14 +224,12 @@ All communications are routed via ephemeral mixnet handshakes. RDF-Star assertio
                     
         st.divider()
         st.markdown("#### 🚨 Internal Sentinel Alerts")
-        st.markdown(
-            """<div class="premium-card" style="border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05); padding: 16px;">
-<h4 style="margin: 0; color: #ef4444;">🚨 THREAT-MODELING PATTERN DETECTED</h4>
-<p style="font-size: 0.9rem; color: #ef4444; margin-top: 5px; margin-bottom: 0;">
-<b>Sentinel Alert:</b> Overlapping location coordinates detected with unlinked device <code>did:key:z6MkgT...</code> on 3 consecutive evenings, matching logged symptoms of domestic anxiety. Contingency switches have been armed.
-</p>
-</div>""",
-            unsafe_allow_html=True
+        render_alert_card(
+            title="THREAT-MODELING PATTERN DETECTED",
+            body="<b>Sentinel Alert:</b> Overlapping location coordinates detected with unlinked device <code>did:key:z6MkgT...</code> on 3 consecutive evenings, matching logged symptoms of domestic anxiety. Contingency switches have been armed.",
+            accent_color="#ef4444",
+            icon="🚨",
+            dark_mode=dark_mode,
         )
 
     # ------------------ TAB 3: SYNTHESIS ENGINE ------------------

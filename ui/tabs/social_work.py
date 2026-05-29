@@ -7,18 +7,17 @@ from src.phr_models.social_work import (
     AssistanceCategory, UrgencyLevel, AssistanceStatus, AssistanceNeed,
     SocialSecurityStatus, PaymentFrequency, SocialSecurityRecord, GovernmentLetter
 )
+from ui.utils.components import render_info_banner
 
 def render_social_work(dark_mode: bool):
     st.markdown("## 🤝 Social Work & Assistance Vault")
     
-    st.markdown(
-        """<div class="premium-card" style="border-left: 5px solid #0d9488; margin-bottom: 20px;">
-<h4 style="margin: 0; color: #0d9488;">🤝 Social Support Systems & Sovereign Documentation</h4>
-<p style="font-size: 0.9rem; color: #64748b; margin-top: 5px; margin-bottom: 0;">
-Track housing, food, and financial assistance programs. Securely store and audit government letters, review notices, and social security benefit payments in your RDF-Star graph.
-</p>
-</div>""",
-        unsafe_allow_html=True
+    render_info_banner(
+        title="Social Support Systems & Sovereign Documentation",
+        body="Track housing, food, and financial assistance programs. Securely store and audit government letters, review notices, and social security benefit payments in your RDF-Star graph.",
+        accent_color="#0d9488",
+        icon="🤝",
+        dark_mode=dark_mode,
     )
     
     # Initialize mock data in session state
