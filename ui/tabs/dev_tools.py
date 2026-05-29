@@ -26,7 +26,7 @@ from pathlib import Path
 
 import streamlit as st
 
-_ROOT = Path(__file__).parent.parent.parent
+_ROOT = Path(__file__).resolve().parent.parent.parent
 _STATIC_PKG = _ROOT / "ui" / "static" / "pkg"
 _HRA_MODELS = _ROOT / "ui" / "static" / "models" / "hra"
 _AVATAR_MODELS = _ROOT / "ui" / "static" / "models"
@@ -85,9 +85,11 @@ def _test_rdf_transformer():
     try:
         from src.rdf_transformer import OntologyTemplate, graph_for_data_type, TransformOptions
         import pandas as pd
-        tmpl_path = next((_ROOT / d / "ontology_template.yaml" for d in ["config", "."] if (_ROOT / d / "ontology_template.yaml").exists()), None)
+        # Search known locations — config/ is canonical
+        _candidates = [_ROOT / "config" / "ontology_template.yaml", _ROOT / "ontology_template.yaml"]
+        tmpl_path = next((p for p in _candidates if p.exists()), None)
         if not tmpl_path:
-            _warn("ontology_template.yaml not found", "Some transform tests skipped")
+            _warn("ontology_template.yaml not found", f"Searched: {[str(p) for p in _candidates]}")
             return
         tmpl = OntologyTemplate(str(tmpl_path))
         ns = tmpl.namespaces
@@ -98,12 +100,12 @@ def _test_rdf_transformer():
         else:
             _pass("All required namespaces present", f"{len(ns)} total")
         t0 = time.perf_counter()
-        df = pd.DataFrame([{"uuid": "test-001", "start_time": "1777632000000",
-                             "end_time": "1777718340000", "time_offset": "60",
-                             "sleep_duration": "440", "efficiency": "78",
-                             "deep_sleep": "90", "rem_sleep": "110",
-                             "light_sleep": "240", "wake_up_count": "0"}])
-        g = graph_for_data_type(tmpl, "sleep", df, TransformOptions())
+        df = pd.DataFrame([{"uuid": "test-001", "start_time": 1777632000000,
+                             "end_time": 1777718340000, "time_offset": 60,
+                             "sleep_duration": 440, "efficiency": 78,
+                             "deep_sleep": 90, "rem_sleep": 110,
+                             "light_sleep": 240, "wake_up_count": 0}])
+        g = graph_for_data_type(tmpl, "com.samsung.shealth.sleep", df, TransformOptions())
         elapsed = round((time.perf_counter() - t0) * 1000, 1)
         if len(g) > 0:
             _pass(f"Sleep graph: {len(g)} triples", f"{elapsed}ms")
