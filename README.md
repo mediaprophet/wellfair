@@ -2,8 +2,8 @@
 
 **Current Version: 0.0.3-dev** (29 May 2026)
 
-> **Your data. Your device. No cloud.**
-> WellFair is a **P3-SWA** — a Personal Platform Provider App for the Social Web: your own digital platform, running entirely on your own hardware, connected to the world on your terms.
+> **Human-centric. Your data. Your device. No cloud.**
+> WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: your own digital platform, running entirely on your own hardware, connected to the world on your terms.
 
 See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
@@ -12,9 +12,22 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
 
 ## What is WellFair?
 
-**Episteme:WellFair** is a personal wellbeing vault — and an instance of a new category of software called a **P3-SWA**.
+**Episteme:WellFair** is a human-centric personal wellbeing vault — and an instance of a new category of software called a **P3-SWA**.
+
+### Human-centric design
+
+Most digital systems treat the human as a *data subject*: a source of inputs, a row in a database, a profile to be analysed and monetised. WellFair takes the opposite position. **The human is the sovereign.** Data exists to serve the person it describes — not the platform that holds it.
+
+This human-centric principle flows through every layer of the design:
+
+- **Maslow over metrics** — a sleep score or heart rate is understood in the context of safety, shelter, belonging, and psychological wellbeing, not in isolation
+- **Shapes, not classes** — people are described using SHACL/RDFS shapes rather than OWL class membership; assigning a human to an ontological class can strip nuance and dignity from lived experience
+- **Consent is modelled, not assumed** — Proxy Consent and Sanctuary Mode treat the person's right to control their own information as a first-class architectural requirement, not an afterthought
+- **The tool serves the person** — WellFair exists to give you infrastructure; it has no interest in your data itself
 
 ### The P3 concept
+
+Human-centricity is also the foundation of the P3 model:
 
 | Term | Meaning |
 |---|---|
@@ -24,13 +37,13 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
 
 The dominant model of digital health makes corporations the platform provider: they ingest your data, control how you see it, and monetise it. WellFair inverts that. **You are the platform.** Your phone or computer is the server. Your data is yours — and when you choose to share it (with a doctor, a carer, a researcher), you do so on your own terms through open, decentralised protocols.
 
-WellFair as a P3-SWA gives you:
+WellFair as a human-centric P3-SWA gives you:
 - **Local compute** — ingest, reason over, and query your health data entirely on-device
 - **Semantic interoperability** — data stored as RDF (Turtle/Solid) so it can speak to any system that understands linked data, without lock-in
 - **Selective federation** — share specific records via Solid-compatible pod structure; Proxy Consent logic controls who sees what
 - **Social Web participation** — your vault is a node, not a user account on someone else's node
 
-Developed independently by Timothy Charles Holborn, WellFair also maps physiological data against **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate isn't just a number — it's understood in the context of safety, shelter, relationships, and psychological wellbeing.
+Developed independently by Timothy Charles Holborn, WellFair maps physiological data against **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate is understood in the full context of a human life — safety, shelter, relationships, and psychological wellbeing — not just as a number.
 
 ---
 
@@ -77,6 +90,7 @@ wellfare-core (Rust → WASM)              extensions/
 ```
 
 ### Core principles
+- **Human-centric** — the person is the sovereign; the system exists to serve them, not to extract from them
 - **You are the platform (P3)** — your device is the server; there is no upstream provider
 - **WellFair is a P3A** — it exists to give you that infrastructure, not to be a platform itself
 - **Social Web, not social silo (P3-SWA)** — federation via Solid/WebID on your terms, not a walled garden
