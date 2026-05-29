@@ -435,7 +435,7 @@ try {{
 
 def render_dev_tools(dark_mode: bool = False):
     st.title("🔧 Developer Tools & Test Suite")
-    st.caption("v0.0.3-dev — internal test runner for WASM core, semantic pipeline, and extensions")
+    st.caption("v0.0.4-dev — internal test runner for WASM core, semantic pipeline, and extensions")
 
     st.info(
         "**SWI-Prolog WASM status:** Not yet integrated (Phase 5). "
