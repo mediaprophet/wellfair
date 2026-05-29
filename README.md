@@ -5,8 +5,8 @@
 > **WellFair: Welfare, wellness & Fairness, Fair Terms.**
 > WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.
 
-See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
+See [RELEASE_NOTES_v0.0.3.md](RELEASE_NOTES_v0.0.3.md) for the v0.0.3 release notes.
+See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.4 roadmap (next sprint).
 
 ---
 
@@ -106,7 +106,7 @@ wellfare-core (Rust → WASM)              extensions/
 
 ---
 
-## ✨ What's New in v0.0.3-dev
+## ✨ What's in v0.0.3
 
 ### Rust/WASM Core (`wellfare-core`)
 - **oxigraph RDF store** — your health data is loaded into an in-browser SPARQL-queryable triple store (no server required)
