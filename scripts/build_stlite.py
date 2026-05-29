@@ -36,7 +36,12 @@ def main():
 <html>
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#030005" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Wellfair Vault (WASM Demo)</title>
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.css"/>
     <style>
       body, html {{ height: 100%; margin: 0; padding: 0; background-color: #030005; font-family: 'Outfit', sans-serif; }}
@@ -87,9 +92,49 @@ def main():
         opacity: 0 !important;
         pointer-events: none;
       }}
+      /* PWA Install Button */
+      #pwa-install-btn {{
+        display: none; /* Hidden by default until beforeinstallprompt fires */
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999999;
+        background: linear-gradient(135deg, #ff1e56 0%, #d80032 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 28px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: 0.05em;
+        box-shadow: 0 4px 15px rgba(255, 30, 86, 0.4);
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        align-items: center;
+        gap: 8px;
+      }}
+      #pwa-install-btn:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 30, 86, 0.6);
+      }}
+      #pwa-install-btn:active {{
+        transform: translateY(1px);
+      }}
+      .install-icon {{
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+      }}
     </style>
   </head>
   <body>
+    <button id="pwa-install-btn" style="display: none;">
+      <svg class="install-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+      </svg>
+      Install App
+    </button>
     <div id="loader-wrapper">
         <div class="spinner"></div>
         <div class="loader-text">Initializing Holographic Engine...</div>
@@ -120,6 +165,40 @@ def main():
       }});
       observer.observe(document.body, {{ childList: true, subtree: true }});
 
+      // PWA Installation Logic
+      let deferredPrompt;
+      const installBtn = document.getElementById('pwa-install-btn');
+      
+      window.addEventListener('beforeinstallprompt', (e) => {{
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can install the PWA
+        installBtn.style.display = 'flex';
+      }});
+
+      installBtn.addEventListener('click', async () => {{
+        // Hide the app provided install promotion
+        installBtn.style.display = 'none';
+        // Show the install prompt
+        if (deferredPrompt) {{
+          deferredPrompt.prompt();
+          // Wait for the user to respond to the prompt
+          const {{ outcome }} = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${{outcome}}`);
+          // We've used the prompt, and can't use it again, throw it away
+          deferredPrompt = null;
+        }}
+      }});
+
+      window.addEventListener('appinstalled', () => {{
+        // Hide the app-provided install promotion
+        installBtn.style.display = 'none';
+        // Clear the deferredPrompt so it can be garbage collected
+        deferredPrompt = null;
+        console.log('PWA was installed');
+      }});
     </script>
   </body>
 </html>
