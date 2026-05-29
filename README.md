@@ -3,7 +3,7 @@
 **Current Version: 0.0.3-dev** (29 May 2026)
 
 > **Your data. Your device. No cloud.**
-> WellFair runs entirely on your phone, tablet, or computer — no account, no server, no upload.
+> WellFair makes you a **P3 — Personal Platform Provider**: your own digital platform, running entirely on your own hardware.
 
 See [RELEASE_NOTES_v0.0.2.md](RELEASE_NOTES_v0.0.2.md) for the last stable release.
 See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
@@ -12,11 +12,17 @@ See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.3 roadmap.
 
 ## What is WellFair?
 
-**Episteme:WellFair** is a personal wellbeing vault that runs entirely on your own device. It helps you own, understand, and protect your health story — across clinical, social, legal, and lived-context dimensions — without ever sending your data to a third party.
+**Episteme:WellFair** is a personal wellbeing vault built on the principle that every person should be their own **P3 — Personal Platform Provider**.
 
-Unlike health apps that store your data in someone else's cloud, WellFair works the same way a private journal does: it lives on your device, processes everything locally, and shares nothing unless you explicitly choose to. If you install it as a PWA on your phone, it works entirely offline.
+The dominant model of digital health asks you to hand your data to a corporation, which then becomes the platform provider: they store it, analyse it, and decide what you can see. WellFair inverts that. You are the platform. Your phone or computer is the server. Your data never leaves unless you choose to share it.
 
-Developed independently by Timothy Charles Holborn, WellFair maps physiological data against frameworks like **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate isn't just a number — it's understood in the context of safety, shelter, relationships, and psychological wellbeing.
+WellFair gives you the infrastructure to act as your own P3:
+- Ingest your health data (Samsung Health exports, documents, assessments)
+- Store it as structured, semantically-linked RDF — a format designed for interoperability, not lock-in
+- Query and reason over it locally using SPARQL and N3Logic rules
+- Share selectively, via Solid-compatible pod structure, on your own terms
+
+Developed independently by Timothy Charles Holborn, WellFair also maps physiological data against **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate isn't just a number — it's understood in the context of safety, shelter, relationships, and psychological wellbeing.
 
 ---
 
@@ -63,7 +69,8 @@ wellfare-core (Rust → WASM)              extensions/
 ```
 
 ### Core principles
-- **No cloud** — your data never leaves your device
+- **You are the platform (P3)** — your device is the server; there is no upstream provider
+- **No cloud** — your data never leaves your device unless you explicitly share it
 - **No OWL for people** — health subjects described with SHACL/RDFS shapes, not OWL class membership (which can dehumanise)
 - **N3Logic for reasoning** — causal/clinical rules, not OWL entailment
 - **Extensions are opt-in** — nothing loads until you trigger it; teardown() releases memory
