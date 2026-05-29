@@ -62,6 +62,41 @@ def cached_transform(export_path: str, template_path: str, clinical_mode: bool, 
     return transform_export(normalized, template_path, progress=False, options=options)
 
 
+def get_all_structured_assessments() -> list[dict]:
+    """Return all structured assessment records from session state.
+
+    Aggregates completed questionnaires (vault_questionnaires) and
+    diagnostic/pathology reports (diagnostic_reports) into a flat list
+    with a normalised schema for use in the calendar / timeline view.
+    """
+    results: list[dict] = []
+
+    for record in st.session_state.get("vault_questionnaires", []):
+        if not isinstance(record, dict):
+            continue
+        results.append({
+            "id": record.get("id", id(record)),
+            "type": record.get("type", record.get("questionnaire_type", "Questionnaire")),
+            "date_taken": record.get("date_taken", record.get("date", record.get("completed_at"))),
+            "total_score": record.get("total_score", record.get("score")),
+            "source": "questionnaire",
+            **{k: v for k, v in record.items() if k not in ("id", "type", "date_taken", "total_score")},
+        })
+
+    for report in st.session_state.get("diagnostic_reports", []):
+        if not isinstance(report, dict):
+            continue
+        results.append({
+            "id": report.get("id", id(report)),
+            "type": report.get("report_type", report.get("type", "Diagnostic Report")),
+            "date_taken": report.get("date", report.get("date_taken", report.get("report_date"))),
+            "total_score": report.get("summary", report.get("result")),
+            "source": "pathology",
+            **{k: v for k, v in report.items() if k not in ("id", "type", "date_taken", "total_score")},
+        })
+
+    return results
+
 @st.cache_resource
 def load_dataset_mappings() -> dict:
     try:

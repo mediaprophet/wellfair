@@ -1,10 +1,47 @@
 from __future__ import annotations
 import streamlit as st
+import streamlit.components.v1 as components
 import hashlib
 from datetime import datetime, timedelta
 import pandas as pd
 
 from ui.utils.components import render_info_banner, render_alert_card
+
+
+def _card_colors(dark_mode: bool) -> dict:
+    return {
+        "bg": "rgba(15,23,42,0.55)" if dark_mode else "rgba(255,255,255,0.7)",
+        "text": "#e2e8f0" if dark_mode else "#1e293b",
+        "muted": "#94a3b8" if dark_mode else "#64748b",
+        "border_top": "rgba(255,255,255,0.12)" if dark_mode else "rgba(255,255,255,0.85)",
+        "border_bottom": "rgba(0,0,0,0.2)" if dark_mode else "rgba(15,23,42,0.06)",
+        "mono": "#c084fc" if dark_mode else "#7c3aed",
+    }
+
+
+def _suppress_password_managers():
+    """Inject JS to prevent browser/extension password-manager popups on the PIN field."""
+    components.html("""
+<script>
+(function() {
+    function patch() {
+        var inputs = window.parent.document.querySelectorAll('input[type="password"]');
+        inputs.forEach(function(el) {
+            el.setAttribute('autocomplete', 'off');
+            el.setAttribute('data-lpignore', 'true');
+            el.setAttribute('data-1p-ignore', '');
+            el.setAttribute('data-bwignore', '');
+            el.setAttribute('data-form-type', 'other');
+            el.setAttribute('role', 'presentation');
+        });
+    }
+    patch();
+    setTimeout(patch, 300);
+    setTimeout(patch, 800);
+})();
+</script>
+""", height=0, scrolling=False)
+
 
 def render_sanctuary_mode(dark_mode: bool):
     # Vault Unlocked Check
@@ -17,10 +54,17 @@ def render_sanctuary_mode(dark_mode: bool):
             icon="🔒",
             dark_mode=dark_mode,
         )
-        
+
         col1, col2 = st.columns([1, 1])
         with col1:
-            pin_input = st.text_input("Enter Vault Access PIN", type="password", help="Use secondary PIN (8888) to unlock the Sanctuary Vault.")
+            pin_input = st.text_input(
+                "Vault Access PIN",
+                type="password",
+                placeholder="Enter PIN",
+                help="Use secondary PIN (8888) to unlock the Sanctuary Vault.",
+                label_visibility="visible",
+            )
+            _suppress_password_managers()
             if st.button("🔓 Decrypt & Unlock Vault", type="primary"):
                 if pin_input == "8888":
                     st.session_state.sanctuary_unlocked = True
@@ -31,6 +75,22 @@ def render_sanctuary_mode(dark_mode: bool):
         return
 
     # FULL SANCTUARY MODE DISPLAY
+    _cc = _card_colors(dark_mode)
+    _text = _cc["text"]
+    _muted = _cc["muted"]
+    _bg = _cc["bg"]
+
+    # Sanctuary-scoped CSS overrides — ensures all inline cards adapt to dark/light
+    st.markdown(f"""<style>
+    .sanctuary-vault .premium-card {{
+        background: {_bg} !important;
+        color: {_text} !important;
+    }}
+    .sanctuary-vault p, .sanctuary-vault div, .sanctuary-vault span {{
+        color: inherit;
+    }}
+    </style>""", unsafe_allow_html=True)
+
     st.markdown("<h2 style='color: #f43f5e;'>🤫 Sanctuary Mode: Privileged Vault</h2>", unsafe_allow_html=True)
     render_info_banner(
         title="Safe Haven Active",
@@ -152,34 +212,36 @@ def render_sanctuary_mode(dark_mode: bool):
         st.divider()
         st.markdown("#### 📜 Hashed Ledger Entries (Asymmetric Provenance)")
         
+        cc = _card_colors(dark_mode)
         col_logs1, col_logs2 = st.columns(2)
         with col_logs1:
             st.markdown("##### Active Veiled Assertions")
             for item in reversed(st.session_state.veiled_assertions):
                 st.markdown(
-                    f"""<div class="premium-card" style="border-left: 3px solid #f43f5e; padding: 12px; margin-bottom: 8px;">
-<div style="display:flex; justify-content:space-between;">
-<b>{item["title"]}</b>
-<span style="font-size:0.7rem; color:#64748b;">{item["category"]}</span>
+                    f"""<div class="premium-card" style="background:{cc['bg']};border-left:3px solid #f43f5e;padding:14px;margin-bottom:10px;border-radius:12px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+<b style="color:{cc['text']};font-size:0.9rem;">{item["title"]}</b>
+<span style="font-size:0.72rem;color:{cc['muted']};background:rgba(244,63,94,0.12);padding:2px 8px;border-radius:20px;">{item["category"]}</span>
 </div>
-<p style="font-size:0.8rem; color:#475569; margin: 6px 0;">{item["narrative"]}</p>
-<div style="font-family: monospace; font-size:0.68rem; color:#a855f7;">Anchor Hash: {item["hash"]}</div>
+<p style="font-size:0.83rem;color:{cc['muted']};margin:0 0 8px 0;line-height:1.5;">{item["narrative"]}</p>
+<div style="font-family:monospace;font-size:0.68rem;color:{cc['mono']};word-break:break-all;">⚓ {item["hash"]}</div>
 </div>""",
                     unsafe_allow_html=True
                 )
-                
+
         with col_logs2:
             st.markdown("##### Epistemic Hypothesis Nodes")
             for item in reversed(st.session_state.hypothesis_nodes):
+                level_color = {"Low": "#f59e0b", "Medium": "#f97316", "High": "#ef4444"}.get(item["suspicion_level"], "#ef4444")
                 st.markdown(
-                    f"""<div class="premium-card" style="border-left: 3px solid #e11d48; padding: 12px; margin-bottom: 8px;">
-<div style="display:flex; justify-content:space-between;">
-<b>Suspicion Level: {item["suspicion_level"]}</b>
-<span style="font-size:0.7rem; color:#64748b;">{item["timestamp"].strftime('%b %d, %H:%M')}</span>
+                    f"""<div class="premium-card" style="background:{cc['bg']};border-left:3px solid {level_color};padding:14px;margin-bottom:10px;border-radius:12px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+<span style="font-size:0.78rem;font-weight:700;color:{level_color};background:rgba(239,68,68,0.1);padding:2px 10px;border-radius:20px;">⚠ {item["suspicion_level"].upper()}</span>
+<span style="font-size:0.72rem;color:{cc['muted']};">{item["timestamp"].strftime('%b %d, %H:%M')}</span>
 </div>
-<p style="font-size:0.8rem; color:#475569; margin: 6px 0;"><b>Symptoms:</b> {item["symptoms"]}</p>
-<p style="font-size:0.8rem; color:#475569; margin: 6px 0;"><b>Evidence:</b> {item["evidence"]}</p>
-<div style="font-family: monospace; font-size:0.68rem; color:#e11d48;">Anchor Hash: {item["hash"]}</div>
+<p style="font-size:0.83rem;color:{cc['text']};margin:0 0 4px 0;"><b>Symptoms:</b> {item["symptoms"]}</p>
+<p style="font-size:0.83rem;color:{cc['muted']};margin:0 0 8px 0;"><b>Evidence:</b> {item["evidence"]}</p>
+<div style="font-family:monospace;font-size:0.68rem;color:{cc['mono']};word-break:break-all;">⚓ {item["hash"]}</div>
 </div>""",
                     unsafe_allow_html=True
                 )
@@ -189,20 +251,21 @@ def render_sanctuary_mode(dark_mode: bool):
         st.markdown("### 🕸️ Tripwire Dashboard & Alerts")
         st.write("Monitor external access attempts intercepted by your vault's security policy.")
         
+        cc = _card_colors(dark_mode)
         st.markdown("#### ⚡ Active Opaque Collisions (Intercepted Queries)")
         for item in st.session_state.tripwire_logs:
             status_color = "#ef4444" if "Blocked" in item["status"] else "#f59e0b"
-            
+
             col_info, col_actions = st.columns([3, 1])
             with col_info:
                 st.markdown(
-                    f"""<div class="premium-card" style="border-left: 4px solid {status_color}; padding: 14px; margin-bottom: 10px;">
-<div style="display:flex; justify-content:space-between;">
-<b>{item["agent"]}</b>
-<span style="font-size: 0.72rem; color:{status_color}; font-weight:bold;">{item["status"]}</span>
+                    f"""<div class="premium-card" style="background:{cc['bg']};border-left:4px solid {status_color};padding:14px;margin-bottom:10px;border-radius:12px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+<b style="color:{cc['text']};font-size:0.9rem;">{item["agent"]}</b>
+<span style="font-size:0.72rem;color:{status_color};font-weight:700;background:rgba(239,68,68,0.12);padding:2px 8px;border-radius:20px;">{item["status"]}</span>
 </div>
-<div style="font-size:0.82rem; color:#64748b; margin-top:4px;"><b>Query:</b> {item["query"]}</div>
-<div style="font-size:0.78rem; color:#475569; margin-top:4px;"><b>Sovereign Action:</b> {item["action_taken"]}</div>
+<div style="font-size:0.82rem;color:{cc['muted']};margin-top:4px;"><b style="color:{cc['text']};">Query:</b> {item["query"]}</div>
+<div style="font-size:0.78rem;color:{cc['muted']};margin-top:4px;"><b style="color:{cc['text']};">Sovereign Action:</b> {item["action_taken"]}</div>
 </div>""",
                     unsafe_allow_html=True
                 )
@@ -246,21 +309,22 @@ def render_sanctuary_mode(dark_mode: bool):
                 st.markdown("#### 📊 Prolog Audit Result: Incoherence Report")
                 
                 # Dynamic response showing mathematical contradiction
+                cc = _card_colors(dark_mode)
                 st.markdown(
-                    """<div class="premium-card" style="border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05); padding: 16px;">
-<h4 style="margin: 0; color: #ef4444;">❌ MATHEMATICAL INCOHERENCE PROVEN</h4>
-<p style="font-size: 0.9rem; color: #ef4444; margin-top: 6px;">
+                    f"""<div class="premium-card" style="background:{cc['bg']};border-left:5px solid #ef4444;padding:16px;border-radius:12px;">
+<h4 style="margin:0;color:#ef4444;">❌ MATHEMATICAL INCOHERENCE PROVEN</h4>
+<p style="font-size:0.9rem;color:{cc['text']};margin-top:8px;margin-bottom:6px;">
 <b>Assertion Discrepancy:</b> The external claim directly contradicts verified local vault records.<br>
 <b>Evidence Node:</b> Samsung Health sleep entry <code>SleepRecord_20260526_2215</code>.<br>
 <b>Verification Details:</b>
 </p>
-<ul style="font-size:0.85rem; color:#ef4444; margin-left:20px;">
+<ul style="font-size:0.85rem;color:{cc['muted']};margin-left:20px;line-height:1.7;">
 <li>Sleep Duration: 8 hours 15 minutes (Start: May 26 22:15, End: May 27 06:30)</li>
 <li>Wearable Heart Rate: Average 54 BPM (Consistent with sleep stages; no exercise anomalies)</li>
 <li>Symmetric Hash: <code>0x7e3a9c...</code> anchored to DLT block <b>#488,192</b></li>
 </ul>
-<p style="font-size:0.9rem; color:#ef4444; margin-top:6px; margin-bottom:0;">
-<b>Rule Result:</b> <code>incoherent_claim(external_claim, sleep_record) :- date_match(external_claim, sleep_record), status_match(external_claim, sleeping).</code>
+<p style="font-size:0.85rem;color:{cc['muted']};margin-top:8px;margin-bottom:0;">
+<b style="color:{cc['text']};">Rule Result:</b> <code>incoherent_claim(external_claim, sleep_record) :- date_match(external_claim, sleep_record), status_match(external_claim, sleeping).</code>
 </p>
 </div>""",
                     unsafe_allow_html=True
@@ -351,6 +415,7 @@ incoherent_timeline(Claim, Record) :-
         with c_dur:
             st.markdown("#### 🎭 Plausible Deniability Decoy Settings")
             st.text_input("Decoy PIN (Unlocks Standard Wellness View)", value="1234", type="password")
+            _suppress_password_managers()
             st.checkbox("Erase Sanctuary Vault on 3 consecutive invalid entries", value=True)
             st.checkbox("Erase entire vault if secondary 'Nuke PIN' (0000) is typed", value=False)
             

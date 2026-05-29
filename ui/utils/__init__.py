@@ -4,7 +4,7 @@ from .styling import (
     highlight_turtle_clinical,
     inject_css,
 )
-from .data_access import cached_load, cached_transform, load_dataset_mappings
+from .data_access import cached_load, cached_transform, load_dataset_mappings, get_all_structured_assessments
 from .analytics import extract_timeline_events, get_dashboard_metrics
 from .plotting import plot_dataset_chart
 from .selectors import find_df_by_datatype, find_df_by_keyword
@@ -40,6 +40,7 @@ __all__ = [
     "cached_load",
     "cached_transform",
     "load_dataset_mappings",
+    "get_all_structured_assessments",
     "get_dashboard_metrics",
     "extract_timeline_events",
     "plot_dataset_chart",

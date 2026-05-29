@@ -27,21 +27,37 @@ def init_mock_data():
     profile = st.query_params.get("profile", "gemini").lower()
     
     if "patient_profile" not in st.session_state or st.session_state.get("_mock_data_profile") != profile:
-        sex_map = {
-            "margaret": "Female",
-            "elena": "Female",
-            "rebecca": "Female",
-            "michael": "Male",
-            "robert": "Male",
-            "jordan": "Male",
-            "gemini": "Intersex"
+        karyotype_map = {
+            "margaret": "XX",
+            "elena": "XX",
+            "rebecca": "XX",
+            "michael": "XY",
+            "robert": "XY",
+            "jordan": "XY",
+            "gemini": "XY",
         }
+        full_name_map = {
+            "gemini": "John Doe",
+            "michael": "Michael Chen",
+            "elena": "Elena Vasquez",
+            "rebecca": "Rebecca Hart",
+            "margaret": "Margaret O'Brien",
+            "robert": "Robert Nguyen",
+            "jordan": "Jordan Smith",
+        }
+        expressed_map = {
+            "XX": "Female",
+            "XY": "Male",
+        }
+        karyotype = karyotype_map.get(profile, "XY")
         st.session_state.patient_profile = {
-            "full_name": profile.capitalize(),
+            "full_name": full_name_map.get(profile, profile.capitalize()),
             "date_of_birth": datetime(1980, 5, 20).date(),
-            "biological_sex": sex_map.get(profile, "Male"),
-            "pronouns": "She/Her" if sex_map.get(profile) == "Female" else "He/Him",
-            "gender_identity": profile.capitalize(),
+            "chromosomal_sex": karyotype,
+            "sex_expressed_as": expressed_map.get(karyotype, "Male"),
+            "sex_expressed_custom": "",
+            "pronouns": "She/Her" if karyotype == "XX" else "He/Him",
+            "gender_identity": expressed_map.get(karyotype, "Male"),
             "ancestry_lineage": "Anglo-Celtic / Western European",
             "primary_language": "English",
             "medicare_number": "1234 56789 1",

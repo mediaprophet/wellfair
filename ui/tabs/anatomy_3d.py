@@ -11,16 +11,16 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
     # HuBMAP Human Reference Atlas (HRA) models – CC BY 4.0
     # Source: https://github.com/hubmapconsortium/ccf-3d-reference-object-library
     # Attribution: HuBMAP Consortium / Indiana University
-    # Curated lightweight hologram models (for mobile/WASM) live in vendor/hologram/
-    # Run: python scripts/prepare_hologram_models.py  (needs the CCF library locally)
+    # Served via Streamlit static file serving from static/models/ (enableStaticServing = true)
+    _BASE = "/app/static/models"
     DEMO_AVATARS = {
-        "Healthy Baseline": "vendor/hologram/male_skin.glb",  # preferred lightweight skin shell
-        "Michael (Homeless / Family Separation)": "models/hra/baseline.glb",
-        "Elena (Trauma Survivor)": "vendor/hologram/female_skin.glb",
-        "Rebecca (Birth Trauma / PTSD)": "vendor/hologram/female_skin.glb",
-        "Margaret (Elder Abuse / Neglect)": "vendor/hologram/female_skin.glb",
-        "Robert (Elder Neglect)": "vendor/hologram/male_skin.glb",
-        "Jordan (NDIS Exploitation)": "vendor/hologram/male_skin.glb"
+        "Healthy Baseline":                        f"{_BASE}/baseline.glb",
+        "Michael (Homeless / Family Separation)":  f"{_BASE}/michael.glb",
+        "Elena (Trauma Survivor)":                 f"{_BASE}/elena.glb",
+        "Rebecca (Birth Trauma / PTSD)":           f"{_BASE}/rebecca.glb",
+        "Margaret (Elder Abuse / Neglect)":        f"{_BASE}/margaret.glb",
+        "Robert (Elder Neglect)":                  f"{_BASE}/robert.glb",
+        "Jordan (NDIS Exploitation)":              f"{_BASE}/jordan.glb",
     }
 
     col1, col2 = st.columns([2, 2])
@@ -150,7 +150,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             
             /* Mobile-first responsive behavior for the 3D hologram */
             @media (max-width: 768px) {{
-                #canvas-container {{ height: 62vh; min-height: 420px; border-radius: 12px; }}
+                #canvas-container {{ height: 62vh; min-height: 380px; border-radius: 12px; }}
             }}
             
             /* Premium Glassmorphism UI */
@@ -177,7 +177,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             }}
             
             /* Mobile: Convert layer controls into a compact bottom sheet */
-            @media (max-width: 768px) {{
+            @media (max-width: 520px) {{
                 #layer-controls {{
                     top: auto;
                     bottom: 12px;
@@ -458,17 +458,12 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             controls.maxDistance = 15;
             controls.minDistance = 2;
 
-            // Mobile optimizations
-            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
-            if (isMobile) {
-                controls.enablePan = false;           // Simpler on touch
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 520;
+            if (isMobile) {{
+                controls.enablePan = false;
                 controls.rotateSpeed = 0.7;
                 controls.zoomSpeed = 1.1;
-                // Reduce heavy post-processing on mobile for performance + battery
-                bloomPass.strength = 0.65;
-                filmPass.uniforms.nIntensity.value = 0.15;
-                filmPass.uniforms.sIntensity.value = 0.01;
-            }
+            }}
 
             const ambient = new THREE.AmbientLight(0xffffff, isDark ? 0.2 : 0.6);
             scene.add(ambient);
@@ -494,6 +489,13 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
             composer.addPass(filmPass);
+
+            // Mobile: reduce heavy post-processing for performance + battery
+            if (isMobile) {{
+                bloomPass.strength = 0.65;
+                filmPass.uniforms.nIntensity.value = 0.15;
+                filmPass.uniforms.sIntensity.value = 0.01;
+            }}
 
             // ==========================================
             // HIGH-END SHADER MATERIALS
@@ -525,11 +527,11 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                   vViewPosition = -mvPosition.xyz;
                   vUv = uv;
 
-                  vec3 pos = position;
                   // Very subtle breathing / holographic flicker
-                  pos += normal * sin(uTime * 6.0) * 0.0015 * uGlitchIntensity;
+                  vec3 pos = position + normal * sin(uTime * 6.0) * 0.0015 * uGlitchIntensity;
+                  vec4 mvPosGlitch = modelViewMatrix * vec4(pos, 1.0);
 
-                  gl_Position = projectionMatrix * mvPosition;
+                  gl_Position = projectionMatrix * mvPosGlitch;
                 }}
             `;
 
@@ -584,7 +586,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 fragmentShader: holographicFragmentShader,
                 uniforms: {{
                     uTime: {{ value: 0.0 }},
-                    uOpacity: {{ value: bioData.xRay ? 0.03 : 0.25 }},
+                    uOpacity: {{ value: bioData.xRay ? 0.03 : 0.55 }},
                     uBaseColor: {{ value: baseColor }},
                     uStressColor: {{ value: stressColor }},
                     uStressLevel: {{ value: stressLevel }},
@@ -594,8 +596,8 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 }},
                 transparent: true,
                 wireframe: false,
-                blending: THREE.NormalBlending,
-                side: THREE.FrontSide,
+                blending: THREE.AdditiveBlending,
+                side: THREE.DoubleSide,
                 depthWrite: false
             }});
             
@@ -815,6 +817,21 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             scene.add(atlasGroup);
 
             // ==========================================
+            // ASSET URL RESOLVER
+            // ==========================================
+            const FALLBACK_GLB = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/models/gltf/Soldier.glb";
+            const STATIC_BASE = "/app/static/models";
+            function resolveAssetUrl(url) {{
+                if (!url) return FALLBACK_GLB;
+                if (url.startsWith("http://") || url.startsWith("https://")) return url;
+                if (url.startsWith("/app/static/")) return url;
+                // Relative paths like "vendor/hologram/..." or "models/hra/..." — map to static
+                const filename = url.split("/").pop();
+                if (url.includes("hra/") || url.includes("organ_")) return STATIC_BASE + "/hra/" + filename;
+                return STATIC_BASE + "/" + filename;
+            }}
+
+            // ==========================================
             // GLB AVATAR (SKIN LAYER)
             // ==========================================
             const sysSkin = createLayer('skin');
@@ -831,15 +848,21 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
 
             gltfLoader.load(avatarUrl, (gltf) => {{
                 avatarModel = gltf.scene;
-                
+
                 // Scale depending on the model
                 if (avatarUrl.includes("readyplayer.me")) {{
                     avatarModel.scale.set(3, 3, 3);
-                    avatarModel.position.y = 0.5; // Align with skeleton
+                    avatarModel.position.y = 0.5;
                 }} else {{
                     avatarModel.scale.set(2.2, 2.2, 2.2);
                     avatarModel.position.y = 0;
                 }}
+
+                // Debug: log bounding box so we can tune position/scale
+                const _bb = new THREE.Box3().setFromObject(avatarModel);
+                console.log("[Avatar] Loaded:", avatarUrl);
+                console.log("[Avatar] BBox min:", _bb.min.x.toFixed(2), _bb.min.y.toFixed(2), _bb.min.z.toFixed(2));
+                console.log("[Avatar] BBox max:", _bb.max.x.toFixed(2), _bb.max.y.toFixed(2), _bb.max.z.toFixed(2));
                 
                 // Trauma Morphs
                 if (bioData.trauma === "systemic_frailty") {{
@@ -855,25 +878,24 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                 // Loads only the prioritized organs from vendor/hologram/ (curated lightweight set)
                 // Recommended for mobile / WASM / low-memory environments.
                 // ============================================================
-                function loadTelemetryHologram() {
-                    const base = "vendor/hologram/";
-                    const sex = (bioData.persona || "").toLowerCase().includes("female") ? "female" : "male";
+                function loadTelemetryHologram() {{
+                    // HRA organ files served from /app/static/models/hra/
+                    // Only male variants available in this build; baseline used for skin layer.
                     const organs = [
-                        { key: "skin", role: "spatial_context", domain: null },
-                        { key: "heart", role: "cardiovascular", domain: "wearables" },
-                        { key: "liver", role: "metabolic", domain: "pharmacy" },
-                        { key: "kidney_left", role: "excretory", domain: "pharmacy" },
-                        { key: "kidney_right", role: "excretory", domain: "pharmacy" },
-                        { key: "lung", role: "respiratory", domain: "pathology" },
-                        { key: "large_intestine", role: "digestive", domain: "pathology" }
+                        {{ key: "skin",           file: "baseline.glb",              role: "spatial_context", domain: null }},
+                        {{ key: "heart",          file: "organ_heart_m.glb",         role: "cardiovascular",  domain: "wearables" }},
+                        {{ key: "kidney_left",    file: "organ_kidney_l_m.glb",      role: "excretory",       domain: "pharmacy" }},
+                        {{ key: "kidney_right",   file: "organ_kidney_r_m.glb",      role: "excretory",       domain: "pharmacy" }},
+                        {{ key: "lung",           file: "organ_lung_m.glb",          role: "respiratory",     domain: "pathology" }},
+                        {{ key: "large_intestine",file: "organ_large_intestine_m.glb",role: "digestive",      domain: "pathology" }}
                     ];
 
-                    organs.forEach(org => {
-                        const url = resolveAssetUrl(base + sex + "_" + org.key + ".glb");
+                    organs.forEach(org => {{
+                        const url = STATIC_BASE + "/hra/" + org.file;
                         const layerName = "holo_" + org.key;
                         const sys = createLayer(layerName);
 
-                        gltfLoader.load(url, (gltf) => {
+                        gltfLoader.load(url, (gltf) => {{
                             const model = gltf.scene;
                             model.scale.set(2.0, 2.0, 2.0);
                             model.position.y = 0;
@@ -884,29 +906,29 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
                             else if (org.key.includes("kidney")) targetMat = matUro;
                             else if (org.key === "lung") targetMat = matLungs;
                             else if (org.key === "large_intestine") targetMat = matDigestive;
-                            else if (org.key === "skin") {
-                                targetMat = new THREE.MeshStandardMaterial({
+                            else if (org.key === "skin") {{
+                                targetMat = new THREE.MeshStandardMaterial({{
                                     color: 0x88aaff, emissive: 0x334466, emissiveIntensity: 0.3,
                                     transparent: true, opacity: 0.18
-                                });
-                            }
+                                }});
+                            }}
 
-                            model.traverse(child => {
-                                if (child.isMesh && targetMat) {
+                            model.traverse(child => {{
+                                if (child.isMesh && targetMat) {{
                                     child.material = targetMat.clone();
-                                    child.userData = { name: org.key.toUpperCase(), domain: org.domain };
-                                }
-                            });
+                                    child.userData = {{ name: org.key.toUpperCase(), domain: org.domain }};
+                                }}
+                            }});
 
                             sys.add(model);
-                        }, undefined, () => {});
-                    });
-                }
+                        }}, undefined, () => {{}});
+                    }});
+                }}
 
                 const useLightweight = isMobile || bioData.useLightweightHologram === true;
-                if (useLightweight) {
+                if (useLightweight) {{
                     setTimeout(loadTelemetryHologram, 180);
-                }
+                }}
 
                 // ============================================================
                 // Semantic HRA Mesh Traversal
@@ -1071,16 +1093,16 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // Mobile: Layer panel bottom sheet toggle
             const btnToggleLayers = document.getElementById('btn-toggle-layers');
             const layerPanel = document.getElementById('layer-controls');
-            if (isMobile && btnToggleLayers && layerPanel) {
+            if (isMobile && btnToggleLayers && layerPanel) {{
                 btnToggleLayers.style.display = 'block';
                 let layersVisible = true;
-                btnToggleLayers.addEventListener('click', () => {
+                btnToggleLayers.addEventListener('click', () => {{
                     layersVisible = !layersVisible;
                     layerPanel.style.display = layersVisible ? 'block' : 'none';
                     btnToggleLayers.textContent = layersVisible ? '✕ Close' : '☰ Layers';
-                });
+                }});
                 // Start with layers visible on mobile for discoverability
-            }
+            }}
 
             container.addEventListener('pointermove', (event) => {{
                 const rect = container.getBoundingClientRect();

@@ -229,7 +229,7 @@ def render_study_vault(dark_mode: bool):
             share_hyp = st.checkbox("Include Autonomic Dysregulation Hypothesis Node", value=True)
             
             st.markdown("#### Target Recipient (Social Book)")
-            recipient = st.selectbox("Select Clinician / Practitioner", options=actors, format_func=lambda x: f"{x['name']} ({x.get('did_uri', 'No DID')})")
+            recipient = st.selectbox("Select Clinician / Practitioner", options=actors, format_func=lambda x: f"{x.name} ({x.did_uri or 'No DID'})")
             
             st.markdown("#### Verification & Cryptographic Seals")
             priv_key = st.text_input("Enter Private DID Verification Key", value="did:key:z6MkgTsvK8sPec...", type="password")

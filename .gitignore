@@ -1,6 +1,8 @@
 # Private Health Data Exports (Do not commit)
 20250221_SamsungHealth/
 data/samsung_export/
+# Instructions for the user to follow
+instructions/
 
 # Local Python Caching and Outputs
 output/
@@ -28,3 +30,7 @@ Thumbs.db
 # The current lean version (~8MB) is committed so GitHub Pages can serve it.
 # docs/app.html
 docs/app.tmp.html
+
+# Streamlit local run artefacts
+streamlit_out.txt
+streamlit_err.txt

@@ -8,10 +8,10 @@ from src.phr_models.profile import (
 from ui.utils.components import render_info_banner
 
 def render_profile_intake(dark_mode: bool, normalized: dict):
-    st.markdown("## 📋 Sovereign Profile & Medical Intake")
-    
+    st.markdown("## 📋 Personal Profile & Medical Intake")
+
     render_info_banner(
-        title="Sovereign Intake Credentials & Epistemic Audit",
+        title="Intake Credentials & Epistemic Audit",
         body="Manage your personal demographics, pronouns, ancestry, and primary language. Track disability accessibility support needs, and audit pre-existing conditions and allergies with linked evidence.",
         accent_color="#3b82f6",
         icon="📋",
@@ -92,8 +92,8 @@ def render_profile_intake(dark_mode: bool, normalized: dict):
     
     # ------------------ TAB 1: MEDICAL INTAKE ------------------
     with t_profile:
-        st.markdown("### 📋 Sovereign Patient Intake Sheet")
-        st.write("This data represents your self-sovereign identity profile, commonly required when registering at a new medical practice.")
+        st.markdown("### 📋 Patient Intake Sheet")
+        st.write("This data represents your personal identity profile, commonly required when registering at a new medical practice.")
         
         prof = st.session_state.patient_profile
         
@@ -105,10 +105,11 @@ def render_profile_intake(dark_mode: bool, normalized: dict):
             # Draw intake sheet card
             st.markdown(
                 f"""<div class="premium-card" style="border-left: 4px solid #3b82f6; padding: 24px;">
-<h3 style="margin: 0 0 16px 0; color:#3b82f6; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 8px;"> John Doe</h3>
+<h3 style="margin: 0 0 16px 0; color:#3b82f6; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 8px;">{prof["full_name"]}</h3>
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.92rem;">
 <div><b>Date of Birth:</b> {prof["date_of_birth"].strftime('%B %d, %Y')}</div>
-<div><b>Biological Sex:</b> {prof["biological_sex"]}</div>
+<div><b>Chromosomal Karyotype:</b> {prof.get("chromosomal_sex", prof.get("biological_sex", "—"))}</div>
+<div><b>Expressed As:</b> {prof.get("sex_expressed_as") or prof.get("biological_sex", "—")}{(" — " + prof["sex_expressed_custom"]) if prof.get("sex_expressed_custom") else ""}</div>
 <div><b>Pronouns:</b> {prof["pronouns"]}</div>
 <div><b>Gender Identity:</b> {prof["gender_identity"] or "Not Specified"}</div>
 <div><b>Genetic Ancestry:</b> {prof["ancestry_lineage"]}</div>
@@ -126,7 +127,38 @@ def render_profile_intake(dark_mode: bool, normalized: dict):
             with st.form("edit_profile_form"):
                 name = st.text_input("Full Name", value=prof["full_name"])
                 dob = st.date_input("Date of Birth", value=prof["date_of_birth"])
-                sex = st.selectbox("Biological Sex", ["Male", "Female", "Intersex"], index=["Male", "Female", "Intersex"].index(prof["biological_sex"]))
+                _karyotype_opts = ["XX", "XY", "XXY (Klinefelter)", "XYY (Jacob's)", "X0 (Turner)", "Other / Unknown"]
+                _curr_k = prof.get("chromosomal_sex", prof.get("biological_sex", "XY"))
+                # Normalise legacy values
+                if _curr_k in ("Male", "Female", "Intersex"):
+                    _curr_k = {"Male": "XY", "Female": "XX", "Intersex": "XXY (Klinefelter)"}.get(_curr_k, "XY")
+                _k_idx = next((i for i, v in enumerate(_karyotype_opts) if v.startswith(_curr_k)), 1)
+                chromosomal_sex = st.selectbox(
+                    "Chromosomal Karyotype",
+                    _karyotype_opts,
+                    index=_k_idx,
+                    help="Select the chromosomal sex as determined by genetics or clinical testing."
+                )
+                # Strip the descriptive suffix for storage (keep just "XY", "XX", "XXY", etc.)
+                chromosomal_sex_key = chromosomal_sex.split(" ")[0]
+
+                _express_opts = ["Male", "Female", "Non-binary", "Custom"]
+                _auto_express = {"XX": "Female", "XY": "Male"}.get(chromosomal_sex_key, "Custom")
+                _curr_expr = prof.get("sex_expressed_as", _auto_express)
+                _expr_idx = _express_opts.index(_curr_expr) if _curr_expr in _express_opts else 3
+                sex_expressed_as = st.selectbox(
+                    "Expressed As (clinical / social mapping)",
+                    _express_opts,
+                    index=_expr_idx,
+                    help="How the chromosomal karyotype maps to clinical sex or gender expression for medical records."
+                )
+                sex_expressed_custom = ""
+                if sex_expressed_as in ("Non-binary", "Custom"):
+                    sex_expressed_custom = st.text_input(
+                        "Custom expression / descriptor",
+                        value=prof.get("sex_expressed_custom", ""),
+                        placeholder="e.g. Intersex, Agender, Genderfluid…"
+                    )
                 pronouns = st.text_input("Pronouns", value=prof["pronouns"])
                 gender = st.text_input("Gender Identity", value=prof["gender_identity"] or "")
                 ancestry = st.text_input("Genetic Ancestry / Lineage", value=prof["ancestry_lineage"])
@@ -142,7 +174,9 @@ def render_profile_intake(dark_mode: bool, normalized: dict):
                     st.session_state.patient_profile = {
                         "full_name": name,
                         "date_of_birth": dob,
-                        "biological_sex": sex,
+                        "chromosomal_sex": chromosomal_sex_key,
+                        "sex_expressed_as": sex_expressed_as,
+                        "sex_expressed_custom": sex_expressed_custom,
                         "pronouns": pronouns,
                         "gender_identity": gender if gender else None,
                         "ancestry_lineage": ancestry,
@@ -153,7 +187,7 @@ def render_profile_intake(dark_mode: bool, normalized: dict):
                         "emergency_contact_name": em_name,
                         "emergency_contact_phone": em_phone
                     }
-                    st.success("Sovereign profile updated.")
+                    st.success("Profile updated.")
                     st.rerun()
 
     # ------------------ TAB 2: DISABILITY SUPPORTS ------------------

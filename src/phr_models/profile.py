@@ -26,7 +26,10 @@ class PatientProfile(BaseModel):
     id: str
     full_name: str
     date_of_birth: date
-    biological_sex: str = Field(..., description="e.g., Male, Female, Intersex")
+    biological_sex: str = Field(default="XY", description="Chromosomal karyotype, e.g. XX, XY, XXY")
+    chromosomal_sex: Optional[str] = Field(None, description="Chromosomal karyotype: XX, XY, XXY, XYY, X0, Other")
+    sex_expressed_as: Optional[str] = Field(None, description="Clinical/social mapping: Male, Female, Non-binary, Custom")
+    sex_expressed_custom: Optional[str] = Field(None, description="Custom sex/gender expression descriptor")
     pronouns: str = Field(..., description="e.g., He/Him, She/Her, They/Them, or custom pronouns")
     gender_identity: Optional[str] = None
     ancestry_lineage: str = Field(..., description="Genetic ancestral background, e.g., Anglo-Celtic, East Asian, Indigenous Australian")

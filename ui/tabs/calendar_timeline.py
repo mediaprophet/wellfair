@@ -259,6 +259,8 @@ Track health events, pathology timelines, and dependent clinical workflows. The 
         for ev in events:
             # Backwards compatibility: fallback to "date" if "start" is missing
             ev_start = ev.get("start") or ev.get("date")
+            if ev_start is None:
+                continue
             ev_end = ev.get("end") or (ev_start + timedelta(hours=1))
             
             # Align keys

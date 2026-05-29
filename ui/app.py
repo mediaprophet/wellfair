@@ -324,7 +324,7 @@ def main():
     if show_settings:
         render_vault_admin(dark_mode, normalized, export_path, template_path, output_path)
     else:
-        renderer = SECTION_RENDERERS.get(app_section_key, SECTION_RENDERERS["personal_health"])
+        renderer = SECTION_RENDERERS.get(app_section_key, SECTION_RENDERERS["profile_intake"])
         renderer()
 
 if __name__ == "__main__":

@@ -116,15 +116,14 @@ def get_gauge_html(value: float, low: float | None, high: float | None) -> str:
 def render_pathology(dark_mode: bool):
     st.markdown("## 🔬 Lab & Pathology Results")
     
-    st.markdown(
-        render_info_banner(
-            title="Diagnostic & Lab Observational Informatics",
-            body="Track clinically validated laboratory results, pathology panels, and custom bio-measurements. Use the trending engine to map values chronologically and verify references. All records adhere to strict privacy controls.",
-            accent_color="#0d9488",
-            icon="🧪",
-            dark_mode=dark_mode,
-        )
-    
+    render_info_banner(
+        title="Diagnostic & Lab Observational Informatics",
+        body="Track clinically validated laboratory results, pathology panels, and custom bio-measurements. Use the trending engine to map values chronologically and verify references. All records adhere to strict privacy controls.",
+        accent_color="#0d9488",
+        icon="🧪",
+        dark_mode=dark_mode,
+    )
+
     # Initialize reports list if missing
     if "diagnostic_reports" not in st.session_state:
         st.session_state.diagnostic_reports = []
