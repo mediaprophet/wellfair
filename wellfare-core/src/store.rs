@@ -1,8 +1,8 @@
 /// In-memory RDF store backed by oxigraph.
 /// Accepts Turtle serialised by rdf.rs, executes SPARQL 1.1 SELECT/ASK/CONSTRUCT.
-use oxigraph::io::RdfFormat;
-use oxigraph::model::GraphNameRef;
-use oxigraph::sparql::{QueryResults, QueryResultsFormat};
+use oxigraph::io::{RdfFormat, RdfParser};
+use oxigraph::sparql::results::{QueryResultsFormat, QueryResultsSerializer};
+use oxigraph::sparql::QueryResults;
 use oxigraph::store::Store;
 
 pub struct HealthStore {
@@ -17,9 +17,10 @@ impl HealthStore {
     }
 
     /// Load a Turtle document into the default graph.
-    pub fn load_turtle(&mut self, turtle: &str) -> Result<usize, String> {
+    pub fn load_turtle(&mut self, turtle: &str) -> Result<(), String> {
+        let parser = RdfParser::from_format(RdfFormat::Turtle);
         self.inner
-            .load_from_reader(RdfFormat::Turtle, turtle.as_bytes(), None, None, Some(GraphNameRef::DefaultGraph))
+            .load_from_reader(parser, turtle.as_bytes())
             .map_err(|e| e.to_string())
     }
 
@@ -29,16 +30,20 @@ impl HealthStore {
             Err(e) => Err(e.to_string()),
             Ok(QueryResults::Solutions(solutions)) => {
                 let mut buf = Vec::new();
-                solutions
-                    .write(&mut buf, QueryResultsFormat::Json)
+                let variables = solutions.variables().to_vec();
+                let mut writer = QueryResultsSerializer::from_format(QueryResultsFormat::Json)
+                    .serialize_solutions_to_writer(&mut buf, variables)
                     .map_err(|e| e.to_string())?;
+                for solution in solutions {
+                    writer
+                        .serialize(solution.map_err(|e| e.to_string())?.iter())
+                        .map_err(|e| e.to_string())?;
+                }
+                writer.finish().map_err(|e| e.to_string())?;
                 String::from_utf8(buf).map_err(|e| e.to_string())
             }
-            Ok(QueryResults::Boolean(b)) => {
-                Ok(format!("{{\"boolean\":{}}}", b))
-            }
+            Ok(QueryResults::Boolean(b)) => Ok(format!("{{\"boolean\":{}}}", b)),
             Ok(QueryResults::Graph(triples)) => {
-                // CONSTRUCT → return Turtle
                 let mut buf = Vec::new();
                 for triple in triples {
                     let t = triple.map_err(|e| e.to_string())?;
@@ -49,7 +54,7 @@ impl HealthStore {
         }
     }
 
-    /// Convenience: load prefixes + turtle body, then run a SPARQL ASK shape check.
+    /// Load prefixes + data, then run a SPARQL ASK shape check.
     /// Returns `true` if the constraint is violated (ASK returns true = violation found).
     pub fn check_shape(&mut self, prefixes: &str, turtle_data: &str, ask_query: &str) -> Result<bool, String> {
         let full_ttl = format!("{}\n{}", prefixes, turtle_data);
@@ -88,7 +93,6 @@ mod tests {
     fn test_ask_shape_violation() {
         let mut store = HealthStore::new().unwrap();
         let prefixes = generate_rdf_prefixes();
-        // Efficiency of 150 violates 0–100 range
         let data = "<urn:health:sleep:bad1> a <http://hl7.org/fhir/Observation> ; \
                     <https://health.example.org/ns#sleepEfficiency> 150 .";
         let ask = "ASK { ?obs <https://health.example.org/ns#sleepEfficiency> ?e \

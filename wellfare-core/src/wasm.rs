@@ -88,8 +88,8 @@ impl WasmHealthStore {
             .map_err(|e| JsValue::from_str(&e))
     }
 
-    /// Load a Turtle document into the store. Returns triple count.
-    pub fn load_turtle(&mut self, turtle: &str) -> Result<usize, JsValue> {
+    /// Load a Turtle document into the default graph of the store.
+    pub fn load_turtle(&mut self, turtle: &str) -> Result<(), JsValue> {
         self.0.load_turtle(turtle).map_err(|e| JsValue::from_str(&e))
     }
 
