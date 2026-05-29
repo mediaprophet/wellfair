@@ -30,6 +30,34 @@ def main():
                     "data": base64.b64encode(content).decode("ascii")
                 }
 
+    # --- Post-build verification: prevent silent missing-module disasters in Pyodide ---
+    CRITICAL_MODULES = [
+        "src/__init__.py",
+        "src/utils.py",
+        "src/phr_models/__init__.py",
+        "src/phr_models/imaging.py",
+        "src/phr_models/proxy_consent.py",
+        "src/phr_models/profile.py",
+        "src/phr_models/pathology.py",
+        "ui/app.py",
+        "ui/utils/__init__.py",
+        "ui/tabs/document_ingestion.py",
+        "ui/tabs/personal_health.py",
+        "ui/tabs/anatomy_3d.py",
+    ]
+
+    missing = [m for m in CRITICAL_MODULES if m not in stlite_files]
+    if missing:
+        print("WARNING: The following critical modules are MISSING from the Stlite bundle:")
+        for m in missing:
+            print(f"     - {m}")
+        print("   The WASM demo will fail to import these at runtime (ModuleNotFoundError).")
+        print("   Make sure the files exist on disk and re-run this script.")
+    else:
+        print(f"OK: All {len(CRITICAL_MODULES)} critical modules present in bundle.")
+
+    print(f"   Total files packaged: {len(stlite_files)}")
+
     files_json = json.dumps(stlite_files).replace("<", "\\u003c")
 
     html = f"""<!DOCTYPE html>
