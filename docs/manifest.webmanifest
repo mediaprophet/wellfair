@@ -1,33 +1,24 @@
 {
-  "name": "wellfair (health-to-solid WASM Demo)",
-  "short_name": "wellfair",
-  "start_url": "app.html",
+  "name": "WellFair — Health Vault",
+  "short_name": "WellFair",
+  "start_url": "/pair.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0b5fff",
-  "description": "Client-side demo of wellfair and health-to-solid parsing and RDF export using WebAssembly. Files remain local.",
+  "orientation": "portrait",
+  "background_color": "#f8f9fa",
+  "theme_color": "#0d6efd",
+  "description": "Privacy-first personal health vault. Your data stays on your device, shared only via end-to-end encrypted WebRTC.",
   "icons": [
     {
       "src": "icons/icon-192.svg",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "icons/icon-512.svg",
       "sizes": "512x512",
-      "type": "image/svg+xml"
-    }
-    ,
-    {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII=",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
-

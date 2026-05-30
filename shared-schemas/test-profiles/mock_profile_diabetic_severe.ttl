@@ -1,0 +1,44 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix me:     <urn:wellfair:user:mock-diabetic-severe:> .
+
+# =============================================================================
+# Mock Profile: Severe Type 2 Diabetes
+# Expected evaluation result:
+#   - MUST trigger: fma:Left_kidney, fma:Right_kidney (high) — nephropathy
+#   - MUST trigger: fma:Left_renal_artery, fma:Right_renal_artery (high)
+#   - MUST trigger: fma:Retina (high) — retinopathy
+#   - MUST trigger: fma:Pancreas (high) — beta-cell dysfunction
+#   - MUST trigger: fma:Spinal_cord (medium) — peripheral neuropathy
+#   - MUST trigger: fma:Cardiovascular_system (medium) — peripheral vascular
+#   - MUST NOT trigger: any EDS, hypertension-specific, or PTSD targets
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – Severe Type 2 Diabetes" ;
+    app:subjectId "mock-diabetic-severe" .
+
+# Conditions
+me:subject app:userFact snomed:44054006 .   # Type 2 diabetes mellitus
+
+# Metrics – diabetes out of control, otherwise normal
+me:metric_hba1c           app:prologName "hba1c" ;           app:value "9.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_fasting_glucose  app:prologName "fasting_glucose" ;  app:value "12.4"^^xsd:decimal ; app:subject me:subject .
+me:metric_systolic_bp      app:prologName "systolic_bp" ;      app:value "118"^^xsd:decimal ; app:subject me:subject .
+me:metric_diastolic_bp     app:prologName "diastolic_bp" ;     app:value "76"^^xsd:decimal ;  app:subject me:subject .
+me:metric_heart_rate       app:prologName "heart_rate" ;       app:value "78"^^xsd:decimal ;  app:subject me:subject .
+me:metric_egfr             app:prologName "egfr" ;             app:value "52"^^xsd:decimal ;  app:subject me:subject .
+me:metric_uacr             app:prologName "uacr" ;             app:value "18.4"^^xsd:decimal ; app:subject me:subject .
+me:metric_total_chol       app:prologName "total_cholesterol" ; app:value "5.8"^^xsd:decimal ; app:subject me:subject .
+me:metric_ldl              app:prologName "ldl" ;              app:value "3.8"^^xsd:decimal ;  app:subject me:subject .
+me:metric_hdl              app:prologName "hdl" ;              app:value "0.9"^^xsd:decimal ;  app:subject me:subject .
+me:metric_crp_hs           app:prologName "crp_hs" ;           app:value "4.2"^^xsd:decimal ;  app:subject me:subject .
+me:metric_tsh              app:prologName "tsh" ;              app:value "2.3"^^xsd:decimal ;  app:subject me:subject .
+me:metric_sleep_eff        app:prologName "sleep_efficiency" ;  app:value "72"^^xsd:decimal ;  app:subject me:subject .
+me:metric_phq9             app:prologName "phq9_score" ;       app:value "7"^^xsd:decimal ;   app:subject me:subject .
+me:metric_bmi              app:prologName "bmi" ;              app:value "31.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_vitamin_d        app:prologName "vitamin_d" ;        app:value "38"^^xsd:decimal ;  app:subject me:subject .

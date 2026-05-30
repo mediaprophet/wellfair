@@ -1,0 +1,151 @@
+{
+  "_comment": "Derived from access-profiles.ttl. When a SPARQL engine is available in the vault, load the TTL directly. Until then this JSON is the working registry.",
+  "_source": "docs/profiles/access-profiles.ttl",
+  "profiles": [
+    {
+      "id": "owner_workspace",
+      "label": "My Vault — Owner Workspace",
+      "description": "Your own vault, on your computer. Full access to all records, documents, and settings. Authenticated by your vault PIN on your phone.",
+      "icon": "🔐",
+      "color": "#1a1a2e",
+      "isOwner": true,
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "vault_owner_pin",
+      "readWrite": true,
+      "sections": [
+        "overview", "heart_rate", "blood_pressure", "sleep", "steps", "weight",
+        "medications", "allergies", "conditions", "blood_type", "dnr",
+        "emergency_contacts", "surgical_history", "mental_health",
+        "sexual_health", "social_context", "documents", "notes", "audit_log"
+      ]
+    },
+    {
+      "id": "emergency_first_responder",
+      "label": "Emergency / First Responder",
+      "description": "Paramedic or ambulance crew. Critical information only, when you may be unconscious. Pre-authorised by you when setting up this profile. Time-limited to 2 hours. All access permanently logged.",
+      "icon": "🚑",
+      "color": "#dc3545",
+      "emergencyOnly": true,
+      "requiresAudit": true,
+      "credentialRequired": "emergency_responder_vc",
+      "sessionMaxMinutes": 120,
+      "sections": [
+        "allergies", "blood_type", "medications",
+        "conditions", "dnr", "emergency_contacts"
+      ]
+    },
+    {
+      "id": "emergency_department",
+      "label": "Emergency Department",
+      "description": "ED clinician treating you in hospital. Full clinical picture for safe treatment when you cannot consent directly. Logged for 4 hours.",
+      "icon": "🏥",
+      "color": "#c0392b",
+      "emergencyOnly": true,
+      "requiresAudit": true,
+      "credentialRequired": "clinical_professional_vc",
+      "sessionMaxMinutes": 240,
+      "sections": [
+        "overview", "allergies", "blood_type", "medications",
+        "conditions", "dnr", "emergency_contacts", "surgical_history"
+      ]
+    },
+    {
+      "id": "gp",
+      "label": "General Practitioner",
+      "description": "Your primary care doctor. General health vitals, medications, and conditions. Mental health and sexual health excluded by default.",
+      "icon": "👨‍⚕️",
+      "color": "#0d6efd",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "clinical_professional_vc",
+      "sections": [
+        "overview", "heart_rate", "blood_pressure",
+        "sleep", "steps", "weight",
+        "medications", "allergies", "conditions"
+      ]
+    },
+    {
+      "id": "specialist",
+      "label": "Specialist",
+      "description": "Hospital specialist (cardiologist, oncologist, etc.). Clinical vitals and procedure history.",
+      "icon": "🔬",
+      "color": "#6610f2",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "clinical_professional_vc",
+      "sections": [
+        "overview", "heart_rate", "blood_pressure",
+        "medications", "allergies", "conditions", "surgical_history"
+      ]
+    },
+    {
+      "id": "psychiatrist",
+      "label": "Psychiatrist / Mental Health",
+      "description": "Mental health clinician. Psychiatric history and sleep indicators. Substance use is excluded — that requires separate Sanctuary Mode disclosure.",
+      "icon": "🧠",
+      "color": "#6f42c1",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "mental_health_practitioner_vc",
+      "sections": [
+        "overview", "mental_health", "sleep", "medications"
+      ]
+    },
+    {
+      "id": "social_worker",
+      "label": "Social Worker",
+      "description": "Social care professional. Social and housing context, support network, emergency contacts. No clinical detail by default.",
+      "icon": "🤝",
+      "color": "#198754",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "social_worker_vc",
+      "sections": [
+        "overview", "social_context", "emergency_contacts"
+      ]
+    },
+    {
+      "id": "personal_partner",
+      "label": "Personal / Partner",
+      "description": "Intimate or close personal sharing. Sexual health status and most recent STI screening date only. No credential required.",
+      "icon": "❤️",
+      "color": "#e91e63",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "none",
+      "sections": [
+        "sexual_health"
+      ]
+    },
+    {
+      "id": "carer_family",
+      "label": "Carer / Family Member",
+      "description": "Trusted carer or family member. Overview, medications, conditions, allergies, and emergency contacts. Mental health excluded unless you add it.",
+      "icon": "🏠",
+      "color": "#fd7e14",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "none",
+      "sections": [
+        "overview", "medications", "conditions",
+        "allergies", "emergency_contacts"
+      ]
+    },
+    {
+      "id": "legal_advocate",
+      "label": "Legal Advocate / Solicitor",
+      "description": "Legal professional acting on your behalf. You choose exactly what to share for this specific legal matter — nothing is shared by default.",
+      "icon": "⚖️",
+      "color": "#6c757d",
+      "emergencyOnly": false,
+      "requiresAudit": false,
+      "credentialRequired": "personal_pin",
+      "sessionScoped": true,
+      "sections": [
+        "overview", "conditions", "mental_health",
+        "social_context", "medications", "surgical_history"
+      ]
+    }
+  ]
+}

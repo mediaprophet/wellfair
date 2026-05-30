@@ -1,0 +1,330 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix wf:   <https://wellfare.social/ns/vault#> .
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WellFair Vault — Access Profile Shapes
+#
+# Each profile is a sh:NodeShape that declares which data paths (sh:property)
+# may be read during a session of that type.  Profiles are SHACL shapes rather
+# than OWL classes so that they describe constraints on data access, not class
+# membership of the natural person whose vault it is.
+#
+# New profiles can be defined by creating additional sh:NodeShape instances
+# following the same pattern and adding them to the profile registry.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Data path vocabulary ──────────────────────────────────────────────────────
+# Each property corresponds to a named section the vault can serve.
+
+wf:overview          a rdf:Property ; rdfs:label "Overview & summary"@en .
+wf:heartRate         a rdf:Property ; rdfs:label "Heart rate"@en .
+wf:bloodPressure     a rdf:Property ; rdfs:label "Blood pressure"@en .
+wf:sleep             a rdf:Property ; rdfs:label "Sleep"@en .
+wf:steps             a rdf:Property ; rdfs:label "Activity & steps"@en .
+wf:weight            a rdf:Property ; rdfs:label "Weight"@en .
+wf:medications       a rdf:Property ; rdfs:label "Current medications"@en .
+wf:allergies         a rdf:Property ; rdfs:label "Allergies & adverse reactions"@en .
+wf:conditions        a rdf:Property ; rdfs:label "Medical conditions"@en .
+wf:bloodType         a rdf:Property ; rdfs:label "Blood type & Rh factor"@en .
+wf:dnr               a rdf:Property ; rdfs:label "Advance directives & DNR status"@en .
+wf:emergencyContacts a rdf:Property ; rdfs:label "Emergency contacts"@en .
+wf:surgicalHistory   a rdf:Property ; rdfs:label "Surgical & procedure history"@en .
+wf:mentalHealth      a rdf:Property ; rdfs:label "Mental health records"@en .
+wf:sexualHealth      a rdf:Property ; rdfs:label "Sexual health & STI status"@en .
+wf:socialContext     a rdf:Property ; rdfs:label "Social & housing context"@en .
+
+
+# ── Access condition vocabulary ───────────────────────────────────────────────
+
+wf:AccessCondition a rdfs:Class .
+
+wf:NormalAccess
+    a wf:AccessCondition ;
+    rdfs:label "Normal"@en ;
+    rdfs:comment "Vault owner is conscious and actively consenting to this session."@en .
+
+wf:EmergencyAccess
+    a wf:AccessCondition ;
+    rdfs:label "Emergency"@en ;
+    rdfs:comment "Vault owner may be unconscious or incapacitated. Pre-authorised by the owner when configuring this profile. Access is time-limited and fully audited."@en .
+
+
+# ── Credential requirement vocabulary ────────────────────────────────────────
+
+wf:CredentialType a rdfs:Class .
+
+wf:NoCredentialRequired
+    a wf:CredentialType ;
+    rdfs:label "No credential required"@en ;
+    rdfs:comment "Personal trust relationship — no verifiable credential needed."@en .
+
+wf:PersonalTrustPin
+    a wf:CredentialType ;
+    rdfs:label "Shared PIN"@en ;
+    rdfs:comment "A PIN the vault owner has shared with this person out-of-band."@en .
+
+wf:EmergencyResponderVC
+    a wf:CredentialType ;
+    rdfs:label "Emergency responder credential (VC)"@en ;
+    rdfs:comment "Verifiable Credential issued to a paramedic or first responder by their employer or registration body."@en .
+
+wf:ClinicalProfessionalVC
+    a wf:CredentialType ;
+    rdfs:label "Clinical professional credential (VC)"@en ;
+    rdfs:comment "Verifiable Credential from a medical registration body (e.g. GMC, NMC)."@en .
+
+wf:MentalHealthPractitionerVC
+    a wf:CredentialType ;
+    rdfs:label "Mental health practitioner credential (VC)"@en ;
+    rdfs:comment "Verifiable Credential from a mental health registration body."@en .
+
+wf:SocialWorkerVC
+    a wf:CredentialType ;
+    rdfs:label "Social worker credential (VC)"@en ;
+    rdfs:comment "Verifiable Credential from a social work registration body (e.g. Social Work England)."@en .
+
+
+# ── Custom properties for profiles ───────────────────────────────────────────
+
+wf:accessCondition    a rdf:Property ; rdfs:range wf:AccessCondition .
+wf:credentialRequired a rdf:Property ; rdfs:range wf:CredentialType .
+wf:sessionMaxDuration a rdf:Property ; rdfs:range xsd:duration ;
+    rdfs:comment "Maximum wall-clock duration of a session under this profile."@en .
+wf:requiresAudit      a rdf:Property ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, all access events must be written to the vault's immutable audit log."@en .
+wf:sessionScoped      a rdf:Property ; rdfs:range xsd:boolean ;
+    rdfs:comment "If true, the vault owner manually selects exactly which sections to expose for this specific session rather than relying on the profile defaults."@en .
+wf:uiColor            a rdf:Property ; rdfs:range xsd:string ;
+    rdfs:comment "Hex colour used to visually distinguish this profile in the vault UI."@en .
+wf:uiIcon             a rdf:Property ; rdfs:range xsd:string .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROFILE SHAPES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Additional data path vocabulary for owner/document mode ──────────────────
+
+wf:documents         a rdf:Property ; rdfs:label "Uploaded documents & PDFs"@en .
+wf:notes             a rdf:Property ; rdfs:label "Personal notes & journal"@en .
+wf:sanctuaryData     a rdf:Property ; rdfs:label "Sanctuary Mode records"@en .
+wf:auditLog          a rdf:Property ; rdfs:label "Vault access audit log"@en .
+wf:vaultSettings     a rdf:Property ; rdfs:label "Vault configuration & profiles"@en .
+
+# ── Write access vocabulary ───────────────────────────────────────────────────
+
+wf:AccessMode a rdfs:Class .
+wf:ReadOnly  a wf:AccessMode ; rdfs:label "Read only"@en .
+wf:ReadWrite a wf:AccessMode ; rdfs:label "Read and write"@en .
+
+wf:accessMode a rdf:Property ; rdfs:range wf:AccessMode ;
+    rdfs:comment "Whether the session may write data back to the vault."@en .
+
+# ── Owner credential ──────────────────────────────────────────────────────────
+
+wf:VaultOwnerPIN
+    a wf:CredentialType ;
+    rdfs:label "Vault owner PIN"@en ;
+    rdfs:comment "PIN or biometric known only to the vault owner, verified locally on the phone."@en .
+
+
+# ── Owner Workspace Profile ───────────────────────────────────────────────────
+
+wf:OwnerWorkspaceProfile
+    a sh:NodeShape ;
+    rdfs:label      "Owner — Personal Workspace"@en ;
+    rdfs:comment    "The vault owner using their desktop or laptop as an extension of their phone vault. Full read/write access to all sections. Authenticated by vault owner PIN or biometric on the phone. No credential is presented to a third party — this is the owner's own session."@en ;
+    dct:description "Use case: owner processes documents, reviews full records, writes notes, configures profiles — all on a larger screen."@en ;
+    wf:uiColor      "#1a1a2e" ;
+    wf:uiIcon       "🔐" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:VaultOwnerPIN ;
+    wf:accessMode         wf:ReadWrite ;
+    wf:requiresAudit      false ;
+    # All data paths available to the owner
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:heartRate         ] ;
+    sh:property [ sh:path wf:bloodPressure     ] ;
+    sh:property [ sh:path wf:sleep             ] ;
+    sh:property [ sh:path wf:steps             ] ;
+    sh:property [ sh:path wf:weight            ] ;
+    sh:property [ sh:path wf:medications       ] ;
+    sh:property [ sh:path wf:allergies         ] ;
+    sh:property [ sh:path wf:conditions        ] ;
+    sh:property [ sh:path wf:bloodType         ] ;
+    sh:property [ sh:path wf:dnr               ] ;
+    sh:property [ sh:path wf:emergencyContacts ] ;
+    sh:property [ sh:path wf:surgicalHistory   ] ;
+    sh:property [ sh:path wf:mentalHealth      ] ;
+    sh:property [ sh:path wf:sexualHealth      ] ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:documents         ] ;
+    sh:property [ sh:path wf:notes             ] ;
+    sh:property [ sh:path wf:auditLog          ] ;
+    sh:property [ sh:path wf:vaultSettings     ] .
+
+
+# ── Emergency / First Responder ───────────────────────────────────────────────
+
+wf:EmergencyFirstResponderProfile
+    a sh:NodeShape ;
+    rdfs:label      "Emergency / First Responder"@en ;
+    rdfs:comment    "Paramedic, ambulance crew, or trained bystander. Accesses the minimum information needed to safely treat an unconscious or incapacitated person. Pre-authorised by the vault owner. Time-limited to 2 hours. All access permanently logged."@en ;
+    dct:description "Use case: vault owner is unconscious at scene of incident."@en ;
+    wf:uiColor      "#dc3545" ;
+    wf:uiIcon       "🚑" ;
+    wf:accessCondition    wf:EmergencyAccess ;
+    wf:credentialRequired wf:EmergencyResponderVC ;
+    wf:sessionMaxDuration "PT2H"^^xsd:duration ;
+    wf:requiresAudit      true ;
+    sh:property [ sh:path wf:allergies         ; sh:minCount 1 ; rdfs:label "Required"@en ] ;
+    sh:property [ sh:path wf:bloodType         ; sh:minCount 1 ; rdfs:label "Required"@en ] ;
+    sh:property [ sh:path wf:medications       ; sh:minCount 1 ; rdfs:label "Required"@en ] ;
+    sh:property [ sh:path wf:conditions        ; sh:minCount 0 ] ;
+    sh:property [ sh:path wf:dnr               ; sh:minCount 1 ; rdfs:label "Required"@en ] ;
+    sh:property [ sh:path wf:emergencyContacts ; sh:minCount 1 ; rdfs:label "Required"@en ] .
+
+
+# ── Emergency Department ──────────────────────────────────────────────────────
+
+wf:EmergencyDepartmentProfile
+    a sh:NodeShape ;
+    rdfs:label      "Emergency Department (Clinical)"@en ;
+    rdfs:comment    "ED clinician treating an incapacitated patient in hospital. Full clinical picture needed for safe treatment decisions including surgical history and implants."@en ;
+    dct:description "Use case: vault owner admitted to ED, unable to consent."@en ;
+    wf:uiColor      "#c0392b" ;
+    wf:uiIcon       "🏥" ;
+    wf:accessCondition    wf:EmergencyAccess ;
+    wf:credentialRequired wf:ClinicalProfessionalVC ;
+    wf:sessionMaxDuration "PT4H"^^xsd:duration ;
+    wf:requiresAudit      true ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:allergies         ] ;
+    sh:property [ sh:path wf:bloodType         ] ;
+    sh:property [ sh:path wf:medications       ] ;
+    sh:property [ sh:path wf:conditions        ] ;
+    sh:property [ sh:path wf:dnr               ] ;
+    sh:property [ sh:path wf:emergencyContacts ] ;
+    sh:property [ sh:path wf:surgicalHistory   ] .
+
+
+# ── General Practitioner ──────────────────────────────────────────────────────
+
+wf:GeneralPractitionerProfile
+    a sh:NodeShape ;
+    rdfs:label      "General Practitioner"@en ;
+    rdfs:comment    "Primary care physician. General health vitals, medications, and chronic conditions. Mental health and sexual health are excluded from this profile by default — those require explicit opt-in by the vault owner."@en ;
+    wf:uiColor      "#0d6efd" ;
+    wf:uiIcon       "👨‍⚕️" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:ClinicalProfessionalVC ;
+    sh:property [ sh:path wf:overview      ] ;
+    sh:property [ sh:path wf:heartRate     ] ;
+    sh:property [ sh:path wf:bloodPressure ] ;
+    sh:property [ sh:path wf:sleep         ] ;
+    sh:property [ sh:path wf:steps         ] ;
+    sh:property [ sh:path wf:weight        ] ;
+    sh:property [ sh:path wf:medications   ] ;
+    sh:property [ sh:path wf:allergies     ] ;
+    sh:property [ sh:path wf:conditions    ] .
+
+
+# ── Specialist ────────────────────────────────────────────────────────────────
+
+wf:SpecialistProfile
+    a sh:NodeShape ;
+    rdfs:label      "Specialist"@en ;
+    rdfs:comment    "Hospital specialist (cardiologist, oncologist, etc.). Clinical vitals, medications, and procedure history. Sub-profiles for specific specialties can extend this base shape."@en ;
+    wf:uiColor      "#6610f2" ;
+    wf:uiIcon       "🔬" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:ClinicalProfessionalVC ;
+    sh:property [ sh:path wf:overview        ] ;
+    sh:property [ sh:path wf:heartRate       ] ;
+    sh:property [ sh:path wf:bloodPressure   ] ;
+    sh:property [ sh:path wf:medications     ] ;
+    sh:property [ sh:path wf:allergies       ] ;
+    sh:property [ sh:path wf:conditions      ] ;
+    sh:property [ sh:path wf:surgicalHistory ] .
+
+
+# ── Psychiatrist / Mental Health Clinician ────────────────────────────────────
+
+wf:PsychiatristProfile
+    a sh:NodeShape ;
+    rdfs:label      "Psychiatrist / Mental Health Clinician"@en ;
+    rdfs:comment    "Mental health practitioner. Accesses psychiatric history, sleep, and psychiatric medications. Substance use data is excluded — that lives in Sanctuary Mode and requires explicit separate disclosure."@en ;
+    wf:uiColor      "#6f42c1" ;
+    wf:uiIcon       "🧠" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:MentalHealthPractitionerVC ;
+    sh:property [ sh:path wf:overview      ] ;
+    sh:property [ sh:path wf:mentalHealth  ] ;
+    sh:property [ sh:path wf:sleep         ] ;
+    sh:property [ sh:path wf:medications   ] .
+
+
+# ── Social Worker ─────────────────────────────────────────────────────────────
+
+wf:SocialWorkerProfile
+    a sh:NodeShape ;
+    rdfs:label      "Social Worker"@en ;
+    rdfs:comment    "Social care professional. Social and housing context, support network, and emergency contacts. No clinical data by default — clinical detail is out of scope for social care unless explicitly added."@en ;
+    wf:uiColor      "#198754" ;
+    wf:uiIcon       "🤝" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:SocialWorkerVC ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Personal / Partner ────────────────────────────────────────────────────────
+
+wf:PersonalPartnerProfile
+    a sh:NodeShape ;
+    rdfs:label      "Personal / Partner"@en ;
+    rdfs:comment    "Intimate or close personal sharing. Sexual health status and most recent STI screening date only, by default. The vault owner can optionally add general health overview. No credential required — this is a personal trust relationship."@en ;
+    wf:uiColor      "#e91e63" ;
+    wf:uiIcon       "❤️" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:NoCredentialRequired ;
+    sh:property [ sh:path wf:sexualHealth ] .
+
+
+# ── Carer / Family ────────────────────────────────────────────────────────────
+
+wf:CarerFamilyProfile
+    a sh:NodeShape ;
+    rdfs:label      "Carer / Family Member"@en ;
+    rdfs:comment    "Trusted carer or family member supporting day-to-day welfare. Overview, medications, conditions, allergies, and emergency contacts. Mental health records are excluded unless the vault owner explicitly adds them."@en ;
+    wf:uiColor      "#fd7e14" ;
+    wf:uiIcon       "🏠" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:NoCredentialRequired ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:medications       ] ;
+    sh:property [ sh:path wf:conditions        ] ;
+    sh:property [ sh:path wf:allergies         ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Legal Advocate / Solicitor ────────────────────────────────────────────────
+
+wf:LegalAdvocateProfile
+    a sh:NodeShape ;
+    rdfs:label      "Legal Advocate / Solicitor"@en ;
+    rdfs:comment    "Legal professional acting on the vault owner's behalf. Fully session-scoped: the vault owner selects exactly which records to share for the specific legal matter. The profile provides no default access — all sections are opt-in per session."@en ;
+    wf:uiColor      "#6c757d" ;
+    wf:uiIcon       "⚖️" ;
+    wf:accessCondition    wf:NormalAccess ;
+    wf:credentialRequired wf:PersonalTrustPin ;
+    wf:sessionScoped      true ;
+    # No sh:property entries — all sections opt-in per session
+    .

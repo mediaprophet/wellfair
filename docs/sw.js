@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v25';
+const CACHE_VERSION = 'v26';
 const CACHE_NAME = `wellfair-${CACHE_VERSION}`;
 const ASSETS = [
   'index.html',
@@ -12,8 +12,33 @@ const ASSETS = [
   'sample_data/synthetic_hr.csv',
   'manifest.webmanifest',
   'icons/icon-192.svg',
-  'icons/icon-512.svg'
+  'icons/icon-512.svg',
+  // Package system
+  'package-download-ui.js',
+  'packages/index.js',
+  'packages/registry.json',
+  'packages/capabilities.js',
+  'packages/package-manager.js',
+  'packages/pkg-prolog-wasm.js',
+  'packages/pkg-llm-mediapipe.js',
 ];
+
+// Large binary packages (WASM, models) are NOT pre-cached by the SW.
+// They are fetched on-demand and stored in OPFS by the PackageManager.
+// The SW must NOT intercept OPFS reads — OPFS is accessed directly by the page.
+
+// Nym Wasm requires SharedArrayBuffer, which needs cross-origin isolation.
+// Inject COOP/COEP on every same-origin response so crossOriginIsolated = true.
+function withCrossOriginIsolation(response) {
+  const h = new Headers(response.headers);
+  h.set('Cross-Origin-Opener-Policy', 'same-origin');
+  h.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: h,
+  });
+}
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -43,14 +68,14 @@ self.addEventListener('activate', event => {
 
 async function cacheFirst(request) {
   const cached = await caches.match(request);
-  if (cached) return cached;
+  if (cached) return withCrossOriginIsolation(cached);
   const response = await fetch(request);
   if (response && response.ok && response.type !== 'opaque') {
     const copy = response.clone();
     const cache = await caches.open(CACHE_NAME);
     cache.put(request, copy);
   }
-  return response;
+  return response ? withCrossOriginIsolation(response) : response;
 }
 
 async function networkFirst(request) {
@@ -61,11 +86,12 @@ async function networkFirst(request) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, copy);
     }
-    return response;
+    return response ? withCrossOriginIsolation(response) : response;
   } catch (e) {
     const cached = await caches.match(request);
-    if (cached) return cached;
-    return caches.match('index.html');
+    if (cached) return withCrossOriginIsolation(cached);
+    const fallback = await caches.match('index.html');
+    return fallback ? withCrossOriginIsolation(fallback) : fallback;
   }
 }
 

@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WellFair — Desktop Connector</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --sidebar: #010409;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --dim:     #8b949e;
+      --accent:  #58a6ff;
+      --green:   #3fb950;
+      --yellow:  #d29922;
+      --red:     #f85149;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Pairing screen ── */
+    #screen-pair {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    #screen-pair h1 { font-size: 1.4rem; font-weight: 600; }
+    #screen-pair p  { color: var(--dim); font-size: 0.9rem; margin-top: 0.3rem 0 1.5rem; }
+    .pair-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    #qr-wrap { min-height: 264px; display:flex; align-items:center; justify-content:center; }
+    #qr-canvas { border-radius: 8px; background:#fff; padding:10px; display:none; }
+    #qr-placeholder { color: var(--dim); font-size:0.85rem; }
+    .status-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-top: 1.25rem; font-size: 0.85rem; color: var(--dim);
+    }
+    .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; background:var(--yellow); }
+    .dot.ok    { background: var(--green); }
+    .dot.err   { background: var(--red); }
+    .dot.pulse { background: var(--accent); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #session-label { font-family:monospace; font-size:0.7rem; color:var(--border); margin-top:0.5rem; word-break:break-all; }
+    .btn { padding:0.55rem 1rem; border:none; border-radius:6px; font-size:0.85rem; font-weight:600; cursor:pointer; }
+    .btn-primary { background:var(--accent); color:#000; }
+    .btn-ghost   { background:transparent; border:1px solid var(--border); color:var(--dim); }
+    .btn:hover   { opacity:0.85; }
+    #retry-btn   { display:none; margin-top:1rem; width:100%; }
+
+    /* ── App shell ── */
+    #screen-app { flex:1; display:none; flex-direction:column; overflow:hidden; }
+
+    /* Header */
+    .app-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 1.25rem;
+      background: var(--sidebar);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .app-header .logo { font-weight: 700; font-size: 0.95rem; }
+    .conn-badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; color: var(--dim); margin-left: 0.25rem;
+    }
+    .conn-badge .dot { width:7px; height:7px; }
+    .app-header .spacer { flex:1; }
+    #session-timer { font-size:0.78rem; color:var(--dim); font-family:monospace; }
+    #vault-did { font-size:0.72rem; color:var(--border); font-family:monospace; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Body: sidebar + content */
+    .app-body { flex:1; display:flex; overflow:hidden; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 200px; flex-shrink: 0;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1rem 0;
+    }
+    .sidebar-label {
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--dim);
+      padding: 0 1rem 0.5rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.88rem; color: var(--dim);
+      cursor: pointer; border: none; background: none;
+      width: 100%; text-align: left;
+      border-left: 2px solid transparent;
+    }
+    .nav-item:hover { background: var(--surface); color: var(--text); }
+    .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: #1c2230; }
+    .nav-item .icon { font-size: 1rem; width: 1.2rem; text-align: center; }
+    .sidebar-bottom { margin-top: auto; padding: 0.75rem; border-top: 1px solid var(--border); }
+    #disconnect-btn { width:100%; background: transparent; border:1px solid var(--red); color:var(--red); border-radius:6px; padding:0.45rem; font-size:0.82rem; cursor:pointer; }
+    #disconnect-btn:hover { background: #2d1515; }
+
+    /* Content */
+    .content {
+      flex: 1; overflow-y: auto;
+      padding: 1.5rem;
+      background: var(--bg);
+    }
+    .content-header {
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .content-header h2 { font-size: 1.1rem; font-weight: 600; }
+    .content-header p  { color: var(--dim); font-size: 0.82rem; margin-top: 0.2rem; }
+
+    /* Loading state */
+    .loading {
+      display: flex; align-items: center; gap: 0.5rem;
+      color: var(--dim); font-size: 0.88rem; padding: 2rem 0;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Metric cards */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .metric-card .m-label { font-size: 0.75rem; color: var(--dim); margin-bottom: 0.35rem; }
+    .metric-card .m-value { font-size: 1.5rem; font-weight: 700; font-family: monospace; }
+    .metric-card .m-unit  { font-size: 0.8rem; color: var(--dim); margin-left: 0.2rem; }
+    .metric-card .m-status { font-size: 0.72rem; margin-top: 0.3rem; }
+    .status-normal   { color: var(--green); }
+    .status-warning  { color: var(--yellow); }
+    .status-alert    { color: var(--red); }
+
+    /* Table */
+    .data-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .data-table th {
+      text-align:left; padding:0.5rem 0.75rem;
+      font-size:0.75rem; font-weight:600; text-transform:uppercase;
+      letter-spacing:0.05em; color:var(--dim);
+      border-bottom:1px solid var(--border);
+    }
+    .data-table td { padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table .val { font-family:monospace; color:var(--accent); }
+
+    /* Sparkline bars */
+    .bar-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin:0.75rem 0; }
+    .bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; opacity:0.7; min-height:3px; }
+
+    /* Notice */
+    .ephem-notice {
+      margin-top: 1.5rem;
+      padding: 0.65rem 1rem;
+      background: #1c2230;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+
+    /* ── Accessibility controls ── */
+    .a11y-bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.75rem;
+      border-left: 1px solid var(--border);
+      margin-left: 0.5rem;
+    }
+    .a11y-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--dim); border-radius: 4px;
+      padding: 0.2rem 0.5rem; font-size: 0.8rem; cursor: pointer;
+    }
+    .a11y-btn:hover { background: var(--surface); color: var(--text); }
+    .a11y-btn.active { background: var(--surface); color: var(--accent); border-color: var(--accent); }
+
+    /* ── Owner mode nav additions ── */
+    .nav-divider {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--dim);
+      padding: 0.75rem 1rem 0.3rem;
+    }
+
+    /* ── Document drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 1.5rem;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #0d1f36;
+    }
+    .drop-zone .dz-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .drop-zone p { font-size: 0.88rem; color: var(--dim); margin-bottom: 0.3rem; }
+    .drop-zone small { font-size: 0.75rem; color: var(--border); }
+
+    /* ── Document list ── */
+    .doc-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 0.5rem;
+    }
+    .doc-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name { font-size: 0.88rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-meta { font-size: 0.75rem; color: var(--dim); margin-top: 0.15rem; }
+    .doc-status { font-size: 0.75rem; }
+    .doc-status.ok     { color: var(--green); }
+    .doc-status.saving { color: var(--yellow); }
+
+    /* ── Editable field ── */
+    .field-row {
+      display: flex; align-items: flex-start; gap: 0.5rem;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-key { color: var(--dim); min-width: 130px; flex-shrink: 0; font-size: 0.82rem; padding-top: 0.1rem; }
+    .field-val { flex: 1; color: var(--text); font-family: monospace; }
+    .field-edit {
+      background: transparent; border: none; color: var(--accent);
+      font-size: 0.75rem; cursor: pointer; flex-shrink: 0; padding: 0;
+    }
+    .field-edit:hover { text-decoration: underline; }
+
+    /* ── Owner header strip ── */
+    .owner-strip {
+      background: #1a1a2e;
+      border-bottom: 2px solid #3d3d8f;
+      padding: 0.3rem 1.25rem;
+      font-size: 0.75rem; color: #8888cc;
+      display: none;
+    }
+    .owner-strip.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ── Pairing screen ── -->
+<div id="screen-pair">
+  <h1>WellFair — Desktop Connector</h1>
+  <p style="margin-top:0.3rem">Scan with the WellFair vault app on your phone</p>
+  <div class="pair-card">
+    <div id="qr-wrap">
+      <canvas id="qr-canvas"></canvas>
+      <span id="qr-placeholder">Initialising…</span>
+    </div>
+    <div class="status-row">
+      <div class="dot pulse" id="pair-dot"></div>
+      <span id="pair-status">Starting up…</span>
+    </div>
+    <div id="session-label"></div>
+    <button class="btn btn-ghost" id="retry-btn" onclick="startSession()">New session</button>
+  </div>
+</div>
+
+<!-- ── App shell (shown after connection) ── -->
+<div id="screen-app">
+
+  <div class="owner-strip" id="owner-strip">
+    🔐 Owner workspace — all data read/write. Changes are saved to your vault on your phone.
+  </div>
+
+  <div class="app-header">
+    <span class="logo">WellFair</span>
+    <div class="conn-badge" id="conn-badge">
+      <div class="dot ok"></div>
+      <span id="conn-label">Vault connected</span>
+    </div>
+    <div class="spacer"></div>
+    <div class="a11y-bar" title="Text size">
+      <span style="font-size:0.72rem;color:var(--dim)">Text</span>
+      <button class="a11y-btn" onclick="a11yFontStep(-1)" aria-label="Decrease font size">A−</button>
+      <button class="a11y-btn" onclick="a11yFontStep(1)"  aria-label="Increase font size">A+</button>
+      <button class="a11y-btn" id="contrast-btn" onclick="a11yToggleContrast()" aria-label="Toggle high contrast">◑</button>
+    </div>
+    <div style="text-align:right;margin-left:0.5rem">
+      <div id="session-timer">00:00</div>
+      <div id="vault-did"></div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar">
+      <div class="sidebar-label">Vault</div>
+      <button class="nav-item active" data-section="overview">
+        <span class="icon">⬡</span> Overview
+      </button>
+      <button class="nav-item" data-section="heart_rate">
+        <span class="icon">♥</span> Heart Rate
+      </button>
+      <button class="nav-item" data-section="sleep">
+        <span class="icon">◗</span> Sleep
+      </button>
+      <button class="nav-item" data-section="steps">
+        <span class="icon">◈</span> Activity
+      </button>
+      <button class="nav-item" data-section="weight">
+        <span class="icon">⊟</span> Weight
+      </button>
+      <button class="nav-item" data-section="medications">
+        <span class="icon">💊</span> Medications
+      </button>
+      <button class="nav-item" data-section="conditions">
+        <span class="icon">📋</span> Conditions
+      </button>
+      <button class="nav-item" data-section="allergies">
+        <span class="icon">⚠️</span> Allergies
+      </button>
+
+      <!-- Owner-only sections — hidden until owner mode -->
+      <div class="nav-divider owner-nav" style="display:none">Workspace</div>
+      <button class="nav-item owner-nav" data-section="documents" style="display:none">
+        <span class="icon">📄</span> Documents
+      </button>
+      <button class="nav-item owner-nav" data-section="notes" style="display:none">
+        <span class="icon">✏️</span> Notes
+      </button>
+      <button class="nav-item owner-nav" data-section="mental_health" style="display:none">
+        <span class="icon">🧠</span> Mental Health
+      </button>
+      <button class="nav-item owner-nav" data-section="social_context" style="display:none">
+        <span class="icon">🏠</span> Social Context
+      </button>
+
+      <div class="sidebar-bottom">
+        <button id="disconnect-btn" onclick="disconnect()">Disconnect</button>
+      </div>
+    </nav>
+
+    <div class="content" id="content-area">
+      <div class="loading"><div class="spinner"></div> Requesting data from vault…</div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js" crossorigin="anonymous"></script>
+<script>
+'use strict';
+
+const RELAYS  = ['https://gun.eco/gun', 'https://relay.peer.ooo/gun'];
+const GUN_NS  = 'wf-v1-signal';
+const ICE_CFG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+let gun, pc, dc, sessionId, expireTimer, timerInterval;
+let answerHandled  = false;
+let reqCounter     = 0;
+let pendingReqs    = {};
+let connectedAt    = null;
+let isOwnerMode    = false;
+let fontScale      = 1.0;
+let highContrast   = false;
+let docList        = [];
+let sessionDidKey  = null;  // ephemeral did:key for this connector session — memory only
+let sessionNoiseKey = null; // ephemeral X25519 keypair for Noise_XX — memory only
+let vaultPublicKey  = null; // vault's Ed25519 CryptoKey — cached from session_info for sig verification
+let _hiddenTimer    = null; // visibilitychange grace period before auto-disconnect
+
+// ── FinalizationRegistry — GC confirmation (dev diagnostic) ───────────────────
+const _gcRegistry = new FinalizationRegistry(label =>
+  console.debug('[WellFair] GC confirmed:', label));
+
+// ── Identity credentials — did:key generation ─────────────────────────────────
+
+const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58btcEncode(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = (n << 8n) | BigInt(b);
+  const digits = [];
+  while (n > 0n) { digits.push(B58_ALPHA[Number(n % 58n)]); n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; digits.push(B58_ALPHA[0]); }
+  return digits.reverse().join('');
+}
+
+function base58btcDecode(s) {
+  let n = 0n;
+  for (const c of s) {
+    const i = B58_ALPHA.indexOf(c);
+    if (i < 0) throw new Error('invalid base58btc char');
+    n = n * 58n + BigInt(i);
+  }
+  let zeros = 0;
+  for (const c of s) { if (c !== '1') break; zeros++; }
+  const out = [];
+  while (n > 0n) { out.unshift(Number(n & 0xffn)); n >>= 8n; }
+  return new Uint8Array([...new Array(zeros).fill(0), ...out]);
+}
+
+async function importDidKeyPublic(did) {
+  const encoded  = did.slice('did:key:z'.length);
+  const prefixed = base58btcDecode(encoded);
+  if (prefixed[0] !== 0xed || prefixed[1] !== 0x01) throw new Error('not an ed25519 did:key');
+  return crypto.subtle.importKey('raw', prefixed.slice(2), { name:'Ed25519' }, true, ['verify']);
+}
+
+async function generateDidKey() {
+  const kp = await crypto.subtle.generateKey(
+    { name: 'Ed25519' }, false, ['sign', 'verify']
+  );
+  const pubRaw   = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+  const prefixed = new Uint8Array(2 + pubRaw.length);
+  prefixed[0] = 0xed; prefixed[1] = 0x01;
+  prefixed.set(pubRaw, 2);
+  return { did: 'did:key:z' + base58btcEncode(prefixed), publicKey: kp.publicKey, privateKey: kp.privateKey };
+}
+
+// ── Noise_XX_25519_AESGCM_SHA256 ─────────────────────────────────────────────
+
+async function hmacSHA256(key, data) {
+  const k = await crypto.subtle.importKey('raw', key, { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, data));
+}
+async function noiseHKDF2(ck, ikm) {
+  const tmp  = await hmacSHA256(ck, ikm);
+  const out1 = await hmacSHA256(tmp, new Uint8Array([1]));
+  const out2 = await hmacSHA256(tmp, new Uint8Array([...out1, 2]));
+  return [out1, out2];
+}
+async function noiseDigest(a, b) {
+  const buf = new Uint8Array(a.length + b.length);
+  buf.set(a); buf.set(b, a.length);
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+}
+async function noiseGenX25519() {
+  const kp  = await crypto.subtle.generateKey({ name:'X25519' }, true, ['deriveBits']);
+  const pub  = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+  return { priv: kp.privateKey, pub, pubKey: kp.publicKey };
+}
+async function noiseImportPub(raw) {
+  return crypto.subtle.importKey('raw', raw, { name:'X25519' }, true, []);
+}
+async function noiseDH(priv, pubKey) {
+  return new Uint8Array(await crypto.subtle.deriveBits({ name:'X25519', public: pubKey }, priv, 256));
+}
+function noiseIV(n) {
+  const iv = new Uint8Array(12);
+  new DataView(iv.buffer).setUint32(8, n >>> 0, true);
+  return iv;
+}
+async function aesGCMEncrypt(k32, n, ad, pt) {
+  const key = await crypto.subtle.importKey('raw', k32, { name:'AES-GCM' }, false, ['encrypt']);
+  return new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv: noiseIV(n), additionalData: ad }, key, pt));
+}
+async function aesGCMDecrypt(k32, n, ad, ct) {
+  const key = await crypto.subtle.importKey('raw', k32, { name:'AES-GCM' }, false, ['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({ name:'AES-GCM', iv: noiseIV(n), additionalData: ad }, key, ct));
+}
+async function noiseStateInit() {
+  const proto = new TextEncoder().encode('Noise_XX_25519_AESGCM_SHA256');
+  const h = new Uint8Array(32);
+  if (proto.length <= 32) h.set(proto);
+  else h.set(new Uint8Array(await crypto.subtle.digest('SHA-256', proto)));
+  return { h: h.slice(), ck: h.slice(), k: null, n: 0 };
+}
+async function noiseMH(st, data) { st.h = await noiseDigest(st.h, data); }
+async function noiseMK(st, dh) {
+  const [ck, k] = await noiseHKDF2(st.ck, dh);
+  st.ck = ck; st.k = k; st.n = 0;
+}
+async function noiseEH(st, pt) {
+  if (!st.k) { await noiseMH(st, pt); return pt; }
+  const ct = await aesGCMEncrypt(st.k, st.n++, st.h, pt);
+  await noiseMH(st, ct); return ct;
+}
+async function noiseDH2(st, ct) {
+  if (!st.k) { await noiseMH(st, ct); return ct; }
+  const pt = await aesGCMDecrypt(st.k, st.n++, st.h, ct);
+  await noiseMH(st, ct); return pt;
+}
+async function noiseSplit(st) {
+  const [k1r, k2r] = await noiseHKDF2(st.ck, new Uint8Array(0));
+  const k1 = await crypto.subtle.importKey('raw', k1r, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
+  const k2 = await crypto.subtle.importKey('raw', k2r, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
+  return { k1, k2 };
+}
+
+// Noise handshake message queue
+let _noiseQ = [], _noiseR = [];
+function noiseEnqueue(m) { if (_noiseR.length) _noiseR.shift()(m); else _noiseQ.push(m); }
+function noiseAwait()    { if (_noiseQ.length) return Promise.resolve(_noiseQ.shift()); return new Promise(r => _noiseR.push(r)); }
+
+// Transport session state
+let _sessionSend = null, _sessionRecv = null, _sendN = 0, _recvN = 0, _handshakeDone = false;
+let _sendQueue = Promise.resolve();
+
+function noiseReset() {
+  _sessionSend = null; _sessionRecv = null;
+  _sendN = 0; _recvN = 0; _handshakeDone = false;
+  _noiseQ = []; _noiseR = [];
+  _sendQueue = Promise.resolve();
+}
+function dcRawSend(m) { dc.send(JSON.stringify(m)); }
+function secureSend(m) {
+  _sendQueue = _sendQueue.then(async () => {
+    if (!_handshakeDone) { dcRawSend(m); return; }
+    const n  = _sendN++;
+    const pt = new TextEncoder().encode(JSON.stringify(m));
+    const ct = new Uint8Array(await crypto.subtle.encrypt(
+      { name:'AES-GCM', iv: noiseIV(n), additionalData: new Uint8Array(0) }, _sessionSend, pt));
+    const buf = new ArrayBuffer(4 + ct.length);
+    new DataView(buf).setUint32(0, n, true);
+    new Uint8Array(buf, 4).set(ct);
+    dc.send(buf);
+  });
+}
+async function secureRecv(raw) {
+  if (raw instanceof ArrayBuffer) {
+    const n  = new DataView(raw).getUint32(0, true);
+    if (n !== _recvN++) throw new Error('nonce mismatch');
+    const ct = new Uint8Array(raw, 4);
+    const pt = new Uint8Array(await crypto.subtle.decrypt(
+      { name:'AES-GCM', iv: noiseIV(n), additionalData: new Uint8Array(0) }, _sessionRecv, ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  return JSON.parse(raw);
+}
+function toB64(u8) { return btoa(String.fromCharCode(...u8)); }
+function fromB64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+// Noise_XX initiator (desktop connector)
+async function runNoiseInitiator(staticKp) {
+  const st  = await noiseStateInit();
+  const ei  = await noiseGenX25519();
+  await noiseMH(st, ei.pub);
+  dcRawSend({ type:'noise', msg:1, e: toB64(ei.pub) });
+
+  const m2    = await noiseAwait();
+  const erRaw = fromB64(m2.e);
+  await noiseMH(st, erRaw);
+  const erPub = await noiseImportPub(erRaw);
+  await noiseMK(st, await noiseDH(ei.priv, erPub));         // ee
+  const srRaw = await noiseDH2(st, fromB64(m2.s));           // s (decrypt responder static)
+  const srPub = await noiseImportPub(srRaw);
+  await noiseMK(st, await noiseDH(ei.priv, srPub));          // es
+
+  const siEnc = await noiseEH(st, staticKp.pub);             // s (encrypt initiator static)
+  await noiseMK(st, await noiseDH(staticKp.priv, erPub));    // se
+  dcRawSend({ type:'noise', msg:3, s: toB64(siEnc) });
+
+  const { k1, k2 } = await noiseSplit(st);
+  return { sendKey: k1, recvKey: k2 };
+}
+
+// ── Pairing UI ───────────────────────────────────────────────────────────────
+
+function setPairStatus(msg, state) {
+  document.getElementById('pair-status').textContent = msg;
+  document.getElementById('pair-dot').className = 'dot ' + (state || 'pulse');
+}
+
+function showQR(payload) {
+  document.getElementById('qr-placeholder').style.display = 'none';
+  const canvas = document.getElementById('qr-canvas');
+  QRCode.toCanvas(canvas, payload, { width:244, margin:2,
+    color:{dark:'#000',light:'#fff'} }, err => {
+    if (!err) canvas.style.display = 'block';
+  });
+}
+
+function hideQR() {
+  document.getElementById('qr-canvas').style.display = 'none';
+  document.getElementById('qr-placeholder').style.display = 'block';
+  document.getElementById('qr-placeholder').textContent = '…';
+}
+
+// ── App shell UI ─────────────────────────────────────────────────────────────
+
+function showAppShell() {
+  document.getElementById('screen-pair').style.display = 'none';
+  document.getElementById('screen-app').style.display  = 'flex';
+
+  connectedAt = Date.now();
+  timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - connectedAt) / 1000);
+    const m = String(Math.floor(s / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    document.getElementById('session-timer').textContent = m + ':' + sec;
+  }, 1000);
+
+  // Nav clicks
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      requestSection(btn.dataset.section);
+    });
+  });
+
+  requestSection('overview');
+}
+
+function renderContent(html) {
+  document.getElementById('content-area').innerHTML = html;
+}
+
+function showLoading() {
+  renderContent('<div class="loading"><div class="spinner"></div> Requesting from vault…</div>');
+}
+
+// ── Section renderers ─────────────────────────────────────────────────────────
+
+const SECTION_META = {
+  overview:   { title: 'Overview',    sub:  'Live summary from vault' },
+  heart_rate: { title: 'Heart Rate',  sub:  '7-day readings' },
+  sleep:      { title: 'Sleep',       sub:  '7-day log' },
+  steps:      { title: 'Activity',    sub:  'Steps & movement' },
+  weight:     { title: 'Weight',      sub:  'Recent measurements' },
+};
+
+function renderSection(section, data) {
+  const meta = SECTION_META[section] || { title: section, sub: '' };
+  let body = '';
+
+  if (section === 'overview') {
+    body = `
+      <div class="metric-grid">
+        ${Object.entries(data.metrics).map(([k, m]) => `
+          <div class="metric-card">
+            <div class="m-label">${k.replace(/_/g,' ')}</div>
+            <div><span class="m-value">${m.value}</span><span class="m-unit">${m.unit}</span></div>
+            <div class="m-status status-${m.status === 'normal' ? 'normal' : m.status === 'alert' ? 'alert' : 'warning'}">${m.status.replace(/_/g,' ')}</div>
+          </div>`).join('')}
+      </div>
+      ${data.alerts && data.alerts.length ? `<p style="color:var(--yellow);font-size:.85rem">${data.alerts.join('<br>')}</p>` : ''}`;
+
+  } else if (section === 'heart_rate') {
+    const max = Math.max(...data.readings.map(r => r.value));
+    body = `
+      <div class="metric-grid">
+        <div class="metric-card"><div class="m-label">Latest</div>
+          <div><span class="m-value">${data.latest}</span><span class="m-unit">${data.unit}</span></div></div>
+        <div class="metric-card"><div class="m-label">7-day avg</div>
+          <div><span class="m-value">${data.avg_7d}</span><span class="m-unit">${data.unit}</span></div></div>
+        <div class="metric-card"><div class="m-label">Range</div>
+          <div><span class="m-value">${data.min_7d}–${data.max_7d}</span><span class="m-unit">${data.unit}</span></div></div>
+      </div>
+      <div class="bar-chart">
+        ${data.readings.map(r => `<div class="bar" style="height:${Math.round(r.value/max*100)}%" title="${r.time}: ${r.value}"></div>`).join('')}
+      </div>
+      <table class="data-table">
+        <tr><th>Time</th><th>BPM</th></tr>
+        ${data.readings.map(r => `<tr><td>${r.time}</td><td class="val">${r.value}</td></tr>`).join('')}
+      </table>`;
+
+  } else if (section === 'sleep') {
+    body = `
+      <div class="metric-grid">
+        <div class="metric-card"><div class="m-label">Last night</div>
+          <div><span class="m-value">${data.last_night_h}</span><span class="m-unit">hrs</span></div></div>
+        <div class="metric-card"><div class="m-label">7-day avg</div>
+          <div><span class="m-value">${data.avg_7d_h}</span><span class="m-unit">hrs</span></div></div>
+        <div class="metric-card"><div class="m-label">Quality</div>
+          <div><span class="m-value" style="font-size:1rem">${data.quality}</span></div></div>
+      </div>
+      <table class="data-table">
+        <tr><th>Night</th><th>Hours</th><th>Quality</th></tr>
+        ${data.log.map(r => `<tr><td>${r.date}</td><td class="val">${r.hours}</td><td>${r.quality}</td></tr>`).join('')}
+      </table>`;
+
+  } else if (section === 'steps') {
+    const max = Math.max(...data.log.map(r => r.steps));
+    body = `
+      <div class="metric-grid">
+        <div class="metric-card"><div class="m-label">Today</div>
+          <div><span class="m-value">${data.today.toLocaleString()}</span><span class="m-unit">steps</span></div></div>
+        <div class="metric-card"><div class="m-label">7-day avg</div>
+          <div><span class="m-value">${data.avg_7d.toLocaleString()}</span><span class="m-unit">steps</span></div></div>
+        <div class="metric-card"><div class="m-label">Goal</div>
+          <div><span class="m-value">${data.goal.toLocaleString()}</span><span class="m-unit">steps</span></div></div>
+      </div>
+      <div class="bar-chart">
+        ${data.log.map(r => `<div class="bar" style="height:${Math.round(r.steps/max*100)}%" title="${r.date}: ${r.steps.toLocaleString()}"></div>`).join('')}
+      </div>`;
+
+  } else if (section === 'weight') {
+    body = `
+      <div class="metric-grid">
+        <div class="metric-card"><div class="m-label">Latest</div>
+          <div><span class="m-value">${data.latest_kg}</span><span class="m-unit">kg</span></div></div>
+        <div class="metric-card"><div class="m-label">Trend</div>
+          <div><span class="m-value" style="font-size:1rem">${data.trend}</span></div></div>
+      </div>
+      <table class="data-table">
+        <tr><th>Date</th><th>kg</th></tr>
+        ${data.log.map(r => `<tr><td>${r.date}</td><td class="val">${r.kg}</td></tr>`).join('')}
+      </table>`;
+
+  } else if (section === 'medications' && data.items) {
+    body = `<table class="data-table">
+      <tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Purpose</th></tr>
+      ${data.items.map(m=>`<tr><td>${m.name}</td><td class="val">${m.dose}</td>
+        <td>${m.frequency}</td><td style="color:var(--dim)">${m.purpose}</td></tr>`).join('')}
+    </table>`;
+
+  } else if (section === 'conditions' && data.items) {
+    body = `<table class="data-table">
+      <tr><th>Condition</th><th>Diagnosed</th><th>Status</th></tr>
+      ${data.items.map(c=>`<tr><td>${c.name}</td><td class="val">${c.diagnosed}</td>
+        <td style="color:var(--dim)">${c.status}</td></tr>`).join('')}
+    </table>`;
+
+  } else if (section === 'allergies' && data.items) {
+    body = `<table class="data-table">
+      <tr><th>Substance</th><th>Reaction</th><th>Severity</th></tr>
+      ${data.items.map(a=>`<tr><td>${a.substance}</td>
+        <td class="val" style="color:var(--red)">${a.reaction}</td>
+        <td style="color:var(--${a.severity==='severe'?'red':'yellow'})">${a.severity}</td></tr>`).join('')}
+    </table>`;
+
+  } else if (section === 'mental_health' && data.current_diagnoses) {
+    body = `
+      <div class="metric-grid">
+        <div class="metric-card"><div class="m-label">Support</div>
+          <div style="font-size:.88rem;margin-top:.3rem">${data.current_support}</div></div>
+        <div class="metric-card"><div class="m-label">Crisis plan</div>
+          <div class="m-value" style="font-size:1rem">${data.crisis_plan_in_place?'Yes ✓':'No'}</div></div>
+      </div>
+      <table class="data-table">
+        <tr><th>Diagnosis</th><th>Since</th><th>Status</th></tr>
+        ${data.current_diagnoses.map(d=>`<tr><td>${d.name}</td>
+          <td class="val">${d.since}</td><td style="color:var(--dim)">${d.status}</td></tr>`).join('')}
+      </table>`;
+
+  } else if (section === 'social_context') {
+    body = `<div style="display:flex;flex-direction:column">
+      ${Object.entries(data).map(([k,v])=>`
+        <div class="field-row">
+          <span class="field-key">${k.replace(/_/g,' ')}</span>
+          <span class="field-val">${Array.isArray(v)?v.join(', ')||'—':v||'—'}</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  renderContent(`
+    <div class="content-header">
+      <h2>${meta.title}</h2>
+      <p>${meta.sub}</p>
+    </div>
+    ${body}
+    ${ownerNotice()}
+  `);
+}
+
+// ── Messaging ────────────────────────────────────────────────────────────────
+
+function requestSection(section) {
+  if (!dc || dc.readyState !== 'open') return;
+  showLoading();
+  const id = 'r' + (++reqCounter);
+  secureSend({ type: 'request', id, section });
+
+  // Timeout if phone doesn't respond
+  const t = setTimeout(() => {
+    if (pendingReqs[id]) {
+      delete pendingReqs[id];
+      renderContent('<div class="loading" style="color:var(--red)">No response from vault</div>');
+    }
+  }, 8000);
+
+  pendingReqs[id] = { section, timeout: t };
+}
+
+async function handleMessage(msg) {
+  if (msg.type === 'session_info') {
+    if (msg.vault_did) {
+      document.getElementById('vault-did').textContent = msg.vault_did;
+      try { vaultPublicKey = await importDidKeyPublic(msg.vault_did); } catch(_) {}
+    }
+    if (msg.profile && msg.profile.isOwner) activateOwnerMode(msg.profile);
+    return;
+  }
+
+  if (msg.type === 'vault_write_ack') {
+    if (msg.filename) updateDocStatus(msg.id, 'ok');
+    return;
+  }
+
+  if (msg.type === 'response' && msg.id && pendingReqs[msg.id]) {
+    const { section, timeout } = pendingReqs[msg.id];
+    clearTimeout(timeout);
+    delete pendingReqs[msg.id];
+
+    if (vaultPublicKey && msg.sig) {
+      try {
+        const bytes = new TextEncoder().encode(section + ':' + JSON.stringify(msg.data));
+        const valid = await crypto.subtle.verify({ name:'Ed25519' }, vaultPublicKey, fromB64(msg.sig), bytes);
+        if (!valid) {
+          renderContent('<div class="loading" style="color:var(--red)">Signature verification failed — data rejected</div>');
+          return;
+        }
+      } catch(_) {
+        renderContent('<div class="loading" style="color:var(--red)">Signature error — data rejected</div>');
+        return;
+      }
+    }
+
+    renderSection(section, msg.data);
+  }
+}
+
+// ── WebRTC ───────────────────────────────────────────────────────────────────
+
+function waitForICE(p) {
+  return new Promise(resolve => {
+    if (p.iceGatheringState === 'complete') { resolve(); return; }
+    p.addEventListener('icegatheringstatechange', function h() {
+      if (p.iceGatheringState === 'complete') { p.removeEventListener('icegatheringstatechange', h); resolve(); }
+    });
+    setTimeout(resolve, 4000);
+  });
+}
+
+function teardown() {
+  clearTimeout(expireTimer);
+  clearTimeout(_hiddenTimer); _hiddenTimer = null;
+  clearInterval(timerInterval);
+  Object.values(pendingReqs).forEach(r => clearTimeout(r.timeout));
+  pendingReqs = {};
+  if (dc) { try { dc.close(); } catch(_){} dc = null; }
+  if (pc) { try { pc.close(); } catch(_){} pc = null; }
+  answerHandled = false;
+  if (sessionDidKey)  _gcRegistry.register(sessionDidKey,  'sessionDidKey');
+  if (sessionNoiseKey) _gcRegistry.register(sessionNoiseKey, 'sessionNoiseKey');
+  if (vaultPublicKey) _gcRegistry.register(vaultPublicKey, 'vaultPublicKey');
+  sessionDidKey  = null;
+  sessionNoiseKey = null;
+  vaultPublicKey  = null;
+  noiseReset();
+}
+
+function disconnect() {
+  if (dc && dc.readyState === 'open') secureSend({ type: 'disconnect' });
+  teardown();
+  // Return to pair screen
+  document.getElementById('screen-app').style.display  = 'none';
+  document.getElementById('screen-pair').style.display = 'flex';
+  startSession();
+}
+
+// ── Session ───────────────────────────────────────────────────────────────────
+
+async function startSession() {
+  teardown();
+  hideQR();
+  document.getElementById('retry-btn').style.display = 'none';
+
+  sessionDidKey  = await generateDidKey();
+  sessionNoiseKey = await noiseGenX25519();
+
+  sessionId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+  document.getElementById('session-label').textContent = 'session: ' + sessionId;
+
+  setPairStatus('Connecting to relay…');
+  gun = Gun(RELAYS);
+  const node = gun.get(GUN_NS).get(sessionId);
+
+  pc = new RTCPeerConnection(ICE_CFG);
+  dc = pc.createDataChannel('vault', { ordered: true });
+
+  dc.onopen = async () => {
+    clearTimeout(expireTimer);
+    setPairStatus('Securing channel…', 'pulse');
+    try {
+      const { sendKey, recvKey } = await runNoiseInitiator(sessionNoiseKey);
+      _sessionSend = sendKey; _sessionRecv = recvKey; _handshakeDone = true;
+      try { node.put({ offer: null, created: null }); node.get('answer').put({ sdp: null }); } catch(_) {}
+    } catch (err) {
+      setPairStatus('Handshake failed: ' + err.message, 'err');
+      document.getElementById('retry-btn').style.display = 'block';
+      teardown(); return;
+    }
+    setPairStatus('Connected', 'ok');
+    showAppShell();
+    secureSend({ type: 'hello', v: 1, did: sessionDidKey ? sessionDidKey.did : undefined });
+  };
+
+  dc.onmessage = async e => {
+    if (!_handshakeDone) {
+      try { const m = JSON.parse(e.data); if (m && m.type === 'noise') noiseEnqueue(m); } catch(_) {}
+      return;
+    }
+    try { await handleMessage(await secureRecv(e.data)); } catch(_) {}
+  };
+
+  dc.onclose = () => {
+    clearInterval(timerInterval);
+    document.getElementById('screen-app').style.display  = 'none';
+    document.getElementById('screen-pair').style.display = 'flex';
+    setPairStatus('Session ended — start a new session', 'err');
+    document.getElementById('retry-btn').style.display = 'block';
+    teardown();
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (pc && pc.iceConnectionState === 'failed') {
+      setPairStatus('Connection failed', 'err');
+      document.getElementById('retry-btn').style.display = 'block';
+    }
+  };
+
+  setPairStatus('Building offer…');
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await waitForICE(pc);
+
+  node.put({ offer: JSON.stringify(pc.localDescription), created: Date.now() });
+  showQR(JSON.stringify({ sid: sessionId, v: 1, r: RELAYS[0] }));
+  setPairStatus('Waiting — scan QR on your phone');
+
+  node.get('answer').on(async data => {
+    if (answerHandled || !data || !data.sdp) return;
+    if (!pc || pc.signalingState !== 'have-local-offer') return;
+    answerHandled = true;
+    try {
+      await pc.setRemoteDescription(JSON.parse(data.sdp));
+      node.put({ offer: null, created: null });
+      node.get('answer').put({ sdp: null });
+    } catch (err) {
+      setPairStatus('Handshake error: ' + err.message, 'err');
+      document.getElementById('retry-btn').style.display = 'block';
+    }
+  });
+
+  expireTimer = setTimeout(() => {
+    setPairStatus('Session expired', 'err');
+    document.getElementById('retry-btn').style.display = 'block';
+    node.put({ offer: null });
+    teardown();
+  }, 5 * 60 * 1000);
+}
+
+// ── Owner mode ────────────────────────────────────────────────────────────────
+
+function activateOwnerMode(profile) {
+  isOwnerMode = true;
+  document.getElementById('owner-strip').classList.add('visible');
+  document.getElementById('conn-label').textContent = 'Owner workspace';
+  document.querySelectorAll('.owner-nav').forEach(el => el.style.display = '');
+  // Re-register nav clicks so new owner sections work
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.onclick = null;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (btn.dataset.section === 'documents') renderDocumentsPanel();
+      else if (btn.dataset.section === 'notes')    renderNotesPanel();
+      else requestSection(btn.dataset.section);
+    });
+  });
+}
+
+// ── Accessibility ─────────────────────────────────────────────────────────────
+
+function a11yFontStep(dir) {
+  fontScale = Math.min(1.5, Math.max(0.85, fontScale + dir * 0.1));
+  document.getElementById('content-area').style.fontSize = fontScale + 'rem';
+  document.querySelector('.sidebar').style.fontSize = (fontScale * 0.9) + 'rem';
+}
+
+function a11yToggleContrast() {
+  highContrast = !highContrast;
+  document.getElementById('contrast-btn').classList.toggle('active', highContrast);
+  if (highContrast) {
+    document.documentElement.style.setProperty('--bg',      '#000000');
+    document.documentElement.style.setProperty('--surface', '#111111');
+    document.documentElement.style.setProperty('--text',    '#ffffff');
+    document.documentElement.style.setProperty('--dim',     '#cccccc');
+    document.documentElement.style.setProperty('--border',  '#555555');
+    document.documentElement.style.setProperty('--accent',  '#66b3ff');
+  } else {
+    document.documentElement.style.removeProperty('--bg');
+    document.documentElement.style.removeProperty('--surface');
+    document.documentElement.style.removeProperty('--text');
+    document.documentElement.style.removeProperty('--dim');
+    document.documentElement.style.removeProperty('--border');
+    document.documentElement.style.removeProperty('--accent');
+  }
+}
+
+// ── Document processing panel ─────────────────────────────────────────────────
+
+function renderDocumentsPanel() {
+  const docItems = docList.map(d => `
+    <div class="doc-item" id="doc-${d.id}">
+      <div class="doc-icon">📄</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.name}</div>
+        <div class="doc-meta">${d.size} · ${d.pages} page${d.pages !== 1 ? 's' : ''} · ${d.date}</div>
+      </div>
+      <div class="doc-status ${d.status === 'saved' ? 'ok' : 'saving'}" id="docst-${d.id}">
+        ${d.status === 'saved' ? '✓ Saved to vault' : '⏳ Saving…'}
+      </div>
+    </div>`).join('');
+
+  renderContent(`
+    <div class="content-header">
+      <h2>Documents</h2>
+      <p>Upload PDFs and documents — extracted text is saved to your vault</p>
+    </div>
+    <div class="drop-zone" id="drop-zone" role="button" tabindex="0"
+         aria-label="Drop PDFs here or click to upload">
+      <div class="dz-icon">📁</div>
+      <p>Drop PDFs or documents here</p>
+      <small>or click to browse</small>
+      <input type="file" id="file-input" accept=".pdf,.txt,.csv,.json"
+             multiple style="display:none" onchange="handleFileSelect(event)" />
+    </div>
+    ${docItems ? `<div style="margin-top:0.5rem">${docItems}</div>` : ''}
+    <p class="ephem-notice">
+      Files are read in this browser tab only. Extracted text and metadata are saved to
+      your vault on your phone. Raw file bytes are never transmitted — only the extracted content.
+    </p>
+  `);
+
+  // Wire up drop zone
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('click', () => document.getElementById('file-input').click());
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    handleFiles([...e.dataTransfer.files]);
+  });
+  zone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') zone.click(); });
+}
+
+function handleFileSelect(e) { handleFiles([...e.target.files]); }
+
+async function handleFiles(files) {
+  for (const file of files) {
+    const id   = 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    const date = new Date().toLocaleDateString();
+
+    // Read as text (PDF text extraction requires PDF.js — for now read as text/fallback)
+    let extracted = '';
+    let pages = 1;
+    try {
+      extracted = await file.text();
+      // Rough page estimate for non-PDFs
+      pages = Math.max(1, Math.round(extracted.length / 3000));
+    } catch (_) {
+      extracted = '[Binary file — text extraction not available for this format]';
+    }
+
+    const doc = {
+      id, name: file.name, size: formatBytes(file.size),
+      pages, date, status: 'saving',
+      text: extracted.slice(0, 50000)   // cap payload size
+    };
+    docList.push(doc);
+
+    // Send to vault for storage (owner mode write)
+    if (dc && dc.readyState === 'open') {
+      secureSend({
+        type: 'store_document', id,
+        filename: file.name,
+        size: file.size,
+        pages,
+        extracted_text: doc.text,
+        stored_at: new Date().toISOString()
+      });
+    }
+
+    // Re-render to show new item
+    renderDocumentsPanel();
+  }
+}
+
+function updateDocStatus(id, status) {
+  const el = document.getElementById('docst-' + id);
+  const doc = docList.find(d => d.id === id);
+  if (doc) doc.status = status;
+  if (el) {
+    el.className = 'doc-status ok';
+    el.textContent = '✓ Saved to vault';
+  }
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+// ── Notes panel ───────────────────────────────────────────────────────────────
+
+function renderNotesPanel() {
+  renderContent(`
+    <div class="content-header">
+      <h2>Notes</h2>
+      <p>Personal notes saved to your vault</p>
+    </div>
+    <textarea id="notes-area"
+      placeholder="Type your notes here…&#10;&#10;These are saved to your vault when you click Save."
+      style="width:100%;min-height:280px;background:var(--surface);border:1px solid var(--border);
+             border-radius:8px;padding:0.875rem;color:var(--text);font-size:0.9rem;
+             font-family:inherit;resize:vertical;line-height:1.6"
+      aria-label="Personal notes"></textarea>
+    <button onclick="saveNotes()"
+      style="margin-top:0.75rem;padding:0.6rem 1.5rem;background:var(--accent);color:#000;
+             border:none;border-radius:6px;font-weight:600;font-size:0.88rem;cursor:pointer">
+      Save to vault
+    </button>
+    <p class="ephem-notice">
+      Notes are saved to your vault on your phone and cleared from this tab when you disconnect.
+    </p>
+  `);
+}
+
+function saveNotes() {
+  const text = document.getElementById('notes-area').value.trim();
+  if (!text || !dc || dc.readyState !== 'open') return;
+  const id = 'note-' + Date.now();
+  secureSend({
+    type: 'write_section', id, section: 'notes',
+    data: { text, saved_at: new Date().toISOString() }
+  });
+}
+
+// ── Section renderers — add owner-mode extra sections ─────────────────────────
+
+SECTION_META.medications   = { title: 'Medications',    sub: 'Current prescriptions' };
+SECTION_META.conditions    = { title: 'Conditions',     sub: 'Diagnosed conditions' };
+SECTION_META.allergies     = { title: 'Allergies',      sub: 'Known allergies & reactions' };
+SECTION_META.mental_health = { title: 'Mental Health',  sub: 'Mental health records' };
+SECTION_META.social_context= { title: 'Social Context', sub: 'Housing & social situation' };
+
+
+
+function ownerNotice() {
+  return isOwnerMode
+    ? `<div class="ephem-notice" style="border-color:#3d3d8f;background:#0d0d1e">
+         🔐 Owner session — data fetched live from your vault. Changes save back to your phone.
+       </div>`
+    : `<div class="ephem-notice">
+         All data was fetched live from the vault on your phone. Nothing is stored in this browser.
+         Closing this tab clears everything.
+       </div>`;
+}
+
+// Send disconnect before unload (fires before pagehide in most browsers)
+window.addEventListener('beforeunload', () => {
+  if (dc && dc.readyState === 'open') secureSend({ type: 'disconnect' });
+});
+
+// Teardown on unload; evict from BFCache if the page would be cached
+window.addEventListener('pagehide', (event) => {
+  teardown();
+  if (event.persisted) event.target.location.replace('about:blank');
+});
+
+// Grace-period disconnect when tab is hidden — cancel if user returns within 2 min
+window.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    if (dc && dc.readyState === 'open') {
+      _hiddenTimer = setTimeout(() => {
+        if (dc && dc.readyState === 'open') secureSend({ type: 'disconnect' });
+        teardown();
+      }, 2 * 60 * 1000);
+    }
+  } else {
+    clearTimeout(_hiddenTimer); _hiddenTimer = null;
+  }
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+(async () => {
+  // WebCrypto feature detection — Ed25519 (Firefox 111+) and X25519 (Firefox 130+) required
+  const _missing = [];
+  try { await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign', 'verify']); } catch (_) { _missing.push('Ed25519'); }
+  try { await crypto.subtle.generateKey({ name: 'X25519'  }, false, ['deriveBits']);       } catch (_) { _missing.push('X25519');  }
+  if (_missing.length) {
+    document.body.innerHTML =
+      `<div style="font-family:system-ui;max-width:36rem;margin:4rem auto;padding:1.5rem;` +
+      `background:#1a1a2e;color:#e2e8f0;border-radius:.75rem;border:1px solid #e53e3e">` +
+      `<h2 style="margin:0 0 .75rem;color:#fc8181">Browser not supported</h2>` +
+      `<p style="line-height:1.6;margin:0 0 .75rem">WellFair requires WebCrypto algorithms ` +
+      `not available in this browser: <strong style="color:#fc8181">${_missing.join(', ')}</strong>.</p>` +
+      `<p style="line-height:1.6;margin:0">Please use <strong>Chrome 111+</strong>, ` +
+      `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
+    return;
+  }
+  startSession();
+})();
+</script>
+</body>
+</html>

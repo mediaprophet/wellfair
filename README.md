@@ -1,12 +1,11 @@
 # Episteme:WellFair
 
-**Current Version: 0.0.4-dev** (30 May 2026)
+**Current Version: 0.0.5-dev** (30 May 2026)
 
 > **WellFair: Welfare, wellness & Fairness, Fair Terms.**
 > WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.
 
-See [RELEASE_NOTES_v0.0.3.md](RELEASE_NOTES_v0.0.3.md) for the v0.0.3 release notes.
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the v0.0.4 roadmap (next sprint).
+See [RELEASE_NOTES_v0.0.3.md](RELEASE_NOTES_v0.0.3.md) for the last stable release notes.
 
 ---
 
@@ -41,47 +40,43 @@ Human-centricity is also the foundation of the P3 model:
 
 The dominant model of digital health makes corporations the platform provider: they ingest your data, control how you see it, and monetise it. WellFair inverts that. **You are the platform.** Your phone or computer is the server. Your data is yours — and when you choose to share it (with a doctor, a carer, a researcher), you do so on your own terms through open, decentralised protocols.
 
-WellFair as a human-centric P3-SWA gives you:
-- **Local compute** — ingest, reason over, and query your health data entirely on-device
-- **Semantic interoperability** — data stored as RDF (Turtle/Solid) so it can speak to any system that understands linked data, without lock-in
-- **Selective federation** — share specific records via Solid-compatible pod structure; Proxy Consent logic controls who sees what
-- **Social Web participation** — your vault is a node, not a user account on someone else's node
-
 Developed independently by Timothy Charles Holborn, WellFair maps physiological data against **Maslow's Hierarchy of Needs**, ensuring that a sleep reading or heart rate is understood in the full context of a human life — safety, shelter, relationships, and psychological wellbeing — not just as a number.
 
 ---
 
-## 📱 Designed for Your Phone — No Cloud Required
+## Architecture
 
-WellFair is built mobile-first and local-first. The entire application — including semantic reasoning, 3D anatomy, and data analysis — runs on your device.
+WellFair has two complementary layers:
 
-**How it works on a phone:**
+### 1. Privacy Vault (primary — v0.0.4+)
 
-1. Visit **<https://mediaprophet.github.io/wellfair/>** in your mobile browser
-2. Tap **Add to Home Screen** (Android: "Install App" banner; iOS: Share → Add to Home Screen)
-3. The vault installs as a PWA — it works offline from that point forward
-4. Export your Samsung Health data and load it directly — it is processed on-device and never leaves your phone
+The vault is a phone-first, zero-server, end-to-end encrypted personal health vault. The phone is the authoritative data store; the desktop is a stateless terminal. All session data is destroyed when the tab closes.
 
-> [!IMPORTANT]
-> **No data is ever transmitted to a server.** There is no account, no login, no cloud sync. The GitHub Pages URL is just a delivery mechanism — once the app is installed, it runs 100% on your hardware using WebAssembly (WASM) compiled from Rust.
+```
+Phone (pair.html — vault)               Desktop (connector/index.html — terminal)
+─────────────────────────────────       ──────────────────────────────────────────
+WebCrypto Ed25519 did:key (ephemeral)   WebCrypto Ed25519 did:key (ephemeral)
+X25519 static key (Noise_XX)            X25519 static key (Noise_XX)
+│                                       │
+└──── WebRTC DataChannel ───────────────┘
+      Noise_XX_25519_AESGCM_SHA256
+      AES-256-GCM per message
 
-**What runs locally:**
-- All CSV ingestion and RDF/Turtle generation (Rust → WASM)
-- SPARQL queries over your health graph (oxigraph in-browser)
-- SHACL shape validation of health records
-- 3D anatomy viewer with HuBMAP organ models
-- Semantic reasoning via N3Logic rules (optional EYE extension)
+Gun.eco ─── WebRTC signalling only (health data never touches relay nodes)
+Nym Mixnet ─ anonymous routing for non-real-time messages (DMS, notifications)
+```
 
----
+**Phone vault holds:**
+- Health records (encrypted at rest, AES-256-GCM)
+- Identity credentials (did:key per session, did:peer per pairing)
+- Sanctuary Mode entries (double-encrypted, PBKDF2 key derivation)
+- Audit log (every accessor, timestamp, did:key)
 
-## 🏗️ Architecture
+**Desktop terminal is stateless** — no IndexedDB writes, no cookies, no persistence. Closing the tab destroys all session state.
 
-WellFair has two complementary modes:
+### 2. Semantic Health Core (legacy — v0.0.3)
 
-| Mode | How to run | What it does |
-|---|---|---|
-| **Browser / PWA** | Install from GitHub Pages | Runs the full UI + Rust WASM core offline on your device |
-| **Local desktop** | `streamlit run ui/app.py` | Full pipeline including Python extensions (SHACL, N3, Ollama) |
+The original WASM/Streamlit data analysis layer, still available for local research use:
 
 ```
 Browser (WASM — runs on device)          Optional local extensions (Python)
@@ -93,87 +88,86 @@ wellfare-core (Rust → WASM)              extensions/
   └── HRA/CCF/UBERON namespaces             └── local_llm/    Ollama PDF parsing
 ```
 
-### Core principles
-- **The natural person is the ground truth** — lived experience cannot be reduced to transferable data; the system serves the person, not the other way around
-- **Peace infrastructure** — the vault is an inalienable extension of the self, not a service platform
-- **You are the platform (P3)** — your device is the server; there is no upstream provider
-- **WellFair is a P3A** — it exists to extend your capacity to act, not to be a platform itself
-- **Social Web, not social silo (P3-SWA)** — federation via Solid/WebID on your terms, not a walled garden
-- **No cloud** — your data never leaves your device unless you explicitly choose to share it
-- **No OWL for people** — natural persons described with SHACL/RDFS shapes, not OWL class membership; a human is not a class instance
-- **N3Logic for reasoning** — causal/clinical rules grounded in relational context, not abstract entailment
-- **Extensions are opt-in** — nothing loads until you trigger it; teardown() releases memory
+---
+
+## What's in v0.0.4
+
+The v0.0.4 sprint delivered the complete privacy vault stack across six milestones:
+
+### M1 — Pairing & Access Profiles
+- QR-code WebRTC session pairing (phone scans desktop QR)
+- Gun.eco signalling with automatic cleanup post-handshake
+- 9 SHACL access profiles (Emergency Responder, Legal Advocate, GP, Carer, Researcher, and more) with ODRL EdgeConstraints governing what each receiver may see
+- Owner workspace: drag-and-drop, notes, mental health assessments, social context panel
+
+### M2 — Identity Credentials & Encrypted Channel
+- Ed25519 `did:key` generated per session via WebCrypto (both sides); vault signs every response, desktop verifies before rendering
+- X25519 static keys for **Noise_XX_25519_AESGCM_SHA256** handshake
+- All DataChannel traffic AES-256-GCM encrypted after handshake
+- Session keys are non-extractable `CryptoKey` objects; nulled on teardown
+- `FinalizationRegistry` confirms key GC after session end
+
+### M3 — Ephemeral Sharing & Emergency Mode
+- Session TTL (30 min, configurable) — vault overwrites Gun session node on expiry
+- `beforeunload` / `pagehide` (BFCache) / `visibilitychange` (2-min grace) teardown on connector
+- Emergency pre-auth: owner can pre-approve access profiles before an incident
+- Full ISO timestamp + accessor `did:key` written to phone audit log for every session
+- Legal Advocate section picker — all sections unchecked by default
+
+### M4 — Nym Mixnet Integration (scaffolded)
+- COOP/COEP headers injected by Service Worker for SharedArrayBuffer support
+- `nymAdapter.send()` routes vault outbound via Nym instead of Gun relay; fragments payloads > 28 KB (Sphinx packet limit)
+- Fragment reassembly buffer with 30-second expiry
+- SURB pool: 20 budget, 3 attached per message, replenish when < 5
+- **Dead Man's Switch**: configurable check-in interval, two trustee Nym addresses; fires silent alert to trustees on missed check-in
+- **Anonymous notification**: compose and send via Nym with no WebRTC required
+- *Activation step remaining: run `docs/nym-test.html` against Nym Sandbox testnet, then set `NYM_SDK_URL` in `pair.html`*
+
+### M5 — Sanctuary Mode & Duress
+- `deriveVaultKey(pin, salt)` — PBKDF2-SHA256, 310,000 iterations; three independent keys (sanctuary, duress, main-vault slot)
+- Sanctuary IndexedDB namespace (`wf-vault` v2, stores `wf-s` + `wf-sc`) — obfuscated store names, all entries AES-256-GCM encrypted
+- **Duress decoy**: duress PIN at the owner PIN screen opens an identical owner workspace, fires a silent Nym alert to configured contacts, and suppresses the Sanctuary panel entirely
+- Sanctuary workspace: dark-theme UI, Unvarnished Log (Veiled Assertions + Hypothesis Nodes), Contingency Protocols (duress contacts encrypted under duress key)
+- DLT commitment anchor computed before every IDB write: `commitment = sha256(sha256(entry) ‖ nonce)` — content never leaves the device
+
+### M6 — Hardening & Evidentiary Export (code-complete)
+- Gun write audit and connector storage audit — both clean; no health data touches relay nodes
+- PWA manifest wired to `pair.html`; Wake Lock API keeps screen on during active sessions
+- 12-second relay-unreachable timeout with user-facing error
+- **Tripwire Dashboard** — log Active Opaque Collisions; mark as exported, noted, or resolved
+- **Synthesis Engine** — Contradiction Audits, Incoherence Reports, configurable Sentinel Ruleset
+- **Evidentiary Export** — select sanctuary entries, generate a cryptographically signed Verifiable Presentation (JSON-LD, Ed25519, W3C VC Data Model); download commitment manifest
+- **Bitcoin anchoring via OpenTimestamps** — publish commitment hashes anonymously to Bitcoin via public calendar servers (alice, bob, finney); each hash is one anonymous Merkle-tree leaf with no on-chain identity linking entries; async confirmation tracked per entry; `.ots` proof files downloadable for offline verification by any standard OTS tool
+- Browser compatibility guard: startup checks for Ed25519 and X25519 WebCrypto support; unsupported browsers (Firefox < 130) receive a clear error rather than a cryptic failure
 
 ---
 
-## ✨ What's in v0.0.3
+## What's next in v0.0.5-dev
 
-### Rust/WASM Core (`wellfare-core`)
-- **oxigraph RDF store** — your health data is loaded into an in-browser SPARQL-queryable triple store (no server required)
-- **SHACL-via-SPARQL validation** — shapes for sleep efficiency, HR range, and trauma fields run as SPARQL ASK queries in-browser
-- **HRA/CCF/UBERON namespaces** — sleep and heart rate records link to HuBMAP anatomical identifiers (UBERON organ codes)
-- **PROV-O provenance** — every generated triple records its Samsung Health source
-
-### Semantic Integration
-- **HuBMAP HRA SPARQL client** (`src/hra_client.py`) — queries `lod.humanatlas.io` for cell types and biomarkers mapped to UBERON organ IDs, with local TTL cache
-- **Extension framework** — pluggable architecture for SHACL validator (pyshacl), N3 reasoner (EYE binary), and local LLM (Ollama)
-
-### Developer Tools
-- Built-in test suite (Dev Tools tab) covering WASM CSV parsing, Turtle generation, SPARQL, SHACL, Python RDF pipeline, HRA client, and static assets — all runnable from the UI
-
----
-
-## 🌟 Key Features
-
-### Welfare Modeling & Maslow's Hierarchy
-Health data is not just numbers. WellFair maps physiological signals (sleep, heart rate, pathology) against higher-order needs (safety, shelter, mental health). The interface models how systemic stressors — housing instability, divorce, financial exploitation — impact physical health over time.
-
-### 🔒 Sanctuary Mode & Proxy Consent
-Personal vaults contain highly sensitive information. **Sanctuary Mode** instantly locks or obscures sensitive data (abuse records, psychiatric assessments, location history) on a specific trigger (device lock or duress PIN). This protects users in situations where their device could be accessed by someone who might use their data against them.
-
-The platform also models **Proxy Consent** — legal delegations of authority (Designated Carers, Guardians, Medical Professionals) with strict privacy-mode limits.
-
-**Demo PIN:** `8888`
-
-### 🧬 3D Spatial Anatomy (HuBMAP Integration)
-WellFair integrates the **HuBMAP Human Reference Atlas (HRA)** 3D Reference Object Library — medically-accurate GLB organ models mapped to UBERON and FMA ontologies. Clinical data is visualized spatially on a 3D body, linking biomarkers to the anatomical location they came from.
-
-### 👥 Synthetic Personas for High-Stakes Testing
-The repository ships with synthetic profiles that simulate complex, real-world systemic issues:
-
-| Persona | Scenario |
+| Task | Notes |
 |---|---|
-| Margaret / Robert | Elder abuse and financial exploitation |
-| Jordan | NDIS (disability insurance) funding exploitation |
-| Elena / Rebecca | Chronic trauma, birth trauma, PTSD |
-| Michael | Housing instability and family separation |
-
-These personas allow developers and advocates to test semantic reasoning, Sanctuary Mode triggers, and Maslow dashboards against realistic, high-stakes scenarios — not just "healthy adult" dummy data.
+| Nym Sandbox validation | Run `docs/nym-test.html` against `https://sandbox-nym-api1.nymtech.net/api`; confirm cold-start time; set `NYM_SDK_URL` in `pair.html` |
+| Real-device testing | iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md` |
+| SURB stress test | Airplane-mode toggle while Nym client active; verify replenishment and fragment expiry |
+| DLT chain write (secondary) | OTS Bitcoin anchoring is live; IOTA/Ethereum options deferred |
 
 ---
 
-## ⚙️ Technical Capabilities
+## Quick Start
 
-| Capability | Implementation | Status |
-|---|---|---|
-| Samsung Health CSV ingestion | Rust WASM | ✅ |
-| RDF/Turtle generation | Rust WASM (PROV-O, FHIR, SNOMED, QUDT) | ✅ |
-| In-browser SPARQL | oxigraph via WASM | ✅ |
-| SHACL validation | SPARQL shapes in WASM | ✅ |
-| HuBMAP HRA semantic linking | Python SPARQL client + UBERON | ✅ |
-| 3D anatomy viewer | Three.js + HuBMAP GLBs | ✅ |
-| SHACL validator (extended) | pyshacl extension | ✅ |
-| N3Logic reasoning | EYE binary extension | ✅ |
-| FHIR diagnostic reports | Python phr_models | ✅ |
-| Mental health assessments | DASS-21, K10, PHQ-9 | ✅ |
-| Proxy consent / guardianship | Pydantic models | ✅ |
-| PWA offline install | Service Worker + Stlite | ✅ |
-| Local LLM / PDF parsing | Ollama extension | 🔲 Phase 6 |
-| In-browser N3 (swipl-wasm) | SWI-Prolog WASM | 🔲 Phase 5 |
+### Vault (phone + desktop)
 
----
+```bash
+python -m http.server 3000 --directory docs
+```
 
-## 🚀 Quick Start (Local Desktop)
+Open two browser tabs or devices:
+- **Phone vault**: `http://localhost:3000/pair.html`
+- **Desktop terminal**: `http://localhost:3000/connector/`
+
+Scan the desktop QR from the phone vault to pair. Requires Chrome 111+ or Firefox 130+ (Ed25519 + X25519 WebCrypto).
+
+### Semantic Health Core (local desktop, legacy)
 
 ```bash
 # Windows
@@ -181,54 +175,91 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 streamlit run ui/app.py
-```
 
-```bash
 # macOS / Linux
-chmod +x run.sh
-./run.sh
+chmod +x run.sh && ./run.sh
 ```
 
 Select a demo profile (e.g. **gemini**, **elena**, **margaret**) from the sidebar. No data export needed to explore.
 
-To use your own Samsung Health data, point the export path to a folder containing your `com.samsung.health.*.csv` files.
+### Building the WASM Bundle
 
-### Building the WASM Bundle (for local PWA testing)
 ```bash
 cd wellfare-core && wasm-pack build --release --target web --out-dir ../ui/static/pkg
 python scripts/build_stlite.py
-python -m http.server 8000 --directory docs
 ```
 
 ---
 
-## 📁 Project Layout
+## Technical Capabilities
+
+| Capability | Implementation | Status |
+|---|---|---|
+| **Vault** | | |
+| QR WebRTC pairing | Gun.eco signalling + WebRTC DataChannel | ✅ |
+| Identity credentials | Ed25519 did:key + did:peer via WebCrypto | ✅ |
+| Encrypted channel | Noise_XX_25519_AESGCM_SHA256 | ✅ |
+| SHACL access profiles + ODRL EdgeConstraints | 9 profiles (TTL + JSON) | ✅ |
+| Session lifecycle & teardown | TTL, BFCache, FinalizationRegistry | ✅ |
+| Sanctuary Mode (encrypted IDB) | PBKDF2-SHA256 310k iter, AES-256-GCM | ✅ |
+| Duress decoy vault | Silent Nym alert + suppressed sanctuary panel | ✅ |
+| Tripwire Dashboard | Active Opaque Collisions + Resolution Engine | ✅ |
+| Synthesis Engine | Contradiction Audits + Sentinel Ruleset | ✅ |
+| Verifiable Presentation export | JSON-LD, Ed25519 signed, W3C VC Data Model | ✅ |
+| Bitcoin commitment anchoring | OpenTimestamps (feeless, anonymous) | ✅ |
+| Nym Mixnet routing | Dead Man's Switch + anonymous notify | ✅ (activation pending) |
+| PWA install + Wake Lock | manifest.webmanifest + Screen Wake Lock API | ✅ |
+| Browser compatibility guard | Ed25519 + X25519 feature detection on startup | ✅ |
+| **Semantic Health Core** | | |
+| Samsung Health CSV ingestion | Rust WASM | ✅ |
+| RDF/Turtle generation | Rust WASM (PROV-O, FHIR, SNOMED, QUDT) | ✅ |
+| In-browser SPARQL | oxigraph via WASM | ✅ |
+| SHACL validation | SPARQL shapes in WASM | ✅ |
+| HuBMAP HRA semantic linking | Python SPARQL client + UBERON | ✅ |
+| 3D anatomy viewer | Three.js + HuBMAP GLBs | ✅ |
+| Mental health assessments | DASS-21, K10, PHQ-9 | ✅ |
+| Proxy consent / guardianship | Pydantic models | ✅ |
+| Local LLM / PDF parsing | Ollama extension | 🔲 planned |
+| In-browser N3 (swipl-wasm) | SWI-Prolog WASM | 🔲 planned |
+
+---
+
+## Project Layout
 
 ```text
-├── config/
-│   └── ontology_template.yaml       # RDF namespace & mapping config
-├── data/demo/                       # Synthetic personas (Margaret, Jordan, etc.)
-├── docs/                            # Compiled Stlite WASM PWA bundle
-│   ├── pkg/                         # wellfare-core WASM (built by CI)
-│   ├── models/hra/                  # HuBMAP organ GLBs
-│   └── sw.js                        # PWA service worker
-├── extensions/
-│   ├── shacl_validator/             # pyshacl integration
-│   ├── n3_reasoner/                 # EYE N3Logic daemon
-│   └── local_llm/                   # Ollama PDF parsing (Phase 6)
-├── scripts/
-│   └── build_stlite.py             # Stlite WASM bundler
-├── src/
-│   ├── hra_client.py                # HuBMAP SPARQL client
-│   ├── rdf_transformer.py           # Python RDF pipeline
-│   └── phr_models/                  # FHIR/Maslow Pydantic models
-├── ui/
-│   ├── app.py                       # Streamlit entry point
-│   └── tabs/                        # Per-section UI modules
-│       └── dev_tools.py             # Built-in test suite
-├── wellfare-core/                   # Rust library (CSV → RDF, oxigraph, SHACL)
-├── LICENSE
-└── COPYRIGHT.md
+docs/
+  pair.html                Phone vault (Noise responder, Sanctuary Mode, OTS anchoring)
+  connector/
+    index.html             Desktop terminal (Noise initiator, Ed25519 verify)
+  nym-test.html            Nym SDK validation harness
+  manifest.webmanifest     PWA manifest
+  sw.js                    Service Worker — COOP/COEP for Nym SharedArrayBuffer
+  profiles/
+    access-profiles.ttl    SHACL access profile shapes (canonical)
+    profiles.json          JS-loadable profile registry
+
+instructions/
+  VAULT_CONNECTOR_NEXT_STEPS.md   Full milestone checklist
+  BROWSER_COMPAT.md               Audit results + real-device test matrix
+  sanctuaryMode.md                Sanctuary Mode specification
+
+shared-schemas/
+  biomarker-vocabulary.ttl        Shared RDF vocabulary
+  test-profiles/                  SHACL test profile data
+
+wellfare-core/                    Rust library (CSV → RDF, oxigraph, SHACL)
+ui/
+  app.py                          Streamlit entry point
+  tabs/                           Per-section UI modules
+extensions/
+  shacl_validator/                pyshacl integration
+  n3_reasoner/                    EYE N3Logic daemon
+  local_llm/                      Ollama PDF parsing (planned)
+src/
+  hra_client.py                   HuBMAP SPARQL client
+  rdf_transformer.py              Python RDF pipeline
+  phr_models/                     FHIR/Maslow Pydantic models
+data/demo/                        Synthetic personas (Margaret, Jordan, Elena, Michael…)
 ```
 
 ---

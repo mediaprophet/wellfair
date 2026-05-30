@@ -1,0 +1,498 @@
+# =============================================================================
+# WellFair – Biomarker Parameter Vocabulary
+# =============================================================================
+# Maps Prolog parameter names (used in compiled .pl rule files) to LOINC
+# codes, SNOMED observable entities, units, and normal reference ranges.
+#
+# Purpose: interoperability bridge between:
+#   - SPARQL-to-Prolog fact bridge (user_metric/3 assertions)
+#   - FHIR Observation resources (LOINC-coded lab results)
+#   - Expert-authored Prolog rules (which reference prolog_name strings)
+#
+# When a user's data arrives from a FHIR source using LOINC codes, the
+# bridge uses this vocabulary to resolve the correct Prolog parameter name.
+# =============================================================================
+
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+
+@prefix loinc:  <http://loinc.org/> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix ucum:   <http://unitsofmeasure.org/> .
+
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix param:  <https://wellfair.app/biomarker/> .
+
+
+# =============================================================================
+# ONTOLOGY METADATA
+# =============================================================================
+
+<https://wellfair.app/ontology/biomarker-vocabulary>
+    a owl:Ontology ;
+    rdfs:label "WellFair Biomarker Parameter Vocabulary" ;
+    rdfs:comment "Bridges Prolog parameter names to LOINC codes and clinical reference ranges." ;
+    owl:versionInfo "0.1.0" .
+
+
+# =============================================================================
+# SCHEMA
+# =============================================================================
+
+app:BiomarkerParameter
+    a rdfs:Class ;
+    rdfs:label "Biomarker Parameter" ;
+    rdfs:comment "A measurable biological or clinical variable used as a trigger condition in Prolog rules." .
+
+app:prologName
+    a rdf:Property ;
+    rdfs:label "Prolog parameter name" ;
+    rdfs:comment "The atom name used in user_metric(User, <name>, Value) Prolog assertions." ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:string .
+
+app:loincCode
+    a rdf:Property ;
+    rdfs:label "LOINC code" ;
+    rdfs:comment "The LOINC observation code for this parameter." ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:string .
+
+app:snomedObservable
+    a rdf:Property ;
+    rdfs:label "SNOMED observable entity" ;
+    rdfs:comment "SNOMED CT URI for the observable entity." ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  rdfs:Resource .
+
+app:ucumUnit
+    a rdf:Property ;
+    rdfs:label "UCUM unit" ;
+    rdfs:comment "Unified Code for Units of Measure (UCUM) string." ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:string .
+
+app:normalRangeLow
+    a rdf:Property ;
+    rdfs:label "normal range lower bound" ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:decimal .
+
+app:normalRangeHigh
+    a rdf:Property ;
+    rdfs:label "normal range upper bound" ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:decimal .
+
+app:category
+    a rdf:Property ;
+    rdfs:label "biomarker category" ;
+    rdfs:comment "Broad grouping: metabolic | cardiovascular | renal | hepatic | haematology | endocrine | psychiatric | social" ;
+    rdfs:domain app:BiomarkerParameter ;
+    rdfs:range  xsd:string .
+
+
+# =============================================================================
+# METABOLIC
+# =============================================================================
+
+param:HbA1c
+    a app:BiomarkerParameter ;
+    rdfs:label "Glycated Haemoglobin (HbA1c)" ;
+    app:prologName "hba1c" ;
+    app:loincCode "4548-4" ;
+    app:snomedObservable snomed:43396009 ;
+    app:ucumUnit "%" ;
+    app:normalRangeLow "4.0"^^xsd:decimal ;
+    app:normalRangeHigh "5.6"^^xsd:decimal ;
+    app:category "metabolic" ;
+    rdfs:comment "Primary diabetes monitoring marker. Prediabetes: 5.7–6.4%. Diabetes: ≥6.5%." .
+
+param:FastingGlucose
+    a app:BiomarkerParameter ;
+    rdfs:label "Fasting Plasma Glucose" ;
+    app:prologName "fasting_glucose" ;
+    app:loincCode "1558-6" ;
+    app:snomedObservable snomed:33747003 ;
+    app:ucumUnit "mmol/L" ;
+    app:normalRangeLow "3.9"^^xsd:decimal ;
+    app:normalRangeHigh "5.5"^^xsd:decimal ;
+    app:category "metabolic" .
+
+param:TotalCholesterol
+    a app:BiomarkerParameter ;
+    rdfs:label "Total Cholesterol" ;
+    app:prologName "total_cholesterol" ;
+    app:loincCode "2093-3" ;
+    app:snomedObservable snomed:121868005 ;
+    app:ucumUnit "mmol/L" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "5.0"^^xsd:decimal ;
+    app:category "metabolic" .
+
+param:LDL
+    a app:BiomarkerParameter ;
+    rdfs:label "LDL Cholesterol" ;
+    app:prologName "ldl" ;
+    app:loincCode "2089-1" ;
+    app:snomedObservable snomed:113079009 ;
+    app:ucumUnit "mmol/L" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "3.0"^^xsd:decimal ;
+    app:category "metabolic" .
+
+param:HDL
+    a app:BiomarkerParameter ;
+    rdfs:label "HDL Cholesterol" ;
+    app:prologName "hdl" ;
+    app:loincCode "2085-9" ;
+    app:snomedObservable snomed:102737005 ;
+    app:ucumUnit "mmol/L" ;
+    app:normalRangeLow "1.0"^^xsd:decimal ;
+    app:normalRangeHigh "3.0"^^xsd:decimal ;
+    app:category "metabolic" .
+
+param:Triglycerides
+    a app:BiomarkerParameter ;
+    rdfs:label "Triglycerides" ;
+    app:prologName "triglycerides" ;
+    app:loincCode "2571-8" ;
+    app:snomedObservable snomed:85600001 ;
+    app:ucumUnit "mmol/L" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "1.7"^^xsd:decimal ;
+    app:category "metabolic" .
+
+param:BMI
+    a app:BiomarkerParameter ;
+    rdfs:label "Body Mass Index" ;
+    app:prologName "bmi" ;
+    app:loincCode "39156-5" ;
+    app:snomedObservable snomed:60621009 ;
+    app:ucumUnit "kg/m2" ;
+    app:normalRangeLow "18.5"^^xsd:decimal ;
+    app:normalRangeHigh "24.9"^^xsd:decimal ;
+    app:category "metabolic" .
+
+
+# =============================================================================
+# CARDIOVASCULAR
+# =============================================================================
+
+param:SystolicBP
+    a app:BiomarkerParameter ;
+    rdfs:label "Systolic Blood Pressure" ;
+    app:prologName "systolic_bp" ;
+    app:loincCode "8480-6" ;
+    app:snomedObservable snomed:271649006 ;
+    app:ucumUnit "mm[Hg]" ;
+    app:normalRangeLow "90.0"^^xsd:decimal ;
+    app:normalRangeHigh "120.0"^^xsd:decimal ;
+    app:category "cardiovascular" .
+
+param:DiastolicBP
+    a app:BiomarkerParameter ;
+    rdfs:label "Diastolic Blood Pressure" ;
+    app:prologName "diastolic_bp" ;
+    app:loincCode "8462-4" ;
+    app:snomedObservable snomed:271650006 ;
+    app:ucumUnit "mm[Hg]" ;
+    app:normalRangeLow "60.0"^^xsd:decimal ;
+    app:normalRangeHigh "80.0"^^xsd:decimal ;
+    app:category "cardiovascular" .
+
+param:HeartRate
+    a app:BiomarkerParameter ;
+    rdfs:label "Resting Heart Rate" ;
+    app:prologName "heart_rate" ;
+    app:loincCode "8867-4" ;
+    app:snomedObservable snomed:364075005 ;
+    app:ucumUnit "/min" ;
+    app:normalRangeLow "60.0"^^xsd:decimal ;
+    app:normalRangeHigh "100.0"^^xsd:decimal ;
+    app:category "cardiovascular" .
+
+param:HRV
+    a app:BiomarkerParameter ;
+    rdfs:label "Heart Rate Variability (RMSSD)" ;
+    app:prologName "hrv_rmssd" ;
+    app:loincCode "80404-7" ;
+    app:ucumUnit "ms" ;
+    app:normalRangeLow "20.0"^^xsd:decimal ;
+    app:normalRangeHigh "200.0"^^xsd:decimal ;
+    app:category "cardiovascular" ;
+    rdfs:comment "Lower HRV associated with chronic stress, cardiovascular disease, PTSD." .
+
+param:SpO2
+    a app:BiomarkerParameter ;
+    rdfs:label "Oxygen Saturation (SpO2)" ;
+    app:prologName "spo2" ;
+    app:loincCode "59408-5" ;
+    app:snomedObservable snomed:431314004 ;
+    app:ucumUnit "%" ;
+    app:normalRangeLow "95.0"^^xsd:decimal ;
+    app:normalRangeHigh "100.0"^^xsd:decimal ;
+    app:category "cardiovascular" .
+
+
+# =============================================================================
+# RENAL
+# =============================================================================
+
+param:eGFR
+    a app:BiomarkerParameter ;
+    rdfs:label "Estimated Glomerular Filtration Rate" ;
+    app:prologName "egfr" ;
+    app:loincCode "62238-1" ;
+    app:snomedObservable snomed:80274001 ;
+    app:ucumUnit "mL/min/1.73m2" ;
+    app:normalRangeLow "60.0"^^xsd:decimal ;
+    app:normalRangeHigh "120.0"^^xsd:decimal ;
+    app:category "renal" ;
+    rdfs:comment "CKD staging: G1 ≥90, G2 60–89, G3a 45–59, G3b 30–44, G4 15–29, G5 <15." .
+
+param:SerumCreatinine
+    a app:BiomarkerParameter ;
+    rdfs:label "Serum Creatinine" ;
+    app:prologName "creatinine" ;
+    app:loincCode "38483-4" ;
+    app:snomedObservable snomed:70901006 ;
+    app:ucumUnit "umol/L" ;
+    app:normalRangeLow "60.0"^^xsd:decimal ;
+    app:normalRangeHigh "110.0"^^xsd:decimal ;
+    app:category "renal" .
+
+param:AlbuminCreatinineRatio
+    a app:BiomarkerParameter ;
+    rdfs:label "Urine Albumin-to-Creatinine Ratio (uACR)" ;
+    app:prologName "uacr" ;
+    app:loincCode "9318-7" ;
+    app:snomedObservable snomed:313261000 ;
+    app:ucumUnit "mg/mmol" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "3.0"^^xsd:decimal ;
+    app:category "renal" ;
+    rdfs:comment "Early diabetic nephropathy marker. Microalbuminuria: 3–30 mg/mmol." .
+
+
+# =============================================================================
+# HEPATIC
+# =============================================================================
+
+param:ALT
+    a app:BiomarkerParameter ;
+    rdfs:label "Alanine Aminotransferase (ALT)" ;
+    app:prologName "alt" ;
+    app:loincCode "1742-6" ;
+    app:snomedObservable snomed:34608000 ;
+    app:ucumUnit "U/L" ;
+    app:normalRangeLow "7.0"^^xsd:decimal ;
+    app:normalRangeHigh "56.0"^^xsd:decimal ;
+    app:category "hepatic" .
+
+param:AST
+    a app:BiomarkerParameter ;
+    rdfs:label "Aspartate Aminotransferase (AST)" ;
+    app:prologName "ast" ;
+    app:loincCode "1920-8" ;
+    app:snomedObservable snomed:45896001 ;
+    app:ucumUnit "U/L" ;
+    app:normalRangeLow "10.0"^^xsd:decimal ;
+    app:normalRangeHigh "40.0"^^xsd:decimal ;
+    app:category "hepatic" .
+
+param:GGT
+    a app:BiomarkerParameter ;
+    rdfs:label "Gamma-Glutamyl Transferase (GGT)" ;
+    app:prologName "ggt" ;
+    app:loincCode "2324-2" ;
+    app:ucumUnit "U/L" ;
+    app:normalRangeLow "8.0"^^xsd:decimal ;
+    app:normalRangeHigh "61.0"^^xsd:decimal ;
+    app:category "hepatic" ;
+    rdfs:comment "Elevated in alcohol use disorder, fatty liver, and biliary disease." .
+
+
+# =============================================================================
+# HAEMATOLOGY
+# =============================================================================
+
+param:Haemoglobin
+    a app:BiomarkerParameter ;
+    rdfs:label "Haemoglobin" ;
+    app:prologName "haemoglobin" ;
+    app:loincCode "718-7" ;
+    app:snomedObservable snomed:38082009 ;
+    app:ucumUnit "g/dL" ;
+    app:normalRangeLow "13.5"^^xsd:decimal ;
+    app:normalRangeHigh "17.5"^^xsd:decimal ;
+    app:category "haematology" ;
+    rdfs:comment "Normal range is sex-dependent; values here are for adult males." .
+
+param:WBC
+    a app:BiomarkerParameter ;
+    rdfs:label "White Blood Cell Count" ;
+    app:prologName "wbc" ;
+    app:loincCode "6690-2" ;
+    app:snomedObservable snomed:767002 ;
+    app:ucumUnit "10*9/L" ;
+    app:normalRangeLow "4.5"^^xsd:decimal ;
+    app:normalRangeHigh "11.0"^^xsd:decimal ;
+    app:category "haematology" .
+
+param:CRP
+    a app:BiomarkerParameter ;
+    rdfs:label "C-Reactive Protein (high-sensitivity)" ;
+    app:prologName "crp_hs" ;
+    app:loincCode "30522-7" ;
+    app:snomedObservable snomed:55235003 ;
+    app:ucumUnit "mg/L" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "3.0"^^xsd:decimal ;
+    app:category "haematology" ;
+    rdfs:comment "Cardiovascular risk: >3 mg/L high risk. Also elevated in chronic inflammation, EDS flares." .
+
+
+# =============================================================================
+# ENDOCRINE
+# =============================================================================
+
+param:TSH
+    a app:BiomarkerParameter ;
+    rdfs:label "Thyroid-Stimulating Hormone (TSH)" ;
+    app:prologName "tsh" ;
+    app:loincCode "3016-3" ;
+    app:snomedObservable snomed:61167004 ;
+    app:ucumUnit "mIU/L" ;
+    app:normalRangeLow "0.4"^^xsd:decimal ;
+    app:normalRangeHigh "4.0"^^xsd:decimal ;
+    app:category "endocrine" ;
+    rdfs:comment "Low TSH → hyperthyroidism. High TSH → hypothyroidism." .
+
+param:FreeT4
+    a app:BiomarkerParameter ;
+    rdfs:label "Free Thyroxine (fT4)" ;
+    app:prologName "free_t4" ;
+    app:loincCode "3024-7" ;
+    app:ucumUnit "pmol/L" ;
+    app:normalRangeLow "9.0"^^xsd:decimal ;
+    app:normalRangeHigh "19.0"^^xsd:decimal ;
+    app:category "endocrine" .
+
+param:CortisolAM
+    a app:BiomarkerParameter ;
+    rdfs:label "Morning Serum Cortisol" ;
+    app:prologName "cortisol_am" ;
+    app:loincCode "2143-6" ;
+    app:snomedObservable snomed:42186007 ;
+    app:ucumUnit "nmol/L" ;
+    app:normalRangeLow "170.0"^^xsd:decimal ;
+    app:normalRangeHigh "540.0"^^xsd:decimal ;
+    app:category "endocrine" ;
+    rdfs:comment "HPA-axis marker. Dysregulated in PTSD, chronic stress, adrenal insufficiency." .
+
+param:Insulin
+    a app:BiomarkerParameter ;
+    rdfs:label "Fasting Serum Insulin" ;
+    app:prologName "fasting_insulin" ;
+    app:loincCode "20448-7" ;
+    app:ucumUnit "pmol/L" ;
+    app:normalRangeLow "18.0"^^xsd:decimal ;
+    app:normalRangeHigh "173.0"^^xsd:decimal ;
+    app:category "endocrine" .
+
+param:VitaminD
+    a app:BiomarkerParameter ;
+    rdfs:label "25-Hydroxyvitamin D" ;
+    app:prologName "vitamin_d" ;
+    app:loincCode "1989-3" ;
+    app:snomedObservable snomed:259594003 ;
+    app:ucumUnit "nmol/L" ;
+    app:normalRangeLow "50.0"^^xsd:decimal ;
+    app:normalRangeHigh "250.0"^^xsd:decimal ;
+    app:category "endocrine" ;
+    rdfs:comment "Deficiency (<50 nmol/L) associated with bone disease, immune dysfunction, depression. Particularly relevant for EDS and chronic pain populations." .
+
+
+# =============================================================================
+# PSYCHIATRIC / PSYCHOSOCIAL
+# =============================================================================
+
+param:PHQ9
+    a app:BiomarkerParameter ;
+    rdfs:label "PHQ-9 Depression Score" ;
+    app:prologName "phq9_score" ;
+    app:loincCode "44261-6" ;
+    app:ucumUnit "{score}" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "4.0"^^xsd:decimal ;
+    app:category "psychiatric" ;
+    rdfs:comment "0–4 minimal, 5–9 mild, 10–14 moderate, 15–19 moderately severe, 20–27 severe." .
+
+param:GAD7
+    a app:BiomarkerParameter ;
+    rdfs:label "GAD-7 Anxiety Score" ;
+    app:prologName "gad7_score" ;
+    app:loincCode "69737-5" ;
+    app:ucumUnit "{score}" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "4.0"^^xsd:decimal ;
+    app:category "psychiatric" ;
+    rdfs:comment "0–4 minimal, 5–9 mild, 10–14 moderate, 15–21 severe." .
+
+param:PCL5
+    a app:BiomarkerParameter ;
+    rdfs:label "PCL-5 PTSD Symptom Score" ;
+    app:prologName "pcl5_score" ;
+    app:loincCode "97974-3" ;
+    app:ucumUnit "{score}" ;
+    app:normalRangeLow "0.0"^^xsd:decimal ;
+    app:normalRangeHigh "31.0"^^xsd:decimal ;
+    app:category "psychiatric" ;
+    rdfs:comment "Probable PTSD: ≥31–33. Used with trauma history to trigger PTSD implication rules." .
+
+param:SleepEfficiency
+    a app:BiomarkerParameter ;
+    rdfs:label "Sleep Efficiency" ;
+    app:prologName "sleep_efficiency" ;
+    app:loincCode "93832-4" ;
+    app:ucumUnit "%" ;
+    app:normalRangeLow "85.0"^^xsd:decimal ;
+    app:normalRangeHigh "100.0"^^xsd:decimal ;
+    app:category "psychiatric" .
+
+
+# =============================================================================
+# SOCIAL DETERMINANTS (non-clinical parameters for welfare rulesets)
+# =============================================================================
+
+param:HousingStability
+    a app:BiomarkerParameter ;
+    rdfs:label "Housing Stability Index" ;
+    app:prologName "housing_stability" ;
+    app:ucumUnit "{score}" ;
+    app:normalRangeLow "70.0"^^xsd:decimal ;
+    app:normalRangeHigh "100.0"^^xsd:decimal ;
+    app:category "social" ;
+    rdfs:comment "0 = street homeless, 100 = stable owned housing. Welfare ruleset parameter." .
+
+param:WeeklyIncome
+    a app:BiomarkerParameter ;
+    rdfs:label "Weekly Net Income (AUD)" ;
+    app:prologName "weekly_income_aud" ;
+    app:ucumUnit "[AUD]" ;
+    app:category "social" ;
+    rdfs:comment "Used in welfare eligibility rulesets for income threshold testing." .
+
+param:SocialIsolationScore
+    a app:BiomarkerParameter ;
+    rdfs:label "Social Isolation Score (UCLA-3)" ;
+    app:prologName "social_isolation" ;
+    app:ucumUnit "{score}" ;
+    app:normalRangeLow "3.0"^^xsd:decimal ;
+    app:normalRangeHigh "5.0"^^xsd:decimal ;
+    app:category "social" ;
+    rdfs:comment "3–5 not isolated, 6–9 moderate isolation. Elevated score linked to cardiovascular risk and cognitive decline." .
