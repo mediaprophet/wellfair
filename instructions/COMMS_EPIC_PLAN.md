@@ -12,14 +12,23 @@
 
 **At the start of every session**, read in this order:
 1. `CLAUDE.md` — project orientation, terminology, architecture (mandatory)
-2. This file — find the current milestone row in the Progress Tracker, read that milestone section
+2. This file — find the first "not started" row in the Progress Tracker, read that milestone section
 3. The handover file written by the previous session (path shown in Progress Tracker)
 4. The source files listed under "Read first" for that milestone
 
-**At the end of every session**, write a handover file at:
-`instructions/HANDOVER_VC{milestone}_{YYYY-MM-DD}.md`
+**Keep going through milestones until the context window signals it is filling up:**
+- The system emits a compression notice (prior messages summarised)
+- Tool call results are truncated or cut off mid-output
 
-Follow the Handover Template below exactly. Then update the Progress Tracker table in this file with the session date, handover path, and status. Commit everything before closing.
+Do NOT stop after each milestone. Finish one milestone (code + verify + commit), then move immediately to the next "not started" row. Only stop and write the handover when a context signal appears or all milestones are done.
+
+**When a context signal appears (or all milestones are done)**, stop mid-milestone if necessary and:
+1. Write a handover file at `instructions/HANDOVER_VC{last_milestone}_{YYYY-MM-DD}.md`
+   following the Handover Template below — note exactly where you stopped.
+2. Update every completed row in the Progress Tracker with date, status, and handover path.
+3. Commit everything on `release/v0.0.6` and tell the user to start a new session.
+
+Incomplete-but-committed code is fine. Uncommitted half-work is not.
 
 ---
 
@@ -73,22 +82,22 @@ for heavy work. Jobs persist in IDB `wf-jobs` across app restarts.
 
 ## Session size guidance
 
-Each Claude Code session has a limited context window (typically enough for 1–2 milestones of
-focused implementation). Signs you are approaching the limit:
-- Responses start summarising rather than implementing
-- Tool call results are being compressed/truncated
-- You notice prior context being dropped from tool outputs
+Context window signals that mean **stop now, write handover, commit**:
+- The system emits a compression notice (you see "prior messages have been summarised")
+- Tool call results arrive truncated / cut off mid-content
+- You notice prior context dropping from outputs
 
-When approaching the limit: **stop, write the handover, commit, and tell the user to start a new session.**
-Do not attempt to rush VC milestones into a single session — incomplete code is worse than a clean stop.
+Until those signals appear: **keep going**. Finish a milestone, commit, move straight to the next.
+Do not stop between milestones just because a "session" boundary exists in the table below —
+those rows are tracking units, not stopping points.
 
-Recommended session scopes (adjust based on actual progress):
+Milestone order (implement top-to-bottom, skip none):
 
-| Session | Scope |
-|---------|-------|
-| 1 | VC-7: SHACL shapes + IDB v4 + vault-directory.js |
-| 2 | VC-7 cont.: vault.html Directory panel + wiring |
-| 3 | VC-8: vault-handshake.js (QR + Nym flows, ODRL signing) |
+| Session row | Milestone scope |
+|-------------|-----------------|
+| 1 | VC-7a: SHACL shapes + IDB v4 + vault-directory.js |
+| 2 | VC-7b: vault.html Directory panel + wiring |
+| 3 | VC-8: vault-handshake.js + vault.html handshake UI |
 | 4 | VC-9: vault-comms-gate.js (dual transport, ring UI) |
 | 5 | VC-10a: vault-comms-call.js + docs/join.html |
 | 6 | VC-10b: connector/index.html Calls panel + vault-cv.js stub |
