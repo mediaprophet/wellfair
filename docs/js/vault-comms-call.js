@@ -206,6 +206,20 @@ function _callSetupDc(channel) {
         document.dispatchEvent(new CustomEvent('wf:data-request', { detail: msg }));
       } else if (msg.type === 'data_response' || msg.type === 'data_receipt') {
         document.dispatchEvent(new CustomEvent('wf:data-response', { detail: msg }));
+      } else if (msg.type === 'job_result' || msg.type === 'job_error' || msg.type === 'job_progress') {
+        // Route desktop job offload results back to the scheduler
+        if (typeof schedHandleDesktopResult === 'function') {
+          schedHandleDesktopResult(msg).catch(() => {});
+        }
+      } else if (msg.type === 'call_control') {
+        // Remote call-control from peer (mute/end)
+        if (msg.action === 'end') {
+          endCall();
+        } else if (msg.action === 'mute_audio') {
+          muteAudio(!!msg.muted);
+        } else if (msg.action === 'mute_video') {
+          muteVideo(!!msg.muted);
+        }
       }
     } catch (_) {}
   };

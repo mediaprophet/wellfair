@@ -327,6 +327,16 @@
     </div>
     <div id="session-label"></div>
     <button class="btn btn-ghost" id="retry-btn" onclick="startSession()">New session</button>
+    <!-- Demo / dev: auto-connect link (shown once QR is ready) -->
+    <div id="demo-link-wrap" style="display:none;margin-top:.75rem;text-align:center">
+      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.35rem">
+        Dev / demo — same machine as vault?
+      </div>
+      <button class="btn btn-ghost" style="font-size:.78rem;padding:.3rem .8rem"
+              onclick="_demoConnect()">📱 Open vault connect page</button>
+      <button class="btn btn-ghost" style="font-size:.78rem;padding:.3rem .8rem;margin-left:.4rem"
+              onclick="_demoCopyLink()" id="demo-copy-btn">📋 Copy link</button>
+    </div>
   </div>
 </div>
 
@@ -773,12 +783,41 @@ function showQR(payload) {
     color:{dark:'#000',light:'#fff'} }, err => {
     if (!err) canvas.style.display = 'block';
   });
+  // Store for demo auto-connect (same-origin tabs / localhost dev)
+  try {
+    localStorage.setItem('wf-demo-session', JSON.stringify({
+      sid: sessionId, relay: RELAYS[0], ts: Date.now()
+    }));
+  } catch (_) {}
+  document.getElementById('demo-link-wrap').style.display = 'block';
 }
 
 function hideQR() {
   document.getElementById('qr-canvas').style.display = 'none';
   document.getElementById('qr-placeholder').style.display = 'block';
   document.getElementById('qr-placeholder').textContent = '…';
+  document.getElementById('demo-link-wrap').style.display = 'none';
+  try { localStorage.removeItem('wf-demo-session'); } catch (_) {}
+}
+
+// Demo/dev helpers — open or copy the vault connect link
+function _demoConnectUrl() {
+  return location.origin + '/webconnect.html?sid=' +
+    encodeURIComponent(sessionId) + '&relay=' + encodeURIComponent(RELAYS[0]);
+}
+
+function _demoConnect() {
+  window.open(_demoConnectUrl(), '_blank');
+}
+
+function _demoCopyLink() {
+  navigator.clipboard.writeText(_demoConnectUrl()).then(() => {
+    const btn = document.getElementById('demo-copy-btn');
+    btn.textContent = '✅ Copied';
+    setTimeout(() => { btn.textContent = '📋 Copy link'; }, 2000);
+  }).catch(() => {
+    prompt('Copy this connect link:', _demoConnectUrl());
+  });
 }
 
 // ── App shell UI ─────────────────────────────────────────────────────────────
@@ -1062,6 +1101,7 @@ function waitForICE(p) {
 }
 
 function teardown() {
+  try { localStorage.removeItem('wf-demo-session'); } catch (_) {}
   clearTimeout(expireTimer);
   clearTimeout(_hiddenTimer); _hiddenTimer = null;
   clearInterval(timerInterval);

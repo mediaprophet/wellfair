@@ -760,6 +760,18 @@ window.addEventListener('pagehide', () => { endSession(false); });
     return;
   }
 
+  // Auto-connect from URL param (demo/dev — connector copies the link)
+  const _autoParams = new URLSearchParams(location.search);
+  const _autoSid    = _autoParams.get('sid');
+  if (_autoSid) {
+    const _autoRelay = _autoParams.get('relay') || RELAYS[0];
+    initNym();
+    showStep('step-scan');
+    setScanStatus('Auto-connecting to desktop session…');
+    connectToSession(_autoSid, _autoRelay);
+    return;
+  }
+
   initNym();
   showStep('step-scan');
   startScanner();
