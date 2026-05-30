@@ -96,6 +96,21 @@ activation in `pair.html`.
 See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the v0.0.5 checklist.
 See `instructions/COMMS_EPIC_PLAN.md` for the v0.0.6 implementation plan (VC-7 through VC-15).
 
+### Carry-over from v0.0.5 (not yet done)
+
+**Needs code:**
+- **Medication Sprint 6 — diet log**: `wf-dl` IDB store exists but UI and capture logic not built.
+  Lives in `docs/js/vault-meds-manager.js` or a new `vault-diet.js`. Lower priority than comms epic;
+  pick up when a session has capacity.
+- **Demo connector auto-connect**: `connector/index.html` should detect an active vault Gun session
+  and offer one-click connect (no manual QR scan) for dev/demo use. Small task, ~50 lines.
+
+**Runtime / device only (no code):**
+- **Nym Sandbox validation**: run `docs/nym-test.html` against Nym Sandbox testnet; set
+  `NYM_SDK_URL` constant in `docs/js/vault-nym.js`. Sandbox API: `https://sandbox-nym-api1.nymtech.net/api`.
+- **Real-device testing**: iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md`.
+- **SURB stress test**: airplane-mode toggle while Nym client active; verify fragment expiry + replenish.
+
 ### Milestone 7+ — Verifiable Communications Ecosystem *(v0.0.6-dev, in progress)*
 
 New epic. See `instructions/COMMS_EPIC_PLAN.md` for full spec and session-by-session plan.

@@ -162,11 +162,20 @@ verifiable; institutions must prove who they are before they can ring.
 
 See `instructions/COMMS_EPIC_PLAN.md` for the full implementation plan and session-by-session breakdown.
 
-### Carry-over from v0.0.5-dev (runtime/device — no code tasks)
+### Carry-over from v0.0.5-dev
+
+#### Needs code
 
 | Task | Notes |
 |---|---|
-| Nym Sandbox validation | Run `docs/nym-test.html` against `https://sandbox-nym-api1.nymtech.net/api`; set `NYM_SDK_URL` in `pair.html` |
+| Medication Sprint 6 — diet log | `wf-dl` IDB store exists; UI and capture logic not yet built. Module: `docs/js/vault-meds-manager.js` or new `vault-diet.js` |
+| Demo connector auto-connect | `connector/index.html` should detect an active vault Gun session and auto-connect without manual QR scan, for demo/dev use |
+
+#### Runtime / device only (no code tasks)
+
+| Task | Notes |
+|---|---|
+| Nym Sandbox validation | Run `docs/nym-test.html` against `https://sandbox-nym-api1.nymtech.net/api`; set `NYM_SDK_URL` in `docs/js/vault-nym.js` |
 | Real-device testing | iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md` |
 | SURB stress test | Airplane-mode toggle while Nym client active; verify replenishment and fragment expiry |
 
