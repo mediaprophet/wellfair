@@ -281,7 +281,7 @@ Only structured JSON telemetry travels over the WebRTC DataChannel to the clinic
 
 | Session | Date | Milestone | Status | Handover file |
 |---------|------|-----------|--------|---------------|
-| DL-1 | | Barcode scanning + Open Food Facts pre-fill | not started | |
+| DL-1 | 2026-05-31 | Barcode scanning + Open Food Facts pre-fill | complete | — |
 
 ---
 
@@ -289,9 +289,9 @@ Only structured JSON telemetry travels over the WebRTC DataChannel to the clinic
 
 | Session | Date | Milestone | Status | Handover file |
 |---------|------|-----------|--------|---------------|
-| WA-1 | | AgentController + consent model + IDB v7 | not started | |
-| WA-2 | | Vision — emotion & landmarks (MediaPipe) | not started | |
-| WA-3 | | Vision — rPPG pulse detection | not started | |
+| WA-1 | 2026-05-31 | AgentController + consent model + IDB v7 | complete | — |
+| WA-2 | 2026-05-31 | Vision — emotion & landmarks (MediaPipe) | complete | — |
+| WA-3 | 2026-05-31 | Vision — rPPG pulse detection | complete | — |
 | WA-4 | | Audio — prosody analysis (Meyda) | not started | |
 | WA-5 | | Audio — STT feed + linguistic analysis | not started | |
 | WA-6 | | Clinician dashboard (connector telemetry panel) | not started | |
