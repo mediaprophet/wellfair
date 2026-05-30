@@ -240,6 +240,58 @@
     .interaction-alert.moderate { border-color:rgba(210,153,34,.35); background:rgba(210,153,34,.05); }
     .interaction-alert.mild     { border-color:rgba(139,148,158,.35); }
 
+    /* ── Directory sheet ─────────────────────────────────────────────────── */
+    #dir-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .dir-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .dir-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .dir-header h3 { font-size:.95rem; font-weight:700; }
+    .dir-scroll { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .dir-search {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:8px; padding:.4rem .65rem; font-size:.85rem;
+      font-family:inherit; margin-bottom:.6rem;
+    }
+    .dir-search:focus { outline:2px solid var(--accent); border-color:transparent; }
+    .dir-contact-card {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.55rem .7rem; border-radius:8px; border:1px solid var(--border);
+      margin-bottom:.35rem; background:rgba(255,255,255,.02); cursor:pointer;
+      gap:.5rem;
+    }
+    .dir-contact-card:hover { border-color:var(--accent); }
+    .dir-contact-info { display:flex; flex-direction:column; gap:.08rem; flex:1; min-width:0; }
+    .dir-contact-name { font-size:.85rem; font-weight:600; }
+    .dir-contact-did  { font-size:.7rem; color:var(--dim); font-family:monospace;
+                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dir-rel-badge {
+      font-size:.68rem; font-weight:600; padding:.12rem .45rem; border-radius:10px;
+      border:1px solid var(--border); color:var(--dim); white-space:nowrap; flex-shrink:0;
+    }
+    .dir-rel-badge.has-agreement { border-color:var(--green); color:var(--green); }
+    /* detail sub-view */
+    .dir-detail-field { margin-bottom:.65rem; }
+    .dir-detail-label { font-size:.73rem; color:var(--dim); margin-bottom:.18rem; display:block; }
+    .dir-detail-value { font-size:.85rem; word-break:break-all; }
+    .dir-detail-mono  { font-family:monospace; font-size:.78rem; }
+    .dir-form-label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .dir-form-label span { display:block; margin-bottom:.2rem; }
+    .dir-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.28rem .45rem; font-size:.82rem;
+      font-family:inherit;
+    }
+    .dir-input:focus { outline:none; border-color:var(--accent); }
+    .dir-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+
     label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
     input[type="text"], input[type="password"] {
       width:100%; padding:.55rem .7rem; border:1px solid var(--border);
@@ -413,6 +465,12 @@
     </div>
   </div>
 
+  <!-- Contacts / Verified Directory -->
+  <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="openDirectory()">👥 Contacts</button>
+  </div>
+
   <!-- Sanctuary mode -->
   <div id="sanctuary-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
     <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;
@@ -498,6 +556,67 @@
       <button class="btn btn-primary" style="width:100%;margin-top:.75rem;font-size:.82rem"
               onclick="saveMedication()">Save medication</button>
       <div id="med-save-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Directory sheet -->
+<div id="dir-sheet" style="display:none" onclick="if(event.target===this)closeDirectory()">
+  <div class="dir-body">
+    <div class="dir-header">
+      <h3>👥 Contacts</h3>
+      <div style="display:flex;gap:.45rem;align-items:center">
+        <button class="btn btn-primary" id="dir-add-btn"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_dirShowAddForm()">+ Add</button>
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="closeDirectory()">Close</button>
+      </div>
+    </div>
+
+    <!-- List view -->
+    <div id="dir-list-view" class="dir-scroll">
+      <input class="dir-search" id="dir-search" type="text"
+             placeholder="Search by name or identity credential…"
+             oninput="_dirFilterList(this.value)" />
+      <div id="dir-contact-list">
+        <p class="dir-empty">No contacts yet — tap + Add to create one.</p>
+      </div>
+    </div>
+
+    <!-- Add contact form -->
+    <div id="dir-add-view" class="dir-scroll" style="display:none">
+      <span class="back-link" onclick="_dirShowListView()">← Back</span>
+      <p style="font-size:.88rem;font-weight:600;margin-bottom:.75rem">New contact</p>
+      <label class="dir-form-label">
+        <span>Name *</span>
+        <input type="text" id="dir-add-name" class="dir-input" placeholder="e.g. Dr Sarah Jones" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Identity credential (did:key or did:peer)</span>
+        <input type="text" id="dir-add-did" class="dir-input"
+               placeholder="did:key:z6Mk…" style="font-family:monospace;font-size:.78rem" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>WebID / profile URL (optional)</span>
+        <input type="text" id="dir-add-webid" class="dir-input" placeholder="https://…" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Notes (private)</span>
+        <textarea id="dir-add-notes" class="dir-input" rows="3"
+                  placeholder="Anything you want to remember about this contact…"
+                  style="resize:vertical"></textarea>
+      </label>
+      <button class="btn btn-primary" style="margin-top:.75rem;font-size:.82rem"
+              onclick="_dirSaveNewContact()">Save contact</button>
+      <div id="dir-add-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
+
+    <!-- Contact detail view -->
+    <div id="dir-detail-view" class="dir-scroll" style="display:none">
+      <span class="back-link" onclick="_dirShowListView()">← Contacts</span>
+      <div id="dir-detail-content"></div>
     </div>
   </div>
 </div>
@@ -678,6 +797,8 @@
 <script src="js/vault-did.js"></script>
 <script src="js/vault-nym.js"></script>
 <script src="js/vault-mock.js"></script>
+<!-- VC-7 Verified Directory — must load after vault-crypto (needs _sEnc/_sDec) -->
+<script src="js/vault-directory.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -734,6 +855,7 @@ async function pinKey(k) {
     if (entered === VAULT_PIN) {
       document.getElementById('pin-hint').textContent = '✓ Verified';
       document.getElementById('pin-hint').style.color = 'var(--green)';
+      deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
       setTimeout(openOwnerWorkspace, 400);
     } else {
       document.getElementById('pin-hint').textContent = 'Checking…';
@@ -741,6 +863,7 @@ async function pinKey(k) {
       if (isDuress) {
         document.getElementById('pin-hint').textContent = '✓ Verified';
         document.getElementById('pin-hint').style.color = 'var(--green)';
+        deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
         setTimeout(openOwnerWorkspace, 400);
       } else {
         updatePinDots('error');
@@ -760,6 +883,7 @@ function openOwnerWorkspace() {
   document.getElementById('dms-panel').style.display             = 'block';
   document.getElementById('anon-notify-panel').style.display     = 'block';
   if (!duressModeActive) {
+    document.getElementById('dir-panel').style.display       = 'block';
     document.getElementById('sanctuary-panel').style.display = 'block';
   }
   document.getElementById('vault-unlock-time').textContent =
@@ -773,15 +897,194 @@ function lockVault() {
   if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
   clearTimeout(dmsTimer);
   ['med-interaction-panel','med-reminder-panel','dms-panel',
-   'anon-notify-panel','sanctuary-panel'].forEach(id => {
+   'anon-notify-panel','dir-panel','sanctuary-panel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
+  document.getElementById('dir-sheet').style.display = 'none';
+  initDirectory(null);
   duressModeActive = false;
   document.body.classList.remove('sanctuary-active');
   sanctuaryKey    = null;
   sanctuaryActive = false;
   resetPin();
   showStep('step-pin');
+}
+
+// ── Directory UI ──────────────────────────────────────────────────────────────
+
+let _dirAllContacts = [];
+
+function openDirectory() {
+  document.getElementById('dir-sheet').style.display = 'flex';
+  _dirShowListView();
+  _dirLoadContacts();
+}
+
+function closeDirectory() {
+  document.getElementById('dir-sheet').style.display = 'none';
+}
+
+function _dirShowListView() {
+  document.getElementById('dir-list-view').style.display   = 'block';
+  document.getElementById('dir-add-view').style.display    = 'none';
+  document.getElementById('dir-detail-view').style.display = 'none';
+  document.getElementById('dir-add-btn').style.display     = '';
+  document.getElementById('dir-search').value              = '';
+}
+
+function _dirShowAddForm() {
+  document.getElementById('dir-list-view').style.display   = 'none';
+  document.getElementById('dir-add-view').style.display    = 'block';
+  document.getElementById('dir-detail-view').style.display = 'none';
+  document.getElementById('dir-add-btn').style.display     = 'none';
+  ['dir-add-name','dir-add-did','dir-add-webid','dir-add-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('dir-add-status').textContent = '';
+}
+
+function _dirShowDetail() {
+  document.getElementById('dir-list-view').style.display   = 'none';
+  document.getElementById('dir-add-view').style.display    = 'none';
+  document.getElementById('dir-detail-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display     = 'none';
+}
+
+async function _dirLoadContacts() {
+  const listEl = document.getElementById('dir-contact-list');
+  try {
+    _dirAllContacts = await getAllContacts();
+    _dirRenderList(_dirAllContacts);
+  } catch (e) {
+    listEl.innerHTML = `<p class="dir-empty" style="color:var(--red)">Error loading contacts: ${e.message}</p>`;
+  }
+}
+
+function _dirRenderList(contacts) {
+  const listEl = document.getElementById('dir-contact-list');
+  if (!contacts.length) {
+    listEl.innerHTML = '<p class="dir-empty">No contacts yet — tap + Add to create one.</p>';
+    return;
+  }
+  listEl.innerHTML = contacts.map(c => `
+    <div class="dir-contact-card" onclick="_dirOpenDetail('${_dirEsc(c.id)}')">
+      <div class="dir-contact-info">
+        <span class="dir-contact-name">${_dirEsc(c.name)}</span>
+        <span class="dir-contact-did">${_dirEsc(c.did || '—')}</span>
+      </div>
+      <span class="dir-rel-badge" id="dir-rel-${_dirEsc(c.id)}">contact</span>
+    </div>
+  `).join('');
+  contacts.forEach(async c => {
+    const rel   = await getRelationship(c.id).catch(() => null);
+    const badge = document.getElementById(`dir-rel-${c.id}`);
+    if (!badge) return;
+    if (rel?.agreement?.theirSig) {
+      badge.textContent = rel.type || 'linked';
+      badge.classList.add('has-agreement');
+    } else if (rel) {
+      badge.textContent = 'pending';
+    }
+  });
+}
+
+function _dirFilterList(query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q
+    ? _dirAllContacts.filter(c =>
+        c.name.toLowerCase().includes(q) || (c.did || '').toLowerCase().includes(q))
+    : _dirAllContacts;
+  _dirRenderList(filtered);
+}
+
+async function _dirOpenDetail(id) {
+  const contact = _dirAllContacts.find(c => c.id === id);
+  if (!contact) return;
+  const rel = await getRelationship(id).catch(() => null);
+
+  const agStatus = rel?.agreement?.theirSig
+    ? '<span style="color:var(--green);font-weight:600">Signed by both parties</span>'
+    : rel
+      ? '<span style="color:var(--yellow)">Pending counterparty signature</span>'
+      : '<span style="color:var(--dim)">No agreement yet</span>';
+
+  document.getElementById('dir-detail-content').innerHTML = `
+    <div style="margin-bottom:1rem">
+      <p style="font-size:1rem;font-weight:700;margin-bottom:.2rem">${_dirEsc(contact.name)}</p>
+      <p style="font-size:.75rem;color:var(--dim)">Added ${new Date(contact.created_at).toLocaleDateString()}</p>
+    </div>
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Identity credential</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(contact.did || '—')}</div>
+    </div>
+    ${contact.webId ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">WebID</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(contact.webId)}</div>
+    </div>` : ''}
+    ${contact.notes ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">Notes</span>
+      <div class="dir-detail-value" style="white-space:pre-wrap">${_dirEsc(contact.notes)}</div>
+    </div>` : ''}
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Relationship type</span>
+      <div class="dir-detail-value">${rel ? _dirEsc(rel.type || 'personal') : '—'}</div>
+    </div>
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Usage agreement</span>
+      <div class="dir-detail-value">${agStatus}</div>
+    </div>
+    ${rel?.peerDid ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">Channel identity credential (did:peer)</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(rel.peerDid)}</div>
+    </div>` : ''}
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;
+                border-top:1px solid var(--border);padding-top:.875rem">
+      <button class="btn btn-outline" disabled
+              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem;opacity:.45"
+              title="Semantic Handshake available in VC-8">Initiate handshake</button>
+      <button class="btn btn-danger"
+              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
+              onclick="_dirDeleteContact('${_dirEsc(contact.id)}')">Delete</button>
+    </div>`;
+  _dirShowDetail();
+}
+
+async function _dirSaveNewContact() {
+  const name  = document.getElementById('dir-add-name').value.trim();
+  const did   = document.getElementById('dir-add-did').value.trim();
+  const webId = document.getElementById('dir-add-webid').value.trim();
+  const notes = document.getElementById('dir-add-notes').value.trim();
+  const st    = document.getElementById('dir-add-status');
+
+  if (!name) { st.style.color = 'var(--red)'; st.textContent = 'Name is required.'; return; }
+
+  st.style.color = 'var(--dim)'; st.textContent = 'Saving…';
+  try {
+    await addContact(name, did || '', webId || null, notes);
+    st.style.color = 'var(--green)'; st.textContent = 'Contact saved.';
+    _dirAllContacts = await getAllContacts();
+    setTimeout(() => { _dirShowListView(); _dirRenderList(_dirAllContacts); }, 600);
+  } catch (e) {
+    st.style.color = 'var(--red)'; st.textContent = `Error: ${e.message}`;
+  }
+}
+
+async function _dirDeleteContact(id) {
+  if (!confirm('Delete this contact and their relationship records?')) return;
+  try {
+    await deleteContact(id);
+    _dirAllContacts = _dirAllContacts.filter(c => c.id !== id);
+    _dirShowListView();
+    _dirRenderList(_dirAllContacts);
+  } catch (e) {
+    alert(`Delete failed: ${e.message}`);
+  }
+}
+
+function _dirEsc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 window.addEventListener('pagehide', () => {
