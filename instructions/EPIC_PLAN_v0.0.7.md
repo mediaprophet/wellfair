@@ -292,10 +292,10 @@ Only structured JSON telemetry travels over the WebRTC DataChannel to the clinic
 | WA-1 | 2026-05-31 | AgentController + consent model + IDB v7 | complete | — |
 | WA-2 | 2026-05-31 | Vision — emotion & landmarks (MediaPipe) | complete | — |
 | WA-3 | 2026-05-31 | Vision — rPPG pulse detection | complete | — |
-| WA-4 | | Audio — prosody analysis (Meyda) | not started | |
-| WA-5 | | Audio — STT feed + linguistic analysis | not started | |
-| WA-6 | | Clinician dashboard (connector telemetry panel) | not started | |
-| WA-7 | | Telemetry packaging + VC-13/15 integration | not started | |
+| WA-4 | 2026-05-31 | Audio — prosody analysis (Meyda) | complete | — |
+| WA-5 | 2026-05-31 | Audio — STT feed + linguistic analysis | complete | — |
+| WA-6 | 2026-05-31 | Clinician dashboard (connector telemetry panel) | complete | — |
+| WA-7 | 2026-05-31 | Telemetry packaging + VC-13/15 integration | complete | instructions/HANDOVER_WA-7_2026-05-31.md |
 
 ---
 
