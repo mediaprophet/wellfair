@@ -109,7 +109,7 @@ Recommended session scopes (adjust based on actual progress):
 |---------|------|-----------|--------|---------------|
 | 1 | 2026-05-30 | VC-7a: shapes + IDB + directory.js | complete | instructions/HANDOVER_VC7a_2026-05-30.md |
 | 2 | 2026-05-30 | VC-7b: vault.html Directory panel | complete | instructions/HANDOVER_VC7b_2026-05-30.md |
-| 3 | — | VC-8: Handshake | not started | — |
+| 3 | 2026-05-30 | VC-8: Handshake | complete | instructions/HANDOVER_VC8_2026-05-30.md |
 | 4 | — | VC-9: Caller Gating | not started | — |
 | 5 | — | VC-10a: call.js + join.html | not started | — |
 | 6 | — | VC-10b: connector Calls panel + cv stub | not started | — |

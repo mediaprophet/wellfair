@@ -291,6 +291,27 @@
     }
     .dir-input:focus { outline:none; border-color:var(--accent); }
     .dir-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+    .hs-payload {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:6px; padding:.4rem .55rem; font-size:.72rem;
+      font-family:monospace; word-break:break-all; resize:vertical; min-height:5.5rem;
+    }
+    .hs-payload:focus { outline:none; border-color:var(--accent); }
+    .hs-section { margin-bottom:1rem; }
+    .hs-section-label {
+      font-size:.72rem; font-weight:600; color:var(--dim); text-transform:uppercase;
+      letter-spacing:.05em; margin-bottom:.4rem;
+    }
+    .hs-status { font-size:.75rem; margin-top:.35rem; }
+    .hs-sig-ok  { color:var(--green); }
+    .hs-sig-bad { color:var(--red); }
+    .hs-agree-box {
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      padding:.6rem .75rem; font-size:.78rem; line-height:1.6;
+    }
+    .hs-agree-row { display:flex; gap:.35rem; align-items:baseline; margin-bottom:.2rem; }
+    .hs-agree-key { font-size:.7rem; color:var(--dim); min-width:7rem; flex-shrink:0; }
+    .hs-agree-val { font-family:monospace; font-size:.72rem; word-break:break-all; }
 
     label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
     input[type="text"], input[type="password"] {
@@ -569,6 +590,9 @@
         <button class="btn btn-primary" id="dir-add-btn"
                 style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
                 onclick="_dirShowAddForm()">+ Add</button>
+        <button class="btn btn-outline" id="dir-receive-btn"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_hsShowReceive()">↙ Receive</button>
         <button class="btn btn-outline"
                 style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
                 onclick="closeDirectory()">Close</button>
@@ -617,6 +641,71 @@
     <div id="dir-detail-view" class="dir-scroll" style="display:none">
       <span class="back-link" onclick="_dirShowListView()">← Contacts</span>
       <div id="dir-detail-content"></div>
+    </div>
+
+    <!-- Handshake view — initiator proposal + receiver flow -->
+    <div id="dir-handshake-view" class="dir-scroll" style="display:none">
+      <span class="back-link" id="hs-back-link" onclick="_dirShowListView()">← Contacts</span>
+
+      <!-- Stage A: proposal generated (initiator) -->
+      <div id="hs-stage-proposal" style="display:none">
+        <p style="font-size:.88rem;font-weight:600;margin-bottom:.65rem">Handshake proposal</p>
+        <div class="hs-section">
+          <p class="hs-section-label">Your proposal payload</p>
+          <textarea class="hs-payload" id="hs-proposal-payload" readonly></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.76rem;padding:.28rem .7rem"
+                  onclick="_hsCopyPayload('hs-proposal-payload')">Copy to clipboard</button>
+          <p class="hs-status" id="hs-proposal-nym-status"></p>
+        </div>
+        <p style="font-size:.78rem;color:var(--dim);line-height:1.5;margin-top:.35rem">
+          Share this with your contact. They paste it into their vault and accept.
+          Once they send back their response, paste it below to finalise.
+        </p>
+        <div class="hs-section" style="margin-top:1rem">
+          <p class="hs-section-label">Paste their response</p>
+          <textarea class="hs-payload" id="hs-response-input"
+                    placeholder="Paste the response blob here…"></textarea>
+          <button class="btn btn-primary"
+                  style="width:auto;margin:.4rem 0 0;font-size:.78rem;padding:.32rem .8rem"
+                  onclick="_hsFinalisePasted()">Finalise handshake</button>
+          <p class="hs-status" id="hs-finalise-status"></p>
+        </div>
+      </div>
+
+      <!-- Stage B: receive & review (receiver) -->
+      <div id="hs-stage-receive" style="display:none">
+        <p style="font-size:.88rem;font-weight:600;margin-bottom:.65rem">Receive handshake</p>
+        <div class="hs-section">
+          <p class="hs-section-label">Paste the proposal from your contact</p>
+          <textarea class="hs-payload" id="hs-proposal-input"
+                    placeholder="Paste the handshake proposal here…"></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.78rem;padding:.32rem .8rem"
+                  onclick="_hsParseProposal()">Parse &amp; review</button>
+          <p class="hs-status" id="hs-parse-status"></p>
+        </div>
+        <div id="hs-review-section" style="display:none;margin-top:.75rem">
+          <p class="hs-section-label">Agreement details</p>
+          <div class="hs-agree-box" id="hs-agree-detail"></div>
+          <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap">
+            <button class="btn btn-primary"
+                    style="width:auto;margin:0;font-size:.78rem;padding:.32rem .9rem"
+                    onclick="_hsAccept()">Accept</button>
+            <button class="btn btn-outline"
+                    style="width:auto;margin:0;font-size:.78rem;padding:.32rem .9rem"
+                    onclick="_dirShowListView()">Decline</button>
+          </div>
+          <p class="hs-status" id="hs-accept-status"></p>
+        </div>
+        <div id="hs-response-section" style="display:none;margin-top:.75rem">
+          <p class="hs-section-label">Your response — send this back</p>
+          <textarea class="hs-payload" id="hs-response-payload" readonly></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.76rem;padding:.28rem .7rem"
+                  onclick="_hsCopyPayload('hs-response-payload')">Copy to clipboard</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -799,6 +888,8 @@
 <script src="js/vault-mock.js"></script>
 <!-- VC-7 Verified Directory — must load after vault-crypto (needs _sEnc/_sDec) -->
 <script src="js/vault-directory.js"></script>
+<!-- VC-8 Semantic Handshake — must load after vault-directory.js -->
+<script src="js/vault-handshake.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -924,19 +1015,25 @@ function closeDirectory() {
   document.getElementById('dir-sheet').style.display = 'none';
 }
 
+function _dirHideAllViews() {
+  ['dir-list-view','dir-add-view','dir-detail-view','dir-handshake-view'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
 function _dirShowListView() {
-  document.getElementById('dir-list-view').style.display   = 'block';
-  document.getElementById('dir-add-view').style.display    = 'none';
-  document.getElementById('dir-detail-view').style.display = 'none';
-  document.getElementById('dir-add-btn').style.display     = '';
-  document.getElementById('dir-search').value              = '';
+  _dirHideAllViews();
+  document.getElementById('dir-list-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display   = '';
+  document.getElementById('dir-receive-btn').style.display = '';
+  document.getElementById('dir-search').value            = '';
 }
 
 function _dirShowAddForm() {
-  document.getElementById('dir-list-view').style.display   = 'none';
-  document.getElementById('dir-add-view').style.display    = 'block';
-  document.getElementById('dir-detail-view').style.display = 'none';
-  document.getElementById('dir-add-btn').style.display     = 'none';
+  _dirHideAllViews();
+  document.getElementById('dir-add-view').style.display  = 'block';
+  document.getElementById('dir-add-btn').style.display   = 'none';
+  document.getElementById('dir-receive-btn').style.display = 'none';
   ['dir-add-name','dir-add-did','dir-add-webid','dir-add-notes'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -944,10 +1041,18 @@ function _dirShowAddForm() {
 }
 
 function _dirShowDetail() {
-  document.getElementById('dir-list-view').style.display   = 'none';
-  document.getElementById('dir-add-view').style.display    = 'none';
+  _dirHideAllViews();
   document.getElementById('dir-detail-view').style.display = 'block';
   document.getElementById('dir-add-btn').style.display     = 'none';
+  document.getElementById('dir-receive-btn').style.display = 'none';
+}
+
+function _dirShowHandshakeView(backLabel) {
+  _dirHideAllViews();
+  document.getElementById('dir-handshake-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display        = 'none';
+  document.getElementById('dir-receive-btn').style.display    = 'none';
+  if (backLabel) document.getElementById('hs-back-link').textContent = backLabel;
 }
 
 async function _dirLoadContacts() {
@@ -1039,9 +1144,9 @@ async function _dirOpenDetail(id) {
     </div>` : ''}
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;
                 border-top:1px solid var(--border);padding-top:.875rem">
-      <button class="btn btn-outline" disabled
-              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem;opacity:.45"
-              title="Semantic Handshake available in VC-8">Initiate handshake</button>
+      <button class="btn btn-outline"
+              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
+              onclick="_hsInitiate('${_dirEsc(contact.id)}')">Initiate handshake</button>
       <button class="btn btn-danger"
               style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
               onclick="_dirDeleteContact('${_dirEsc(contact.id)}')">Delete</button>
@@ -1085,6 +1190,126 @@ function _dirEsc(s) {
   return String(s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Handshake UI (VC-8) ───────────────────────────────────────────────────────
+
+// Initiator path: generate proposal, show payload for sharing
+async function _hsInitiate(contactId) {
+  _dirShowHandshakeView('← Contact');
+  document.getElementById('hs-stage-proposal').style.display = 'block';
+  document.getElementById('hs-stage-receive').style.display  = 'none';
+  document.getElementById('hs-proposal-payload').value       = '';
+  document.getElementById('hs-response-input').value         = '';
+  document.getElementById('hs-proposal-nym-status').textContent = 'Generating…';
+  document.getElementById('hs-finalise-status').textContent  = '';
+
+  try {
+    const result = await initiateHandshake(contactId);
+    document.getElementById('hs-proposal-payload').value = result.qrData;
+    document.getElementById('hs-proposal-nym-status').textContent =
+      result.nymSent ? '✓ Also sent via Nym' : '';
+    document.getElementById('hs-proposal-nym-status').className = 'hs-status hs-sig-ok';
+  } catch (e) {
+    document.getElementById('hs-proposal-nym-status').textContent = 'Error: ' + e.message;
+    document.getElementById('hs-proposal-nym-status').className = 'hs-status hs-sig-bad';
+  }
+}
+
+// Receiver path: show receive sub-view
+function _hsShowReceive() {
+  _dirShowHandshakeView('← Contacts');
+  document.getElementById('hs-stage-proposal').style.display = 'none';
+  document.getElementById('hs-stage-receive').style.display  = 'block';
+  document.getElementById('hs-proposal-input').value         = '';
+  document.getElementById('hs-parse-status').textContent     = '';
+  document.getElementById('hs-review-section').style.display = 'none';
+  document.getElementById('hs-response-section').style.display = 'none';
+  document.getElementById('hs-accept-status').textContent    = '';
+  // Store pending parsed data
+  window._hsPendingPayload = null;
+}
+
+async function _hsParseProposal() {
+  const raw  = document.getElementById('hs-proposal-input').value.trim();
+  const stat = document.getElementById('hs-parse-status');
+  if (!raw) { stat.className = 'hs-status hs-sig-bad'; stat.textContent = 'Paste a proposal first.'; return; }
+
+  stat.className = 'hs-status'; stat.textContent = 'Parsing…';
+  try {
+    const info = await receiveHandshake(raw);
+    window._hsPendingPayload = raw;
+
+    const sigLabel = info.sigValid
+      ? '<span class="hs-sig-ok">✓ Valid Ed25519 signature</span>'
+      : '<span class="hs-sig-bad">⚠ Signature invalid</span>';
+
+    const permissions = (info.agreement.permission || [])
+      .map(p => `<span style="background:rgba(13,110,253,.08);border-radius:4px;
+                              padding:.1rem .35rem;font-size:.72rem;margin-right:.25rem">${_dirEsc(p.target)}</span>`)
+      .join('');
+
+    document.getElementById('hs-agree-detail').innerHTML = `
+      <div class="hs-agree-row"><span class="hs-agree-key">From</span>
+        <span class="hs-agree-val">${_dirEsc(info.contactName ?? '(unknown contact)')}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Their identity credential</span>
+        <span class="hs-agree-val">${_dirEsc(info.did)}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Channel (did:peer)</span>
+        <span class="hs-agree-val">${_dirEsc(info.peerDid)}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Data access requested</span>
+        <span>${permissions || '<span style="color:var(--dim)">none</span>'}</span></div>
+      <div class="hs-agree-row" style="margin-top:.35rem"><span class="hs-agree-key">Signature</span>
+        <span>${sigLabel}</span></div>`;
+
+    document.getElementById('hs-review-section').style.display = 'block';
+    stat.textContent = '';
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Parse error: ' + e.message;
+  }
+}
+
+async function _hsAccept() {
+  const stat = document.getElementById('hs-accept-status');
+  stat.className = 'hs-status'; stat.textContent = 'Signing…';
+  try {
+    const result = await acceptHandshake(window._hsPendingPayload, true);
+    if (!result) { stat.textContent = 'Declined.'; return; }
+    document.getElementById('hs-response-payload').value = result.blob;
+    document.getElementById('hs-response-section').style.display = 'block';
+    stat.className = 'hs-status hs-sig-ok';
+    stat.textContent = '✓ Relationship saved. Copy your response and send it back.';
+    await _dirLoadContacts();
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Error: ' + e.message;
+  }
+}
+
+// Initiator path: finalise after pasting counterparty response
+async function _hsFinalisePasted() {
+  const raw  = document.getElementById('hs-response-input').value.trim();
+  const stat = document.getElementById('hs-finalise-status');
+  if (!raw) { stat.className = 'hs-status hs-sig-bad'; stat.textContent = 'Paste the response first.'; return; }
+
+  stat.className = 'hs-status'; stat.textContent = 'Verifying…';
+  try {
+    const result = await finaliseHandshake(raw);
+    stat.className = 'hs-status hs-sig-ok';
+    stat.textContent = `✓ Handshake complete with ${result.contact.name}`;
+    await _dirLoadContacts();
+    setTimeout(() => _dirShowListView(), 1800);
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Error: ' + e.message;
+  }
+}
+
+function _hsCopyPayload(inputId) {
+  const el = document.getElementById(inputId);
+  el.select();
+  document.execCommand('copy');
+  window.getSelection()?.removeAllRanges();
 }
 
 window.addEventListener('pagehide', () => {
