@@ -119,12 +119,12 @@ Milestone order (implement top-to-bottom, skip none):
 | 1 | 2026-05-30 | VC-7a: shapes + IDB + directory.js | complete | instructions/HANDOVER_VC7a_2026-05-30.md |
 | 2 | 2026-05-30 | VC-7b: vault.html Directory panel | complete | instructions/HANDOVER_VC7b_2026-05-30.md |
 | 3 | 2026-05-30 | VC-8: Handshake | complete | instructions/HANDOVER_VC8_2026-05-30.md |
-| 4 | — | VC-9: Caller Gating | not started | — |
-| 5 | — | VC-10a: call.js + join.html | not started | — |
-| 6 | — | VC-10b: connector Calls panel + cv stub | not started | — |
-| 7 | — | VC-11: Web Connector in-call | not started | — |
-| 8 | — | VC-12a: scheduler engine + IDB | not started | — |
-| 9 | — | VC-12b: Queue UI + desktop offload | not started | — |
+| 4 | 2026-05-31 | VC-9: Caller Gating | complete | instructions/HANDOVER_VC12_2026-05-31.md |
+| 5 | 2026-05-31 | VC-10a: call.js + join.html | complete | instructions/HANDOVER_VC12_2026-05-31.md |
+| 6 | 2026-05-31 | VC-10b: connector Calls panel + cv stub | complete | instructions/HANDOVER_VC12_2026-05-31.md |
+| 7 | 2026-05-31 | VC-11: Web Connector in-call | complete | instructions/HANDOVER_VC12_2026-05-31.md |
+| 8 | 2026-05-31 | VC-12a: scheduler engine + IDB | complete | instructions/HANDOVER_VC12_2026-05-31.md |
+| 9 | 2026-05-31 | VC-12b: Queue UI + desktop offload | complete | instructions/HANDOVER_VC12_2026-05-31.md |
 | 10 | — | VC-13a: event log capture | not started | — |
 | 11 | — | VC-13b: transcript generation + revision | not started | — |
 | 12 | — | VC-14: transcoding | not started | — |
