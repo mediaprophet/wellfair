@@ -125,11 +125,11 @@ Milestone order (implement top-to-bottom, skip none):
 | 7 | 2026-05-31 | VC-11: Web Connector in-call | complete | instructions/HANDOVER_VC12_2026-05-31.md |
 | 8 | 2026-05-31 | VC-12a: scheduler engine + IDB | complete | instructions/HANDOVER_VC12_2026-05-31.md |
 | 9 | 2026-05-31 | VC-12b: Queue UI + desktop offload | complete | instructions/HANDOVER_VC12_2026-05-31.md |
-| 10 | — | VC-13a: event log capture | not started | — |
-| 11 | — | VC-13b: transcript generation + revision | not started | — |
-| 12 | — | VC-14: transcoding | not started | — |
-| 13 | — | VC-15: content package | not started | — |
-| 14 | — | Buffer / integration | not started | — |
+| 10 | 2026-05-31 | VC-13a: event log capture | complete | instructions/HANDOVER_VC15_2026-05-31.md |
+| 11 | 2026-05-31 | VC-13b: transcript generation + revision | complete | instructions/HANDOVER_VC15_2026-05-31.md |
+| 12 | 2026-05-31 | VC-14: transcoding | complete | instructions/HANDOVER_VC15_2026-05-31.md |
+| 13 | 2026-05-31 | VC-15: content package | complete | instructions/HANDOVER_VC15_2026-05-31.md |
+| 14 | 2026-05-31 | Buffer / integration | complete | instructions/HANDOVER_VC15_2026-05-31.md |
 
 ---
 
