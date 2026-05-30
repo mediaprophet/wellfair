@@ -127,13 +127,47 @@ async function saveRevision(sessionId, deltaText, correctedByDid, privateKey) {
 // ── HTML+RDFa builder ─────────────────────────────────────────────────────────
 
 function _txBuildHtml(sessionId, events, knownTerms) {
-  const chainEvents  = events.filter(e => e.seq >= 0);
-  const revisions    = events.filter(e => e.type === 'revision');
-  const speechEvents = chainEvents.filter(e => e.type === 'speech.segment');
-  const dataEvents   = chainEvents.filter(e => e.type.startsWith('data.'));
-  const callEvents   = chainEvents.filter(e =>
-    !e.type.startsWith('data.') && e.type !== 'speech.segment'
+  const chainEvents     = events.filter(e => e.seq >= 0);
+  const revisions       = events.filter(e => e.type === 'revision');
+  const speechEvents    = chainEvents.filter(e => e.type === 'speech.segment');
+  const dataEvents      = chainEvents.filter(e => e.type.startsWith('data.'));
+  const telemetryEvents = chainEvents.filter(e => e.type === 'agent.telemetry');
+  const callEvents      = chainEvents.filter(e =>
+    !e.type.startsWith('data.') && e.type !== 'speech.segment' && e.type !== 'agent.telemetry'
   );
+
+  // Biometric telemetry log rows (WA-7)
+  const telemetryRows = telemetryEvents.map(ev => {
+    const p = ev.payload || {};
+    const v = p.vision     || {};
+    const b = p.biometrics || {};
+    const a = p.audio      || {};
+    const l = p.linguistic || {};
+
+    const bpm  = b.bpm != null
+      ? Math.round(b.bpm) + ' BPM' + (b.signalQuality ? ' (' + b.signalQuality + ')' : '')
+      : '—';
+    const expr = v.emotion
+      ? _txEsc(v.emotion) + (v.confidence != null ? ' (' + Math.round(v.confidence * 100) + '%)' : '')
+      : '—';
+    const vocal = a.pitchHz != null ? 'pitch: ' + Math.round(a.pitchHz) + ' Hz' : '—';
+    const lang  = l.sentimentScore != null
+      ? 'sentiment: ' + l.sentimentScore.toFixed(1) +
+        ', pronoun: ' + Math.round((l.pronounRatio1P || 0) * 100) + '%'
+      : '—';
+    const mods = (p.modules || []).join(', ') || '—';
+
+    return `
+    <tr property="wf:hasTelemetrySample" typeof="wf:TelemetrySample"
+        data-seq="${ev.seq}" data-hash="${_txEsc(ev.hash)}">
+      <td><time property="dcterms:date" datetime="${_txEsc(ev.ts)}">${_txEsc(ev.ts.slice(11, 19))}</time></td>
+      <td property="wf:bpm">${_txEsc(bpm)}</td>
+      <td property="wf:primaryExpression">${expr}</td>
+      <td>${_txEsc(vocal)}</td>
+      <td>${_txEsc(lang)}</td>
+      <td class="tel-mods">${_txEsc(mods)}</td>
+    </tr>`;
+  }).join('\n');
 
   const callSegs = callEvents.map(ev => `
     <div class="segment" property="wf:hasSegment" typeof="wf:EventSegment"
@@ -226,6 +260,14 @@ function _txBuildHtml(sessionId, events, knownTerms) {
     .sig   { word-break: break-all; }
     a[resource] { text-decoration: none; border-bottom: 1px dashed #888; cursor: help; }
     section { margin-bottom: 1.5rem; }
+    .tel-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    .tel-table th { text-align: left; padding: .3rem .5rem; border-bottom: 2px solid #ddd;
+                    font-size: .73rem; text-transform: uppercase; letter-spacing: .04em; color: #666; }
+    .tel-table td { padding: .25rem .5rem; border-bottom: 1px solid #eee; }
+    .tel-table tbody { max-height: 280px; overflow-y: auto; display: block; }
+    .tel-table thead, .tel-table tbody tr { display: table; width: 100%; table-layout: fixed; }
+    .tel-mods { font-size: .68rem; color: #aaa; }
+    .notice { font-size: .78rem; color: #888; font-style: italic; margin-bottom: .65rem; }
   </style>
 </head>
 <body vocab="https://wellfare.social/ns/vault#"
@@ -260,6 +302,20 @@ function _txBuildHtml(sessionId, events, knownTerms) {
   <h3>Data sharing log</h3>
   <section id="data-sharing-log" typeof="wf:DataSharingLog" property="wf:hasDataSharingLog">
     ${dataLog}
+  </section>` : ''}
+
+  ${telemetryRows ? `
+  <h3>Biometric indicators log</h3>
+  <section id="telemetry-log" typeof="wf:BiometricTelemetryLog" property="wf:hasTelemetryLog">
+    <p class="notice">Indicators generated locally on patient device.
+       No raw video, audio, or transcript data was collected.</p>
+    <table class="tel-table">
+      <thead>
+        <tr><th>Time</th><th>Heart rate</th><th>Expression</th>
+            <th>Vocal</th><th>Language</th><th>Modules</th></tr>
+      </thead>
+      <tbody>${telemetryRows}</tbody>
+    </table>
   </section>` : ''}
 
 </body>

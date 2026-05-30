@@ -55,6 +55,15 @@ async function _pkgGetTranscriptHtml(sessionId) {
   return null;
 }
 
+// Collect telemetry samples for a session from wf-telemetry as NDJSON (WA-7).
+async function _pkgGetTelemetryNdjson(sessionId) {
+  const all = await _dbGetAll(_ST_TELEMETRY);
+  const samples = all
+    .filter(s => s.sessionId === sessionId)
+    .sort((a, b) => (a.seq || 0) - (b.seq || 0));
+  return samples.map(s => JSON.stringify(s)).join('\n');
+}
+
 // Collect all events for a session as NDJSON.
 async function _pkgGetEventsNdjson(sessionId) {
   const all    = await _dbGetAll(_ST_EVENTS);
@@ -114,7 +123,12 @@ async function buildPackage(sessionId) {
   );
   files.set('receipts.json', receiptBlob);
 
-  // 4. Compute artefact hashes
+  // 4. Telemetry NDJSON (WA-7) — session samples from wf-telemetry store
+  const telNdjson = await _pkgGetTelemetryNdjson(sessionId);
+  const telBlob   = new Blob([telNdjson || ''], { type: 'application/x-ndjson' });
+  files.set('telemetry.ndjson', telBlob);
+
+  // 5. Compute artefact hashes
   const artefacts = [
     {
       '@type':          'wf:TranscriptArtefact',
@@ -132,6 +146,13 @@ async function buildPackage(sessionId) {
       '@type':       'wf:ReceiptArtefact',
       'wf:hash':     await _pkgHashBlob(receiptBlob),
       'wf:filename': 'receipts.json',
+    },
+    {
+      '@type':          'wf:TelemetryArtefact',
+      'wf:hash':        await _pkgHashBlob(telBlob),
+      'wf:filename':    'telemetry.ndjson',
+      'dcterms:format': 'application/x-ndjson',
+      'wf:note':        'Biometric indicator samples — generated on patient device',
     },
   ];
 
