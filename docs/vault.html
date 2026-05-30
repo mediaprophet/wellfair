@@ -718,6 +718,33 @@
             Offload to desktop when connected</label>
         </div>
       </details>
+      <details style="margin-top:.75rem">
+        <summary style="font-size:.78rem;font-weight:600;cursor:pointer;color:var(--dim)">
+          Translation settings
+        </summary>
+        <div class="queue-settings" style="margin-top:.5rem">
+          <div style="font-size:.75rem;color:var(--dim);margin-bottom:.4rem">
+            Tier 1 (WebSpeech) is always on. Tier 3 requires your consent each session.
+          </div>
+          <label style="font-size:.78rem">
+            External API endpoint (Tier 3)
+            <input type="url" id="transcode-api-url" class="dir-input"
+                   placeholder="https://your-translation-api/translate"
+                   style="font-size:.75rem;margin-top:.25rem"
+                   onchange="configureExternalApi(this.value)" />
+          </label>
+          <div style="display:flex;gap:.5rem;margin-top:.4rem">
+            <button class="btn btn-outline"
+                    style="width:auto;font-size:.75rem;padding:.22rem .6rem"
+                    onclick="_txcGrant()">Grant consent (this session)</button>
+            <span id="transcode-consent-badge"
+                  style="font-size:.75rem;color:var(--dim);align-self:center"></span>
+          </div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:.3rem">
+            Detected tier: <span id="transcode-tier-label">—</span>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -1088,6 +1115,8 @@
 <script src="js/vault-scheduler.js"></script>
 <!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->
 <script src="js/vault-transcript.js"></script>
+<!-- VC-14 Language Transcoding — must load after vault-transcript.js -->
+<script src="js/vault-comms-transcode.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -1527,6 +1556,7 @@ let _queueFilter = 'all';
 function openQueue() {
   document.getElementById('queue-sheet').style.display = 'flex';
   _queueRender();
+  _txcUpdateTierLabel();
 }
 
 function closeQueue() {
@@ -1603,6 +1633,19 @@ function _queueViewTranscript(jobId) {
   });
 }
 
+function _txcGrant() {
+  const granted = typeof grantExternalApiConsent === 'function' && grantExternalApiConsent();
+  const badge = document.getElementById('transcode-consent-badge');
+  if (badge) badge.textContent = granted ? '✅ Granted' : '⚠ No endpoint configured';
+}
+
+function _txcUpdateTierLabel() {
+  const el = document.getElementById('transcode-tier-label');
+  if (!el) return;
+  const tier = typeof detectAvailableTier === 'function' ? detectAvailableTier() : null;
+  el.textContent = tier || 'none';
+}
+
 function _schedUpdateSettings() {
   // Settings are read live in _checkConditions via the checkboxes.
   // (Override the condition check to respect UI toggles.)
@@ -1630,6 +1673,20 @@ document.addEventListener('wf:job-updated', (ev) => {
 document.addEventListener('wf:job-progress', (ev) => {
   const bar = document.getElementById('qpb-' + ev.detail.id);
   if (bar) bar.style.width = (ev.detail.pct || 0) + '%';
+});
+
+// ── VC-14 Transcription lifecycle ────────────────────────────────────────────
+
+document.addEventListener('wf:call', (ev) => {
+  const { event, sessionId } = ev.detail || {};
+  if (event === 'call.started' || event === 'call.answered') {
+    if (typeof startRealtimeTranscription === 'function') {
+      const stream = typeof _callStream !== 'undefined' ? _callStream : null;
+      startRealtimeTranscription(stream, sessionId, navigator.language || 'en');
+    }
+  } else if (event === 'call.ended') {
+    if (typeof stopRealtimeTranscription === 'function') stopRealtimeTranscription();
+  }
 });
 
 // ── VC-11 In-call data sharing ────────────────────────────────────────────────
