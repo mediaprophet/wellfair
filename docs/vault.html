@@ -313,6 +313,24 @@
     .hs-agree-key { font-size:.7rem; color:var(--dim); min-width:7rem; flex-shrink:0; }
     .hs-agree-val { font-family:monospace; font-size:.72rem; word-break:break-all; }
 
+    /* ── Caller gate overlays ─────────────────────────────────────────────── */
+    .gate-overlay {
+      position:fixed; inset:0; z-index:2000; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.82);
+    }
+    .gate-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px;
+      padding:1.5rem 1.25rem; width:90%; max-width:380px; text-align:center;
+    }
+    .gate-icon { font-size:2.4rem; margin-bottom:.5rem; }
+    .gate-name { font-size:1.05rem; font-weight:700; margin-bottom:.2rem; }
+    .gate-rel  { font-size:.82rem; color:var(--dim); margin-bottom:.3rem; }
+    .gate-did  { font-size:.68rem; font-family:monospace; color:var(--dim);
+                 word-break:break-all; margin-bottom:1.1rem; }
+    .gate-actions { display:flex; gap:.65rem; justify-content:center; }
+    .gate-actions .btn { width:auto; padding:.55rem 1.4rem; margin:0; font-size:.88rem; }
+
     label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
     input[type="text"], input[type="password"] {
       width:100%; padding:.55rem .7rem; border:1px solid var(--border);
@@ -881,6 +899,38 @@
   </div>
 </div>
 
+<!-- VC-9 incoming call overlays — fixed position, above all panels -->
+<div id="gate-ring-overlay" class="gate-overlay">
+  <div class="gate-card">
+    <div class="gate-icon">📞</div>
+    <div class="gate-name" id="gate-ring-name"></div>
+    <div class="gate-rel"  id="gate-ring-rel"></div>
+    <div class="gate-did"  id="gate-ring-did"></div>
+    <div class="gate-actions">
+      <button class="btn btn-primary"  onclick="gateAcceptCall()">Accept</button>
+      <button class="btn btn-danger"   onclick="gateRejectCall()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate-verify-overlay" class="gate-overlay">
+  <div class="gate-card">
+    <div class="gate-icon">🔍</div>
+    <div class="gate-name" id="gate-verify-name"></div>
+    <div class="gate-rel" style="color:var(--yellow);margin-bottom:.3rem">Identity not verified</div>
+    <div class="gate-did" id="gate-verify-did"></div>
+    <p style="font-size:.78rem;color:var(--dim);margin-bottom:1rem">
+      This caller is not in your Contacts or has no signed agreement.
+      Ask them to share their identity credential before accepting.
+    </p>
+    <div class="gate-actions">
+      <button class="btn btn-outline" onclick="gateVerifyAccept()">Accept anyway</button>
+      <button class="btn btn-danger"  onclick="gateVerifyReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
 <script src="js/vault-idb.js"></script>
 <script src="js/vault-crypto.js"></script>
 <script src="js/vault-did.js"></script>
@@ -890,6 +940,8 @@
 <script src="js/vault-directory.js"></script>
 <!-- VC-8 Semantic Handshake — must load after vault-directory.js -->
 <script src="js/vault-handshake.js"></script>
+<!-- VC-9 Caller Gating — must load after vault-directory.js + vault-nym.js -->
+<script src="js/vault-comms-gate.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -969,6 +1021,7 @@ async function pinKey(k) {
 // ── Owner workspace ───────────────────────────────────────────────────────────
 function openOwnerWorkspace() {
   acquireWakeLock();
+  startGate();
   document.getElementById('med-interaction-panel').style.display = 'block';
   document.getElementById('med-reminder-panel').style.display    = 'block';
   document.getElementById('dms-panel').style.display             = 'block';
@@ -985,6 +1038,7 @@ function openOwnerWorkspace() {
 
 function lockVault() {
   releaseWakeLock();
+  stopGate();
   if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
   clearTimeout(dmsTimer);
   ['med-interaction-panel','med-reminder-panel','dms-panel',
