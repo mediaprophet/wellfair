@@ -26,7 +26,7 @@ DataChannel. Nothing is stored on the desktop — closing the tab destroys every
 6. ODRL EdgeConstraints from `docs/profiles/access-profiles.ttl` govern receiver permissions
 7. "Identity credentials" is the canonical term for what specs call DIDs + VCs
 
-## Current state (as of 2026-05-30)
+## Current state (as of 2026-05-30) — branch release/v0.0.6
 
 ### Completed
 - **Milestone 1 (partial)** — WebRTC QR pairing, Gun signalling, DataChannel, 9 access profiles
@@ -93,23 +93,50 @@ Remaining (runtime/device — no code tasks): real-device testing (see
 `instructions/BROWSER_COMPAT.md`), SURB stress test, Nym Sandbox validation + `NYM_SDK_URL`
 activation in `pair.html`.
 
-See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the full checklist.
+See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the v0.0.5 checklist.
+See `instructions/COMMS_EPIC_PLAN.md` for the v0.0.6 implementation plan (VC-7 through VC-15).
+
+### Milestone 7+ — Verifiable Communications Ecosystem *(v0.0.6-dev, in progress)*
+
+New epic. See `instructions/COMMS_EPIC_PLAN.md` for full spec and session-by-session plan.
+Short summary of what will be built:
+- **VC-7** Verified Directory (contact graph, SHACL, encrypted IDB)
+- **VC-8** Semantic Handshake (ODRL agreement, did:peer, Ed25519 signed)
+- **VC-9** Inbound Caller Gating (Nym+Gun dual transport, VC verification before ring)
+- **VC-10** Hypermedia Voice/Video (Topology A vault↔vault; Topology B guest link via join.html)
+- **VC-11** Web Connector (live data sharing during calls, signed VP receipts)
+- **VC-12** Background Job Scheduler (condition-triggered queue: idle/charging/desktop/manual)
+- **VC-13** Event Log & Transcript (HTML+RDFa, Merkle event chain, participant revision signing)
+- **VC-14** Language Transcoding (3-tier progressive STT+translation, provenance RDFa)
+- **VC-15** Content Package (JSON-LD manifest, ODRL-permissioned zip, OTS anchor)
 
 ## Key files
 
 ```
 docs/
   vault.html             Daily-use vault (PIN → meds, sanctuary, DMS, anon notify)
+                         v0.0.6: + Directory, Calls, Queue panels
   webconnect.html        WebRTC pairing bridge (QR scan → profile → consent → serving)
   connector/index.html   Desktop connector (Noise initiator, Ed25519 verify)
+                         v0.0.6: + Calls nav section
+  join.html              NEW v0.0.6 — lightweight call join page (guest or vault user)
   pair.html              LEGACY — original monolithic page, kept as working fallback
   nym-test.html          Nym SDK validation harness — run before activating NYM_SDK_URL
   js/
-    vault-idb.js               IDB helpers + store constants
+    vault-idb.js               IDB helpers + store constants (v4+ in v0.0.6)
     vault-crypto.js            Key derivation, AES-GCM, commitments, toB64/fromB64
     vault-did.js               did:key (Ed25519) generation
     vault-nym.js               Nym adapter, DMS, anonymous notification
     vault-mock.js              VAULT mock data + SECTION_LABELS
+    vault-directory.js         NEW VC-7 — contact graph, FOAF-inspired, encrypted IDB
+    vault-handshake.js         NEW VC-8 — Semantic Handshake, ODRL agreement signing
+    vault-comms-gate.js        NEW VC-9 — inbound caller gating, Nym+Gun dual transport
+    vault-comms-call.js        NEW VC-10 — call session, WebRTC media, link gen, guest cred
+    vault-cv.js                NEW VC-10 — OpenCV placeholder (emotional recognition, pulse)
+    vault-scheduler.js         NEW VC-12 — background job queue engine
+    vault-transcript.js        NEW VC-13 — event log → HTML+RDFa transcript
+    vault-comms-transcode.js   NEW VC-14 — language transcoding, 3-tier progressive
+    vault-package.js           NEW VC-15 — content package + JSON-LD manifest
     vault-sanctuary-pins.js    PIN state machine, canary/setup, duress check, wake lock
     vault-sanctuary-log.js     Unvarnished Log, Tripwire Dashboard, Synthesis Engine
     vault-sanctuary-evidence.js  Evidentiary Export, VP generation, OpenTimestamps
@@ -119,12 +146,13 @@ docs/
     noise-xx.js                Noise_XX_25519_AESGCM_SHA256 (webconnect only)
     profiles.js                Profile loading, rendering, emergency pre-auth (webconnect only)
   profiles/
-    access-profiles.ttl  SHACL access profile shapes (canonical)
+    access-profiles.ttl  SHACL access profile shapes (canonical); v0.0.6 adds Contact/Relationship shapes
     profiles.json        JS-loadable profile registry
   sw.js                  Service Worker — injects COOP/COEP for Nym SharedArrayBuffer
 
 instructions/
-  VAULT_CONNECTOR_NEXT_STEPS.md   Detailed milestone checklist + architecture notes
+  COMMS_EPIC_PLAN.md              v0.0.6 implementation plan — VC-7 to VC-15, session breakdown
+  VAULT_CONNECTOR_NEXT_STEPS.md   v0.0.5 milestone checklist + architecture notes
   sanctuaryMode.md                Sanctuary Mode full specification (Milestone 5)
   BROWSER_COMPAT.md               Storage/Gun write audit results + real-device test matrix
 ```

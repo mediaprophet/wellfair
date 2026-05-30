@@ -1,6 +1,6 @@
 # Episteme:WellFair
 
-**Current Version: 0.0.5-dev** (30 May 2026)
+**Current Version: 0.0.6-dev** (30 May 2026)
 
 > **WellFair: Welfare, wellness & Fairness, Fair Terms.**
 > WellFair is a human-centric **P3-SWA** — a Personal Platform Provider App for the Social Web: peace infrastructure for the natural person, running entirely on your own hardware, connected to the world on your terms.
@@ -142,14 +142,33 @@ The v0.0.4 sprint delivered the complete privacy vault stack across six mileston
 
 ---
 
-## What's next in v0.0.5-dev
+## What's in v0.0.6-dev — Verifiable Communications Ecosystem
+
+v0.0.6 replaces the native phone/address book/dialer/messages apps with a locally-hosted,
+privacy-first communications layer. All calls, data sharing, and transcripts are cryptographically
+verifiable; institutions must prove who they are before they can ring.
+
+| Milestone | Deliverable |
+|---|---|
+| VC-7 | Verified Directory — semantic contact graph (FOAF-inspired), SHACL shapes, encrypted IDB store |
+| VC-8 | Semantic Handshake — ODRL usage agreement, Ed25519 signed by both parties, did:peer per relationship |
+| VC-9 | Inbound Caller Gating — dual Nym+Gun transport; anonymous institutional callers blocked |
+| VC-10 | Hypermedia Voice/Video — Topology A (vault↔vault) + Topology B (guest call link via join.html) |
+| VC-11 | Web Connector — live data sharing panel during calls; signed VP receipts |
+| VC-12 | Background Job Scheduler — condition-triggered queue (idle/charging/desktop); desktop offload |
+| VC-13 | Event Log & Transcript — HTML+RDFa documents; Merkle event chain; participant revision signing |
+| VC-14 | Language Transcoding — 3-tier progressive STT + translation; provenance tracked in RDFa |
+| VC-15 | Content Package — JSON-LD manifest; ODRL-permissioned artefact bundle; OTS commitment anchor |
+
+See `instructions/COMMS_EPIC_PLAN.md` for the full implementation plan and session-by-session breakdown.
+
+### Carry-over from v0.0.5-dev (runtime/device — no code tasks)
 
 | Task | Notes |
 |---|---|
-| Nym Sandbox validation | Run `docs/nym-test.html` against `https://sandbox-nym-api1.nymtech.net/api`; confirm cold-start time; set `NYM_SDK_URL` in `pair.html` |
+| Nym Sandbox validation | Run `docs/nym-test.html` against `https://sandbox-nym-api1.nymtech.net/api`; set `NYM_SDK_URL` in `pair.html` |
 | Real-device testing | iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md` |
 | SURB stress test | Airplane-mode toggle while Nym client active; verify replenishment and fragment expiry |
-| DLT chain write (secondary) | OTS Bitcoin anchoring is live; IOTA/Ethereum options deferred |
 
 ---
 
