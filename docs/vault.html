@@ -360,6 +360,75 @@
     }
     .queue-settings label:last-child { border-bottom:none; }
 
+    /* ── Diet log sheet ──────────────────────────────────────────────────── */
+    #diet-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .diet-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .diet-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .diet-header h3 { font-size:.95rem; font-weight:700; }
+    .diet-scroll { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .diet-date-nav {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:.75rem;
+    }
+    .diet-date-nav button {
+      background:none; border:1px solid var(--border); color:var(--text);
+      border-radius:6px; padding:.2rem .55rem; font-size:.85rem; cursor:pointer;
+    }
+    .diet-date-nav button:hover { background:var(--bg); }
+    .diet-date-label { font-size:.82rem; font-weight:600; }
+    .diet-totals {
+      display:flex; gap:.5rem; margin-bottom:.85rem; flex-wrap:wrap;
+    }
+    .diet-total-chip {
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:10px; padding:.2rem .55rem; font-size:.72rem; color:var(--dim);
+    }
+    .diet-total-chip strong { color:var(--text); }
+    .diet-meal-section { margin-bottom:.8rem; }
+    .diet-meal-label {
+      font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+      color:var(--dim); margin-bottom:.3rem;
+    }
+    .diet-entry {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      padding:.4rem .6rem; border:1px solid var(--border); border-radius:8px;
+      margin-bottom:.28rem; gap:.5rem; background:rgba(255,255,255,.02);
+    }
+    .diet-entry-info { flex:1; min-width:0; }
+    .diet-entry-name { font-size:.82rem; font-weight:600; }
+    .diet-entry-meta { font-size:.7rem; color:var(--dim); margin-top:.06rem; }
+    .diet-entry-kcal { font-size:.78rem; font-weight:600; white-space:nowrap; }
+    .diet-del-btn {
+      background:none; border:none; color:var(--dim); cursor:pointer; font-size:.8rem;
+      padding:.1rem .25rem; border-radius:4px; flex-shrink:0;
+    }
+    .diet-del-btn:hover { color:var(--red); }
+    .diet-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.2rem 0; }
+    /* add-entry form */
+    .diet-form-label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .diet-form-label span { display:block; margin-bottom:.18rem; }
+    .diet-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.3rem .45rem; font-size:.82rem;
+      font-family:inherit;
+    }
+    .diet-input:focus { outline:none; border-color:var(--accent); }
+    .diet-row { display:flex; gap:.45rem; }
+    .diet-row .diet-input { flex:1; }
+    .diet-optional-toggle {
+      font-size:.73rem; color:var(--accent); cursor:pointer; border:none;
+      background:none; padding:0; margin-bottom:.5rem;
+    }
+
     /* ── In-call data sharing panel ──────────────────────────────────────── */
     #call-share-panel {
       position:fixed; inset:0; z-index:1800; display:none;
@@ -574,19 +643,21 @@
     </div>
   </div>
 
-  <!-- Contacts / Verified Directory + Queue -->
+  <!-- Contacts / Verified Directory + Queue + Diet Log -->
   <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
     <div style="display:flex;gap:.5rem">
-      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;flex:1"
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
               onclick="openDirectory()">👥 Contacts</button>
       <button class="btn btn-outline" id="queue-btn"
-              style="font-size:.78rem;padding:.3rem .8rem;flex:1;position:relative"
+              style="font-size:.78rem;padding:.3rem .6rem;flex:1;position:relative"
               onclick="openQueue()">
         ⏱ Queue
         <span id="queue-badge" style="display:none;position:absolute;top:-5px;right:-5px;
               background:var(--accent);color:#fff;border-radius:10px;font-size:.6rem;
               padding:1px 5px;font-weight:700"></span>
       </button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openDietLog()">🍽 Diet</button>
     </div>
   </div>
 
@@ -597,6 +668,138 @@
             onclick="enterSanctuaryPinStep()">⚫ Sanctuary Mode</button>
   </div>
 
+</div>
+
+<!-- Diet log sheet -->
+<div id="diet-sheet" style="display:none" onclick="if(event.target===this)closeDietLog()">
+  <div class="diet-body">
+    <div class="diet-header">
+      <h3>🍽 Diet Log</h3>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        <button class="btn" style="font-size:.78rem;padding:.25rem .65rem;background:var(--accent);color:#fff;border:none;border-radius:6px"
+                onclick="_dlShowAddForm()">+ Add</button>
+        <button class="btn btn-outline" style="padding:.25rem .65rem;font-size:.78rem"
+                onclick="closeDietLog()">Close</button>
+      </div>
+    </div>
+    <div class="diet-scroll" id="diet-scroll">
+
+      <!-- Date navigation -->
+      <div class="diet-date-nav">
+        <button onclick="_dlNavDate(-1)">‹</button>
+        <span class="diet-date-label" id="diet-date-label">Today</span>
+        <button onclick="_dlNavDate(1)">›</button>
+      </div>
+
+      <!-- Daily totals row -->
+      <div class="diet-totals" id="diet-totals"></div>
+
+      <!-- Meal sections populated by JS -->
+      <div id="diet-log-body"></div>
+
+      <!-- Add entry form (hidden by default) -->
+      <div id="diet-add-form" style="display:none;border-top:1px solid var(--border);padding-top:.85rem;margin-top:.5rem">
+        <p style="font-size:.82rem;font-weight:700;margin-bottom:.65rem">Add food entry</p>
+
+        <label class="diet-form-label">
+          <span>Food name *</span>
+          <input id="dl-name" class="diet-input" type="text" placeholder="e.g. Oatmeal" autocomplete="off">
+        </label>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1.4">
+            <span>Meal</span>
+            <select id="dl-meal" class="diet-input">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack" selected>Snack</option>
+              <option value="drink">Drink</option>
+            </select>
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Time</span>
+            <input id="dl-time" class="diet-input" type="time">
+          </label>
+        </div>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1.2">
+            <span>Qty</span>
+            <input id="dl-qty" class="diet-input" type="number" min="0" step="any" placeholder="1" value="1">
+          </label>
+          <label class="diet-form-label" style="flex:1.6">
+            <span>Unit</span>
+            <select id="dl-unit" class="diet-input">
+              <option value="serving">serving</option>
+              <option value="g">g</option>
+              <option value="ml">ml</option>
+              <option value="piece">piece</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp</option>
+              <option value="tsp">tsp</option>
+              <option value="oz">oz</option>
+            </select>
+          </label>
+          <label class="diet-form-label" style="flex:1.2">
+            <span>Calories</span>
+            <input id="dl-kcal" class="diet-input" type="number" min="0" step="1" placeholder="0">
+          </label>
+        </div>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1">
+            <span>Protein (g)</span>
+            <input id="dl-protein" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Carbs (g)</span>
+            <input id="dl-carbs" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Fat (g)</span>
+            <input id="dl-fat" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+        </div>
+
+        <button class="diet-optional-toggle" onclick="_dlToggleOptional(this)">▸ Optional fields</button>
+        <div id="dl-optional" style="display:none">
+          <label class="diet-form-label">
+            <span>Brand / product</span>
+            <input id="dl-brand" class="diet-input" type="text" placeholder="optional">
+          </label>
+          <div class="diet-row" style="margin-bottom:.35rem">
+            <label class="diet-form-label" style="flex:1">
+              <span>Fibre (g)</span>
+              <input id="dl-fiber" class="diet-input" type="number" min="0" step="0.1" placeholder="">
+            </label>
+            <label class="diet-form-label" style="flex:1">
+              <span>Sugar (g)</span>
+              <input id="dl-sugar" class="diet-input" type="number" min="0" step="0.1" placeholder="">
+            </label>
+            <label class="diet-form-label" style="flex:1">
+              <span>Sodium (mg)</span>
+              <input id="dl-sodium" class="diet-input" type="number" min="0" step="1" placeholder="">
+            </label>
+          </div>
+          <label class="diet-form-label">
+            <span>Notes</span>
+            <input id="dl-notes" class="diet-input" type="text" placeholder="optional">
+          </label>
+        </div>
+
+        <p id="dl-save-status" style="font-size:.75rem;min-height:1.1rem;margin:.35rem 0"></p>
+        <div style="display:flex;gap:.5rem;margin-top:.1rem">
+          <button class="btn" style="flex:1;font-size:.82rem;padding:.35rem .8rem;
+                  background:var(--accent);color:#fff;border:none;border-radius:6px"
+                  onclick="_dlSave()">Save entry</button>
+          <button class="btn btn-outline" style="font-size:.82rem;padding:.35rem .8rem"
+                  onclick="_dlHideAddForm()">Cancel</button>
+        </div>
+      </div>
+
+    </div><!-- .diet-scroll -->
+  </div><!-- .diet-body -->
 </div>
 
 <!-- Medication manager — bottom sheet -->
@@ -1127,6 +1330,8 @@
 <script src="js/vault-meds-reminders.js?v=6"></script>
 <script src="js/vault-meds-lod.js?v=6"></script>
 <script src="js/vault-meds-manager.js?v=6"></script>
+<!-- Medication Sprint 6 — diet log -->
+<script src="js/vault-diet.js?v=6"></script>
 <script>
 'use strict';
 
@@ -1226,6 +1431,7 @@ function lockVault() {
   });
   document.getElementById('dir-sheet').style.display   = 'none';
   document.getElementById('queue-sheet').style.display = 'none';
+  document.getElementById('diet-sheet').style.display  = 'none';
   initDirectory(null);
   duressModeActive = false;
   document.body.classList.remove('sanctuary-active');
@@ -1798,6 +2004,158 @@ async function _shareApprove() {
 function _shareDeny() {
   document.getElementById('call-share-panel').style.display = 'none';
   _sharePending = null;
+}
+
+// ── Diet Log UI ───────────────────────────────────────────────────────────────
+
+let _dlCurrentDate = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+function openDietLog() {
+  _dlCurrentDate = new Date().toISOString().slice(0, 10);
+  document.getElementById('diet-sheet').style.display = 'flex';
+  _dlHideAddForm();
+  _dlRenderDay();
+}
+
+function closeDietLog() {
+  document.getElementById('diet-sheet').style.display = 'none';
+}
+
+function _dlNavDate(delta) {
+  const d = new Date(_dlCurrentDate + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  _dlCurrentDate = d.toISOString().slice(0, 10);
+  _dlRenderDay();
+}
+
+function _dlShowAddForm() {
+  const now = new Date();
+  document.getElementById('dl-time').value =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('dl-save-status').textContent = '';
+  document.getElementById('diet-add-form').style.display = 'block';
+  document.getElementById('diet-scroll').scrollTo({ top: 9999, behavior: 'smooth' });
+}
+
+function _dlHideAddForm() {
+  document.getElementById('diet-add-form').style.display = 'none';
+  ['dl-name','dl-brand','dl-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['dl-qty','dl-kcal','dl-protein','dl-carbs','dl-fat','dl-fiber','dl-sugar','dl-sodium']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('dl-qty').value = '1';
+  document.getElementById('dl-optional').style.display = 'none';
+}
+
+function _dlToggleOptional(btn) {
+  const el = document.getElementById('dl-optional');
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent  = open ? '▸ Optional fields' : '▾ Optional fields';
+}
+
+async function _dlSave() {
+  const status = document.getElementById('dl-save-status');
+  status.style.color = 'var(--red)';
+  const name = document.getElementById('dl-name')?.value.trim();
+  if (!name) { status.textContent = 'Food name is required.'; return; }
+  try {
+    await dlAddEntry({
+      date:       _dlCurrentDate,
+      time:       document.getElementById('dl-time')?.value,
+      meal:       document.getElementById('dl-meal')?.value,
+      name,
+      brand:      document.getElementById('dl-brand')?.value,
+      quantity:   document.getElementById('dl-qty')?.value,
+      unit:       document.getElementById('dl-unit')?.value,
+      kcal:       document.getElementById('dl-kcal')?.value,
+      protein_g:  document.getElementById('dl-protein')?.value,
+      carbs_g:    document.getElementById('dl-carbs')?.value,
+      fat_g:      document.getElementById('dl-fat')?.value,
+      fiber_g:    document.getElementById('dl-fiber')?.value  || null,
+      sugar_g:    document.getElementById('dl-sugar')?.value  || null,
+      sodium_mg:  document.getElementById('dl-sodium')?.value || null,
+      notes:      document.getElementById('dl-notes')?.value,
+    });
+    status.style.color = 'var(--green)';
+    status.textContent = '✓ Saved';
+    setTimeout(() => { _dlHideAddForm(); _dlRenderDay(); }, 600);
+  } catch (e) {
+    status.textContent = e.message;
+  }
+}
+
+async function _dlDeleteEntry(id) {
+  await dlDeleteEntry(id);
+  _dlRenderDay();
+}
+
+async function _dlRenderDay() {
+  const today = new Date().toISOString().slice(0, 10);
+  const label = document.getElementById('diet-date-label');
+  const totalsEl = document.getElementById('diet-totals');
+  const bodyEl   = document.getElementById('diet-log-body');
+
+  if (_dlCurrentDate === today) {
+    label.textContent = 'Today';
+  } else {
+    const d = new Date(_dlCurrentDate + 'T12:00:00');
+    label.textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+  }
+
+  let entries = [];
+  try { entries = await dlGetByDate(_dlCurrentDate); } catch (_) {}
+
+  // Totals row
+  const t = dlDailyTotals(entries);
+  totalsEl.innerHTML = entries.length
+    ? `<div class="diet-total-chip"><strong>${t.kcal}</strong> kcal</div>
+       <div class="diet-total-chip"><strong>${t.protein_g}g</strong> protein</div>
+       <div class="diet-total-chip"><strong>${t.carbs_g}g</strong> carbs</div>
+       <div class="diet-total-chip"><strong>${t.fat_g}g</strong> fat</div>`
+    : '';
+
+  // Group by meal
+  const MEAL_ORDER = ['breakfast','lunch','dinner','snack','drink'];
+  const MEAL_LABELS = { breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snack:'Snack', drink:'Drink' };
+  const groups = {};
+  for (const e of entries) {
+    const m = MEAL_ORDER.includes(e.meal) ? e.meal : 'snack';
+    (groups[m] = groups[m] || []).push(e);
+  }
+
+  if (!entries.length) {
+    bodyEl.innerHTML = '<p class="diet-empty">No entries for this day — tap + Add to log food.</p>';
+    return;
+  }
+
+  bodyEl.innerHTML = MEAL_ORDER
+    .filter(m => groups[m]?.length)
+    .map(m => `
+      <div class="diet-meal-section">
+        <div class="diet-meal-label">${MEAL_LABELS[m]}</div>
+        ${groups[m].map(e => {
+          const macroStr = [
+            e.protein_g ? `${e.protein_g}g P` : '',
+            e.carbs_g   ? `${e.carbs_g}g C`   : '',
+            e.fat_g     ? `${e.fat_g}g F`     : '',
+          ].filter(Boolean).join(' · ');
+          const unitStr = `${e.quantity} ${e.unit}`;
+          return `<div class="diet-entry">
+            <div class="diet-entry-info">
+              <div class="diet-entry-name">${_dlEsc(e.name)}${e.brand ? ' <span style="font-weight:400;color:var(--dim)">· ' + _dlEsc(e.brand) + '</span>' : ''}</div>
+              <div class="diet-entry-meta">${unitStr}${macroStr ? ' · ' + macroStr : ''}${e.notes ? ' · ' + _dlEsc(e.notes) : ''}</div>
+            </div>
+            <span class="diet-entry-kcal">${e.kcal ? e.kcal + ' kcal' : ''}</span>
+            <button class="diet-del-btn" title="Delete" onclick="_dlDeleteEntry('${_dlEsc(e.id)}')">✕</button>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+}
+
+function _dlEsc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
