@@ -643,6 +643,45 @@
     </div>
   </div>
 
+  <!-- WA-1 Webizen Agent — in-call consent panel (hidden until call is active) -->
+  <div id="agent-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <div style="background:rgba(13,110,253,.06);border:1px solid rgba(13,110,253,.25);
+                border-radius:10px;padding:.75rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem">
+        <span style="font-size:.82rem;font-weight:700">🤖 Live indicators</span>
+        <button onclick="stopAgent()" style="font-size:.72rem;padding:.2rem .55rem;
+                border:1px solid var(--red);border-radius:5px;background:transparent;
+                color:var(--red);cursor:pointer">All off</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.35rem;margin-bottom:.55rem">
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
+          <input type="checkbox" id="agent-chk-vision-emotion"
+                 onchange="_cvToggle('vision.emotion', this.checked)" />
+          <span><strong>Facial expression</strong> — emotion tracking</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
+          <input type="checkbox" id="agent-chk-vision-rpg"
+                 onchange="_cvToggle('vision.rpg', this.checked)" />
+          <span><strong>Heart rate indicator</strong> — remote pulse via camera</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
+          <input type="checkbox" id="agent-chk-audio-prosody"
+                 onchange="_cvToggle('audio.prosody', this.checked)" />
+          <span><strong>Vocal pattern analysis</strong> — tone, pitch, speech rate</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
+          <input type="checkbox" id="agent-chk-text-linguistic"
+                 onchange="_cvToggle('text.linguistic', this.checked)" />
+          <span><strong>Language pattern analysis</strong> — text pattern analysis</span>
+        </label>
+      </div>
+      <div id="agent-active-modules" style="font-size:.72rem;color:var(--dim)">No modules active</div>
+      <p style="font-size:.68rem;color:var(--dim);margin-top:.35rem;line-height:1.4">
+        All analysis runs on your device. No raw video, audio, or transcript is sent.
+      </p>
+    </div>
+  </div>
+
   <!-- Contacts / Verified Directory + Queue + Diet Log -->
   <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
     <div style="display:flex;gap:.5rem">
@@ -1311,7 +1350,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
-<script src="js/vault-idb.js?v=6"></script>
+<script src="js/vault-idb.js?v=7"></script>
 <script src="js/vault-crypto.js?v=6"></script>
 <script src="js/vault-did.js?v=6"></script>
 <script src="js/vault-nym.js?v=7"></script>
@@ -1324,8 +1363,8 @@
 <script src="js/vault-comms-gate.js?v=6"></script>
 <!-- VC-10 Call session — must load after vault-comms-gate.js -->
 <script src="js/vault-comms-call.js?v=6"></script>
-<!-- VC-10 OpenCV stub — must load after vault-comms-call.js -->
-<script src="js/vault-cv.js?v=6"></script>
+<!-- WA-1 AgentController — must load after vault-comms-call.js -->
+<script src="js/vault-cv.js?v=7"></script>
 <!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
 <script src="js/vault-scheduler.js?v=6"></script>
 <!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->
@@ -1927,8 +1966,20 @@ document.addEventListener('wf:call', (ev) => {
       const stream = typeof _callStream !== 'undefined' ? _callStream : null;
       startRealtimeTranscription(stream, sessionId, navigator.language || 'en');
     }
+    // WA-1: show agent consent panel; reset all checkboxes to unchecked
+    const agentPanel = document.getElementById('agent-panel');
+    if (agentPanel) {
+      agentPanel.style.display = 'block';
+      ['vision-emotion','vision-rpg','audio-prosody','text-linguistic'].forEach(id => {
+        const el = document.getElementById('agent-chk-' + id);
+        if (el) el.checked = false;
+      });
+    }
   } else if (event === 'call.ended') {
     if (typeof stopRealtimeTranscription === 'function') stopRealtimeTranscription();
+    // WA-1: hide agent consent panel
+    const agentPanel = document.getElementById('agent-panel');
+    if (agentPanel) agentPanel.style.display = 'none';
   }
 });
 

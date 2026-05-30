@@ -52,6 +52,7 @@ async function startCall(contactId) {
   // Data-sharing channel — offer side creates it; answer side receives via ondatachannel
   _callDc = _callPc.createDataChannel('wf-data');
   _callSetupDc(_callDc);
+  if (typeof initAgent === 'function') initAgent(sessionId, _callDc);
 
   const offer = await _callPc.createOffer();
   await _callPc.setLocalDescription(offer);
@@ -98,7 +99,11 @@ async function answerCall(sessionId, gunNode) {
   };
 
   _callPc.ontrack = (ev) => _callRenderRemote(ev.streams[0]);
-  _callPc.ondatachannel = (ev) => { _callDc = ev.channel; _callSetupDc(_callDc); };
+  _callPc.ondatachannel = (ev) => {
+    _callDc = ev.channel;
+    _callSetupDc(_callDc);
+    if (typeof initAgent === 'function') initAgent(_callSessionId, _callDc);
+  };
 
   // Wait for offer then answer
   _callGunNode.on(async (data) => {
@@ -143,6 +148,7 @@ function verifyGuestToken(sessionId, token) {
 
 // Tear down the current call cleanly.
 async function endCall() {
+  if (typeof stopAgent === 'function') await stopAgent().catch(() => {});
   if (_callStream) {
     _callStream.getTracks().forEach(t => t.stop());
     _callStream = null;

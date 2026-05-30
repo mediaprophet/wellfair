@@ -19,10 +19,12 @@ const _ST_AGREEMENTS = 'wf-agreements';    // encrypted signed usage agreements
 const _ST_JOBS       = 'wf-jobs';          // background job queue
 // VC-13 — Event Log & Transcript (added in v6)
 const _ST_EVENTS     = 'wf-events';        // call event log with hash chain
+// WA-1 — Webizen Agent telemetry (added in v7)
+const _ST_TELEMETRY  = 'wf-telemetry';     // session telemetry samples
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 6);
+    const rq = indexedDB.open(_DB_NAME, 7);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -39,6 +41,8 @@ function _openDB() {
       if (!db.objectStoreNames.contains(_ST_JOBS))       db.createObjectStore(_ST_JOBS,       { keyPath: 'id' });
       // v6 — VC-13 Event Log & Transcript
       if (!db.objectStoreNames.contains(_ST_EVENTS))     db.createObjectStore(_ST_EVENTS,     { keyPath: 'id' });
+      // v7 — WA-1 Webizen Agent telemetry
+      if (!db.objectStoreNames.contains(_ST_TELEMETRY))  db.createObjectStore(_ST_TELEMETRY,  { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
