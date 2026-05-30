@@ -8,6 +8,38 @@
 
 ---
 
+## Why this exists — primary use case for HCW
+
+> Read this before implementing anything in the HCW epic. It explains why certain
+> architectural requirements are non-negotiable rather than optional privacy enhancements.
+
+The Human-Centric Wallet is designed around a specific, real-world use case:
+a person escaping organised criminal exploitation (trafficking, forced financial crime)
+who needs access to welfare support — psychiatric care, medication, safe accommodation —
+but whose physical location would be endangered if any transaction on a public ledger
+linked their wallet to a merchant address.
+
+The threat actors in this scenario are not opportunistic criminals. They are enterprise-scale
+operations that can and do use blockchain transaction analysis, corrupted institutional
+contacts, and physical violence to locate people who threaten their operations.
+
+Standard welfare infrastructure fails this person because:
+- On-chain payments link recipient wallet → merchant address → physical location
+- Government-linked identity creates records accessible to potentially compromised institutions  
+- Fiat on-ramps create KYC linkages that can be subpoenaed or leaked
+
+This is why the following are architectural requirements, not preferences:
+- **Blind Proxy treasury** (HCW-8) — wallet never links to merchant on-chain
+- **Anonymous credential issuance** (HCW-9) — eligibility proven without government identity
+- **Nym routing for all transactions** (HCW-2) — IP address never exposed to RPC nodes
+- **Zero server-side user data** — a full breach of app infrastructure reveals nothing exploitable
+- **Decoupled issuance** — credential issuers and infrastructure operators must be separate
+  organisations with no shared data
+
+Full context: `memory/project_hcw_primary_usecase.md`
+
+---
+
 ## How to use this plan
 
 **At the start of every session**, read in this order:
