@@ -217,6 +217,26 @@
     .call-notif-btns  { display:flex; gap:.45rem; }
     .call-notif-btns .btn { flex:1; padding:.38rem .5rem; font-size:.78rem; }
 
+    /* ── Live Indicators panel (WA-6) ── */
+    .indicator-row {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .83rem; padding: .22rem 0;
+    }
+    .indicator-inactive { opacity: .4; }
+    .indicator-icon  { width: 1.4rem; text-align: center; flex-shrink: 0; }
+    .indicator-label { min-width: 5.5rem; color: var(--dim); flex-shrink: 0; }
+    .indicator-value { font-family: monospace; color: var(--text); flex: 1; }
+    .indicator-qual  { font-size: .73rem; color: var(--dim); }
+    .indicator-modules {
+      font-size: .73rem; color: var(--dim);
+      margin-top: .5rem; padding-top: .4rem; border-top: 1px solid var(--border);
+    }
+    .indicator-privacy {
+      font-size: .72rem; color: var(--dim);
+      margin-top: .55rem; line-height: 1.45; font-style: italic;
+    }
+    .indicator-placeholder { font-size: .82rem; color: var(--dim); padding: .5rem 0; }
+
     /* Notice */
     .ephem-notice {
       margin-top: 1.5rem;
@@ -1044,6 +1064,7 @@ function requestSection(section) {
 }
 
 async function handleMessage(msg) {
+  if (msg.type === 'agent.telemetry') { _connHandleTelemetry(msg); return; }
   if (['call_started','call_answered','call_ended','call_incoming'].includes(msg.type)) {
     _connHandleCallMsg(msg); return;
   }
@@ -1415,6 +1436,7 @@ function saveNotes() {
 let _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
 let _connCallSecs  = 0;
 let _connCallTimer = null;
+let _connTelemetry = null; // latest agent.telemetry payload; cleared on call end
 
 function renderCallsPanel() {
   if (_connCallState.active) {
@@ -1488,6 +1510,19 @@ function _connRenderActiveCall() {
     <!-- VC-11 received data -->
     <div id="conn-received-data"></div>
 
+    <!-- WA-6 Live Indicators -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                padding:.85rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">📊 Live Indicators</div>
+      <div id="conn-telemetry-panel">
+        ${_connTelemetry
+          ? _connBuildTelemetryHtml(_connTelemetry)
+          : '<div class="indicator-placeholder">Waiting for patient telemetry…</div>'}
+      </div>
+      <p class="indicator-privacy">These indicators are generated on the patient's device.
+         No raw video, audio, or transcript data is sent to this screen.</p>
+    </div>
+
     <p class="ephem-notice">
       Video stream is handled by your vault phone. This panel shows call controls and data sharing.
     </p>
@@ -1555,6 +1590,7 @@ function _connEndCall() {
   }
   _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
   clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+  _connTelemetry = null;
   renderCallsPanel();
 }
 
@@ -1598,6 +1634,7 @@ function _connHandleCallMsg(msg) {
   if (msg.type === 'call_ended') {
     _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
     clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+    _connTelemetry = null;
     renderCallsPanel();
     return;
   }
@@ -1682,6 +1719,68 @@ function _connBuildTranscriptHtml(sessionId, events, annotate) {
   <p style="font-size:.75rem;color:#aaa">Generated on desktop connector · ${new Date().toISOString()}</p>
   ${segs || '<p><em>No events in this session.</em></p>'}
 </body></html>`;
+}
+
+// ── WA-6 Live telemetry panel ────────────────────────────────────────────────
+
+function _connHandleTelemetry(msg) {
+  _connTelemetry = msg.payload || msg;
+  _connUpdateTelemetryPanel();
+}
+
+function _connUpdateTelemetryPanel() {
+  const panel = document.getElementById('conn-telemetry-panel');
+  if (!panel || !_connTelemetry) return;
+  panel.innerHTML = _connBuildTelemetryHtml(_connTelemetry);
+}
+
+function _connBuildTelemetryHtml(p) {
+  const { modules = [], vision = {}, biometrics = {}, audio = {}, linguistic = {} } = p;
+
+  const bpm     = biometrics.bpm != null ? Math.round(biometrics.bpm) + ' BPM' : '—';
+  const sigQ    = biometrics.signalQuality ? '(' + biometrics.signalQuality + ' signal)' : '';
+  const emotion = vision.emotion || '—';
+  const conf    = vision.confidence != null ? '(conf: ' + Math.round(vision.confidence * 100) + '%)' : '';
+  const rmsLbl  = audio.rms != null
+    ? (audio.rms < 0.01 ? 'low' : audio.rms < 0.05 ? 'medium' : 'high') : '—';
+  const pitchHz = audio.pitchHz != null ? Math.round(audio.pitchHz) + ' Hz' : '—';
+  const sent    = linguistic.sentimentScore != null ? linguistic.sentimentScore.toFixed(1) : '—';
+  const pron    = linguistic.pronounRatio1P != null
+    ? Math.round(linguistic.pronounRatio1P * 100) + '%' : '—';
+
+  const bpmActive  = modules.includes('vision.rpg');
+  const emActive   = modules.includes('vision.emotion');
+  const audActive  = modules.includes('audio.prosody');
+  const lingActive = modules.includes('text.linguistic');
+
+  const _NAMES = { 'vision.emotion': 'emotion', 'vision.rpg': 'pulse',
+                   'audio.prosody': 'prosody',  'text.linguistic': 'language' };
+  const activeStr = modules.map(m => _NAMES[m] || m).join(' · ') || 'none';
+
+  return `
+    <div class="indicator-row${bpmActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">💓</span>
+      <span class="indicator-label">Heart rate</span>
+      <span class="indicator-value">${bpm}</span>
+      ${sigQ ? `<span class="indicator-qual">${sigQ}</span>` : ''}
+    </div>
+    <div class="indicator-row${emActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">😐</span>
+      <span class="indicator-label">Expression</span>
+      <span class="indicator-value">${emotion}</span>
+      ${conf ? `<span class="indicator-qual">${conf}</span>` : ''}
+    </div>
+    <div class="indicator-row${audActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">🎙</span>
+      <span class="indicator-label">Vocal</span>
+      <span class="indicator-value">energy: ${rmsLbl} · pitch: ${pitchHz}</span>
+    </div>
+    <div class="indicator-row${lingActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">📝</span>
+      <span class="indicator-label">Language</span>
+      <span class="indicator-value">sentiment: ${sent} · pronoun: ${pron}</span>
+    </div>
+    <div class="indicator-modules">Modules active: <span style="color:var(--accent)">${activeStr}</span></div>`;
 }
 
 // ── Section renderers — add owner-mode extra sections ─────────────────────────
