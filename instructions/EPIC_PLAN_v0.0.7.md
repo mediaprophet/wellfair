@@ -3,8 +3,8 @@
 
 > Branch: `release/v0.0.7` (branch from `release/v0.0.6` when v0.0.6 is tagged)  
 > Plan written: 2026-05-31  
-> Estimated total sessions: 20–26  
-> Epics: WA (Webizen Agent — CV/Audio Analytics) + HCW (Human-Centric Wallet)
+> Estimated total sessions: 22–28  
+> Epics: DL (Diet Log Sprint 6b) + WA (Webizen Agent — CV/Audio Analytics) + HCW (Human-Centric Wallet)
 
 ---
 
@@ -55,8 +55,8 @@ Full context: `memory/project_hcw_primary_usecase.md`
 When a context signal appears: write handover at `instructions/HANDOVER_{milestone}_{YYYY-MM-DD}.md`,
 update Progress Tracker, commit, tell user to start a new session.
 
-**Sequencing:** Complete WA-1 through WA-7 (Webizen Agent) before starting HCW-1.
-The Webizen Agent's telemetry pipeline (WA-7) feeds directly into the HCW audit trail.
+**Sequencing:** DL-1 (barcode scanning) → WA-1 through WA-7 (Webizen Agent) → HCW-1 through HCW-10.
+DL-1 completes the diet log and is independent. WA-7 telemetry feeds the HCW audit trail.
 
 ---
 
@@ -129,6 +129,123 @@ application servers yields zero useful data about users. See the Threat Model se
 
 ---
 
+## SPRINT 6b — Diet Log Barcode Scanning (DL-1)
+### Open Food Facts Integration
+
+> **Sequence:** Complete this before starting WA-1. It finishes the diet log feature
+> started in Sprint 6 (v0.0.6) and is self-contained (~1 session).
+
+---
+
+### Corrections to the Gemini conversation for WellFair
+
+| Gemini said | WellFair correction |
+|---|---|
+| Use zxing or mlkit for barcode scanning | **BarcodeDetector API** is built into Chrome 83+ / Edge 83+ — no library needed for the primary path. ZXing-js (CDN) as fallback for Firefox/Safari only. mlkit is Android/iOS native; not applicable to a browser app. |
+| "Semantic translation layer / reasoning engine on client side" | Correct long-term direction. MVP stores the OFF `code` (barcode) and raw `categories_tags` in the wf-dl record for future LOD enrichment. FoodOn/Wikidata mapping is a v0.0.8 task. |
+| "Sovereignty" language | Prohibited term — omit. |
+| Full FoodOn + DBpedia + PubChem mapping at implementation time | The OFF API already returns `categories_tags` which are OFF's own FoodOn-compatible URIs. Store them; don't transform them yet. |
+
+**Privacy note:** An Open Food Facts barcode lookup is a public product database query —
+the barcode identifies a product, not a person. For general use, a plain HTTPS fetch is
+acceptable. For users in high-risk situations (see HCW primary use case), the API call
+should be routable through Nym. The implementation should check `nymAdapter.isActive()`
+and route accordingly. Document this in code comments; do not require Nym for all users.
+
+---
+
+### DL-1 — Barcode Scanning + Open Food Facts Pre-fill
+
+**Session scope:** 1 session  
+**Depends on:** `docs/js/vault-diet.js` (dlAddEntry, field names), `docs/vault.html` (diet-add-form)  
+**Read first:** `docs/js/vault-diet.js`, `docs/js/vault-nym.js` (nymAdapter)
+
+**New file:** `docs/js/vault-diet-barcode.js`
+
+**Public API:**
+```js
+async function dlStartBarcodeScanner(videoEl, onDetected)
+// Opens getUserMedia({video: {facingMode:'environment'}}) into videoEl
+// Primary: BarcodeDetector API (formats: ean_13, upc_a, upc_e, ean_8, ean_5, ean_2)
+// Fallback: ZXing-js loaded from CDN if BarcodeDetector unavailable
+// Calls onDetected(barcodeString) on first successful read; stops camera
+// Returns: stopFn — call to cancel scanning without a result
+
+async function dlLookupBarcode(barcode)
+// Fetches Open Food Facts API v2:
+//   GET https://world.openfoodfacts.org/api/v2/product/{barcode}.json
+//   ?fields=product_name,brands,serving_size,nutriments,categories_tags,image_url
+// Routes via nymAdapter if nymAdapter.isActive() (see privacy note above)
+// Returns: {found: bool, fields: Partial<dlAddEntry>, raw: object} | {found: false}
+
+function _mapOffProduct(p)
+// Maps Open Food Facts product JSON → vault-diet.js field names
+// Uses *_serving values preferentially; falls back to *_100g * (serving_size_g / 100)
+// Returns partial fields object ready to pass to dlAddEntry()
+```
+
+**OFF → wf-dl field mapping:**
+
+| Open Food Facts field | wf-dl field | Notes |
+|---|---|---|
+| `product_name` | `name` | |
+| `brands` | `brand` | |
+| `serving_size` | `quantity` + `unit` | Parse "30 g" → qty 30, unit 'g' |
+| `nutriments['energy-kcal_serving']` | `kcal` | Fall back to `energy-kcal_100g` |
+| `nutriments['proteins_serving']` | `protein_g` | |
+| `nutriments['carbohydrates_serving']` | `carbs_g` | |
+| `nutriments['fat_serving']` | `fat_g` | |
+| `nutriments['fiber_serving']` | `fiber_g` | |
+| `nutriments['sugars_serving']` | `sugar_g` | |
+| `nutriments['sodium_serving'] * 1000` | `sodium_mg` | OFF stores sodium in g |
+| `categories_tags` | stored in `notes` as JSON | For future FoodOn LOD enrichment |
+| `code` (barcode) | stored in `notes` | For future re-lookup / LOD linkage |
+
+**vault.html additions to diet-add-form:**
+- "📷 Scan barcode" button at the top of the add-entry form (beside food name field)
+- Hidden `<video>` element for camera stream (shown only while scanning)
+- Scanner overlay: "Point at barcode — scanning…" + Cancel button
+- On detection: camera stops, form pre-filled, status message "Found: {product name}"
+- On not found in OFF: form stays empty, status "Product not found — enter manually"
+- New `source` field value: `'barcode'` (existing field in wf-dl schema, was `'manual'`)
+
+**Script tag:** Add `<script src="js/vault-diet-barcode.js?v=6"></script>` after `vault-diet.js`
+
+**ZXing-js fallback CDN:**
+```
+https://cdn.jsdelivr.net/npm/@zxing/browser@latest/+esm
+```
+Load only if `typeof BarcodeDetector === 'undefined'` — do not load for Chrome/Edge users.
+
+**Acceptance criteria:**
+- [ ] BarcodeDetector opens camera on click; closes after successful scan
+- [ ] EAN-13 barcode on a food package → product name + macros pre-filled in form
+- [ ] ZXing-js fallback loads and functions in Firefox
+- [ ] Product not found in OFF → graceful "enter manually" state, no error
+- [ ] `source: 'barcode'` set on entries created via scan
+- [ ] `notes` field stores barcode + OFF categories_tags for future LOD use
+- [ ] Nym routing used for the OFF API fetch when nymAdapter is active
+- [ ] Camera stream stopped and released on cancel, on result, and on sheet close
+
+---
+
+### DL-1: LOD enrichment roadmap (v0.0.8+, not Sprint 6b)
+
+The following are out of scope for this session but should be designed so the stored
+data (barcode + `categories_tags`) enables them without re-scanning:
+
+| Future milestone | What it does |
+|---|---|
+| FoodOn mapping | Map OFF `categories_tags` URIs to FoodOn ontology terms via a static lookup table |
+| Drug–nutrient interactions | Cross-reference `categories_tags` ingredients against `vault-meds-lod.js` SUBSTANCE_INTERACTIONS |
+| Wikidata enrichment | Resolve OFF ingredient names to Wikidata QIDs for full LOD provenance |
+| PubChem additives | Resolve E-number additives (from `additives_tags`) to PubChem CIDs for safety data |
+| Allergen alerts | OFF `allergens_tags` cross-referenced against user-configured allergen list in IDB |
+
+---
+
+---
+
 ## EPIC 1 — Webizen Agent (WA)
 ### CV, Audio & Text Analytics for Telehealth
 
@@ -157,6 +274,14 @@ connector/index.html
 
 **Key constraint:** Raw video frames, audio buffers, and transcripts never leave the device.
 Only structured JSON telemetry travels over the WebRTC DataChannel to the clinician.
+
+---
+
+### DL: Progress Tracker
+
+| Session | Date | Milestone | Status | Handover file |
+|---------|------|-----------|--------|---------------|
+| DL-1 | | Barcode scanning + Open Food Facts pre-fill | not started | |
 
 ---
 
@@ -1104,9 +1229,10 @@ function getRegionConfig(regionCode)
 
 ## Combined IDB version roadmap
 
-| IDB version | When | New stores |
+| IDB version | When | New stores / schema changes |
 |---|---|---|
 | v6 | current (v0.0.6) | wf-s, wf-sc, wf-meds, wf-ml, wf-pc, wf-dl, wf-contacts, wf-relationships, wf-agreements, wf-jobs, wf-events |
+| v6 | DL-1 | No new store — wf-dl records gain optional `barcode` and `categories_tags` fields (additive, backward-compatible) |
 | v7 | WA-1 | + wf-telemetry |
 | v8 | HCW-1 | + wf-wallet, wf-txlog |
 | v9 | HCW-4 | + wf-credits |
@@ -1123,7 +1249,7 @@ vault-cv →                          ← AgentController (rewritten WA-1)
 vault-scheduler → vault-transcript → vault-comms-transcode → vault-package →
 vault-sanctuary-pins → vault-sanctuary-log → vault-sanctuary-evidence →
 vault-meds-reminders → vault-meds-lod → vault-meds-manager →
-vault-diet →
+vault-diet → vault-diet-barcode →              ← new DL-1
 vault-wallet → vault-welfare → vault-stablecoin   ← new HCW modules
 ```
 
