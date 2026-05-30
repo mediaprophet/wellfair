@@ -1601,13 +1601,47 @@ async function _connHandleJobOffload(msg) {
 }
 
 async function _connRunTranscriptJob(type, payload, job_id) {
-  // Placeholder — real implementation comes in VC-13b
+  const sessionId = payload.sessionId || 'unknown';
+  const events    = Array.isArray(payload.events) ? payload.events : [];
+
   if (dc && dc.readyState === 'open')
-    secureSend({ type: 'job_progress', job_id, pct: 50, eta_ms: 500 });
-  await new Promise(r => setTimeout(r, 100));
+    secureSend({ type: 'job_progress', job_id, pct: 20, eta_ms: 800 });
+
+  // Build HTML+RDFa from events included in the offload payload
+  const html = _connBuildTranscriptHtml(sessionId, events, type === 'transcript.annotate');
+
   if (dc && dc.readyState === 'open')
     secureSend({ type: 'job_progress', job_id, pct: 100, eta_ms: 0 });
-  return { type, done: true };
+
+  return { sessionId, html };
+}
+
+function _connBuildTranscriptHtml(sessionId, events, annotate) {
+  const esc = s => s == null ? '' : String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const chainEvents = events.filter(e => e.seq >= 0).sort((a, b) => a.seq - b.seq);
+  const segs = chainEvents.map(ev => `
+    <div style="border-left:3px solid #4a90d9;padding:.4rem .75rem;margin:.4rem 0;background:#f8faff">
+      <strong>${esc(ev.type)}</strong>
+      <time style="color:#888;font-size:.78rem"> ${esc(ev.ts)}</time>
+      <div style="font-size:.7rem;color:#888;font-family:monospace">${esc(ev.actorDid || '')}</div>
+      ${ev.payload?.original ? `<p>${esc(ev.payload.original)}</p>` : ''}
+      ${ev.payload?.text ? `<p>${esc(ev.payload.text)}</p>` : ''}
+    </div>`).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en" prefix="wf: https://wellfare.social/ns/vault# dcterms: http://purl.org/dc/terms/">
+<head><meta charset="UTF-8"><title>WellFair Transcript — ${esc(sessionId.slice(0,8))}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}</style>
+</head>
+<body vocab="https://wellfare.social/ns/vault#" typeof="wf:CommunicationTranscript"
+      resource="urn:uuid:${esc(sessionId)}">
+  <h2>WellFair Communication Transcript</h2>
+  <p>Session: <code>${esc(sessionId)}</code></p>
+  <p style="font-size:.75rem;color:#aaa">Generated on desktop connector · ${new Date().toISOString()}</p>
+  ${segs || '<p><em>No events in this session.</em></p>'}
+</body></html>`;
 }
 
 // ── Section renderers — add owner-mode extra sections ─────────────────────────

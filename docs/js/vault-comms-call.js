@@ -72,6 +72,9 @@ async function startCall(contactId) {
   });
 
   const callLink = generateGuestLink(sessionId);
+  if (typeof captureEvent === 'function') {
+    captureEvent(sessionId, 'call.start', _callVaultDid(), {}).catch(() => {});
+  }
   _callNotifyUI({ event: 'call.started', sessionId, callLink });
   return { sessionId, callLink };
 }
@@ -154,6 +157,9 @@ async function endCall() {
     _callGunNode = null;
   }
   if (_callSessionId) {
+    if (typeof captureEvent === 'function') {
+      captureEvent(_callSessionId, 'call.end', _callVaultDid(), {}).catch(() => {});
+    }
     _guestTokens.delete(_callSessionId);
     _callSessionId = null;
   }
@@ -193,6 +199,10 @@ function _callSetupDc(channel) {
     try {
       const msg = JSON.parse(ev.data);
       if (msg.type === 'data_request') {
+        if (typeof captureEvent === 'function' && msg.callSessionId) {
+          captureEvent(msg.callSessionId, 'data.request',
+            msg.callerDid || 'unknown', { sections: msg.sections }).catch(() => {});
+        }
         document.dispatchEvent(new CustomEvent('wf:data-request', { detail: msg }));
       } else if (msg.type === 'data_response' || msg.type === 'data_receipt') {
         document.dispatchEvent(new CustomEvent('wf:data-response', { detail: msg }));

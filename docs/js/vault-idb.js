@@ -17,10 +17,12 @@ const _ST_RELS       = 'wf-relationships'; // encrypted relationship edges
 const _ST_AGREEMENTS = 'wf-agreements';    // encrypted signed usage agreements
 // VC-12 — Background Job Scheduler (added in v5)
 const _ST_JOBS       = 'wf-jobs';          // background job queue
+// VC-13 — Event Log & Transcript (added in v6)
+const _ST_EVENTS     = 'wf-events';        // call event log with hash chain
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 5);
+    const rq = indexedDB.open(_DB_NAME, 6);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -35,6 +37,8 @@ function _openDB() {
       if (!db.objectStoreNames.contains(_ST_AGREEMENTS)) db.createObjectStore(_ST_AGREEMENTS, { keyPath: 'id' });
       // v5 — VC-12 Background Job Scheduler
       if (!db.objectStoreNames.contains(_ST_JOBS))       db.createObjectStore(_ST_JOBS,       { keyPath: 'id' });
+      // v6 — VC-13 Event Log & Transcript
+      if (!db.objectStoreNames.contains(_ST_EVENTS))     db.createObjectStore(_ST_EVENTS,     { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);

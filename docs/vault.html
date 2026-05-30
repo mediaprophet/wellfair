@@ -1086,6 +1086,8 @@
 <script src="js/vault-cv.js"></script>
 <!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
 <script src="js/vault-scheduler.js"></script>
+<!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->
+<script src="js/vault-transcript.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -1571,6 +1573,9 @@ async function _queueRender() {
         </div>
         ${j.status === 'pending' || j.status === 'failed' ? `
           <button class="queue-run-btn" onclick="runJobNow('${j.id}').then(()=>_queueRender())">▶</button>` : ''}
+        ${j.status === 'done' && (j.type === 'transcript.generate' || j.type === 'transcript.annotate') && j.result_ref ? `
+          <button class="queue-run-btn" title="View transcript"
+                  onclick="_queueViewTranscript('${j.id}')">📄</button>` : ''}
       </div>`;
   }).join('');
 }
@@ -1580,6 +1585,22 @@ async function _queueRunAll() {
   const pending = jobs.filter(j => j.status === 'pending');
   for (const j of pending) await runJobNow(j.id);
   _queueRender();
+}
+
+function _queueViewTranscript(jobId) {
+  getJobList().then(jobs => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job || !job.result_ref) return;
+    try {
+      const result = JSON.parse(job.result_ref);
+      if (!result.html) return;
+      const blob = new Blob([result.html], { type: 'text/html' });
+      const url  = URL.createObjectURL(blob);
+      const win  = window.open(url, '_blank');
+      // Revoke after tab has had time to load
+      if (win) setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch (_) {}
+  });
 }
 
 function _schedUpdateSettings() {
