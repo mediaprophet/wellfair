@@ -313,6 +313,29 @@
     .hs-agree-key { font-size:.7rem; color:var(--dim); min-width:7rem; flex-shrink:0; }
     .hs-agree-val { font-family:monospace; font-size:.72rem; word-break:break-all; }
 
+    /* ── In-call data sharing panel ──────────────────────────────────────── */
+    #call-share-panel {
+      position:fixed; inset:0; z-index:1800; display:none;
+      align-items:flex-end; justify-content:center;
+      background:rgba(0,0,0,.65);
+    }
+    .share-body {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:16px 16px 0 0; width:100%; max-width:460px;
+      padding:1.25rem 1.25rem 2rem;
+    }
+    .share-title { font-size:.95rem; font-weight:700; margin-bottom:.2rem; }
+    .share-sub   { font-size:.78rem; color:var(--dim); margin-bottom:.9rem; }
+    .share-section-row {
+      display:flex; align-items:center; gap:.6rem;
+      padding:.55rem .65rem; border:1px solid var(--border);
+      border-radius:8px; margin-bottom:.45rem;
+    }
+    .share-section-row input[type=checkbox] { width:16px; height:16px; flex-shrink:0; }
+    .share-section-label { flex:1; font-size:.85rem; }
+    .share-actions { display:flex; gap:.65rem; margin-top:.85rem; }
+    .share-actions .btn { flex:1; margin:0; padding:.58rem; }
+
     /* ── Caller gate overlays ─────────────────────────────────────────────── */
     .gate-overlay {
       position:fixed; inset:0; z-index:2000; display:none;
@@ -899,6 +922,21 @@
   </div>
 </div>
 
+<!-- VC-11 in-call data sharing approval panel -->
+<div id="call-share-panel" style="display:none;position:fixed;inset:0;z-index:1800;
+     align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65)">
+  <div class="share-body">
+    <div class="share-title">📤 Data sharing request</div>
+    <div class="share-sub" id="share-requester">A call participant is requesting health data.</div>
+    <div id="share-sections"></div>
+    <div id="share-status" style="font-size:.75rem;color:var(--dim);margin-top:.4rem"></div>
+    <div class="share-actions">
+      <button class="btn btn-primary" onclick="_shareApprove()">Share selected</button>
+      <button class="btn btn-outline" onclick="_shareDeny()">Deny all</button>
+    </div>
+  </div>
+</div>
+
 <!-- VC-9 incoming call overlays — fixed position, above all panels -->
 <div id="gate-ring-overlay" class="gate-overlay">
   <div class="gate-card">
@@ -1374,6 +1412,93 @@ window.addEventListener('pagehide', () => {
   clearTimeout(dmsTimer);
   releaseWakeLock();
 });
+
+// ── VC-11 In-call data sharing ────────────────────────────────────────────────
+
+let _sharePending = null; // { id, sections, callSessionId }
+
+document.addEventListener('wf:data-request', (ev) => {
+  const { id, sections, callSessionId } = ev.detail;
+  _sharePending = { id, sections, callSessionId };
+
+  const container = document.getElementById('share-sections');
+  container.innerHTML = sections.map(s => {
+    const label = (typeof SECTION_LABELS !== 'undefined' && SECTION_LABELS[s]) || s;
+    return `<div class="share-section-row">
+      <input type="checkbox" id="share-sec-${s.replace(/:/g,'-')}" value="${s}" checked />
+      <span class="share-section-label">${label}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('share-status').textContent = '';
+  document.getElementById('call-share-panel').style.display = 'flex';
+});
+
+async function _shareApprove() {
+  if (!_sharePending) return;
+  const { id, sections, callSessionId } = _sharePending;
+  const st = document.getElementById('share-status');
+  st.textContent = 'Sharing…'; st.style.color = 'var(--dim)';
+
+  const approved = sections.filter(s => {
+    const el = document.getElementById('share-sec-' + s.replace(/:/g,'-'));
+    return el && el.checked;
+  });
+  if (!approved.length) { st.textContent = 'Nothing selected.'; st.style.color = 'var(--yellow)'; return; }
+
+  const sharedAt = new Date().toISOString();
+  const receipts = [];
+
+  for (const section of approved) {
+    const raw = typeof VAULT !== 'undefined' ? VAULT[section] : null;
+    const data = raw ? JSON.stringify(raw) : '{}';
+    let sig = '';
+    if (typeof vaultDidKey !== 'undefined' && vaultDidKey) {
+      const sigBytes = new Uint8Array(await crypto.subtle.sign(
+        { name: 'Ed25519' }, vaultDidKey.privateKey, new TextEncoder().encode(data)));
+      sig = toB64(sigBytes);
+    }
+    callSendData(id, section, data, sig, callSessionId);
+    receipts.push({ section, sig, sharedAt });
+  }
+
+  // Build VP receipt JSON-LD
+  const receiptJsonLd = {
+    '@context': ['https://www.w3.org/2018/credentials/v1', 'https://wellfare.social/ns/vault#'],
+    '@type': 'wf:DataSharingReceipt',
+    '@id': 'urn:uuid:' + crypto.randomUUID(),
+    'wf:callSessionId': callSessionId,
+    'wf:requestId': id,
+    'wf:issuer': typeof vaultDidKey !== 'undefined' && vaultDidKey ? vaultDidKey.did : '',
+    'wf:sharedAt': sharedAt,
+    'wf:sections': receipts,
+  };
+
+  callSendReceipt(id, JSON.stringify(receiptJsonLd), callSessionId);
+
+  // Store receipt in IDB wf-s keyed by session+request ID
+  if (typeof _dbPut === 'function' && typeof _ST_LOG !== 'undefined') {
+    try {
+      await _dbPut(_ST_LOG, {
+        id: 'receipt-' + id, type: 'data_sharing_receipt',
+        callSessionId, sharedAt, sections: approved,
+        receiptJsonLd: JSON.stringify(receiptJsonLd),
+      });
+    } catch (_) {}
+  }
+
+  st.textContent = '✓ Shared ' + approved.length + ' section(s)';
+  st.style.color = 'var(--green)';
+  setTimeout(() => {
+    document.getElementById('call-share-panel').style.display = 'none';
+    _sharePending = null;
+  }, 1200);
+}
+
+function _shareDeny() {
+  document.getElementById('call-share-panel').style.display = 'none';
+  _sharePending = null;
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {

@@ -1008,6 +1008,9 @@ async function handleMessage(msg) {
   if (['call_started','call_answered','call_ended','call_incoming'].includes(msg.type)) {
     _connHandleCallMsg(msg); return;
   }
+  if (msg.type === 'data_response' || msg.type === 'data_receipt') {
+    _connHandleDataResponse(msg); return;
+  }
   if (msg.type === 'session_info') {
     if (msg.vault_did) {
       document.getElementById('vault-did').textContent = msg.vault_did;
@@ -1397,6 +1400,11 @@ function renderCallsPanel() {
 function _connRenderActiveCall() {
   const mins = String(Math.floor(_connCallSecs / 60)).padStart(2, '0');
   const secs = String(_connCallSecs % 60).padStart(2, '0');
+  const sections = ['wf:overview','wf:medications','wf:conditions','wf:allergies'];
+  const sectionLabels = {
+    'wf:overview':'Overview','wf:medications':'Medications',
+    'wf:conditions':'Conditions','wf:allergies':'Allergies'
+  };
   renderContent(`
     <div class="content-header"><h2>Active Call</h2><p>Call in progress via vault</p></div>
     <div class="call-active">
@@ -1420,10 +1428,70 @@ function _connRenderActiveCall() {
                 onclick="_connEndCall()">End call</button>
       </div>
     </div>
+
+    <!-- VC-11 data request -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                padding:.85rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">📤 Request health data</div>
+      <div id="conn-share-picks">
+        ${sections.map(s => `
+          <label style="display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem;font-size:.82rem;cursor:pointer">
+            <input type="checkbox" value="${s}" checked /> ${sectionLabels[s]}
+          </label>`).join('')}
+      </div>
+      <button class="btn btn-ghost" style="width:auto;margin-top:.5rem;padding:.38rem .9rem;font-size:.78rem"
+              onclick="_connRequestData()">Request from vault</button>
+      <div id="conn-share-status" style="font-size:.74rem;color:var(--dim);margin-top:.35rem"></div>
+    </div>
+
+    <!-- VC-11 received data -->
+    <div id="conn-received-data"></div>
+
     <p class="ephem-notice">
-      Video stream is handled by your vault phone. This panel shows call controls only.
+      Video stream is handled by your vault phone. This panel shows call controls and data sharing.
     </p>
   `);
+}
+
+function _connRequestData() {
+  const picks = [...document.querySelectorAll('#conn-share-picks input:checked')]
+    .map(el => el.value);
+  const st = document.getElementById('conn-share-status');
+  if (!picks.length) { st.textContent = 'Select at least one section.'; return; }
+  if (!dc || dc.readyState !== 'open') { st.textContent = 'Not connected to vault.'; return; }
+  const id = 'dr-' + Date.now();
+  secureSend({ type: 'data_request', id, sections: picks,
+               callSessionId: _connCallState.sessionId });
+  st.textContent = 'Request sent — waiting for vault approval…';
+  st.style.color = 'var(--dim)';
+}
+
+function _connHandleDataResponse(msg) {
+  const container = document.getElementById('conn-received-data');
+  if (!container) return;
+  if (msg.type === 'data_receipt') {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background:var(--surface);border:1px solid var(--green);' +
+      'border-radius:8px;padding:.65rem .85rem;margin-bottom:.5rem;font-size:.78rem';
+    notice.innerHTML = `<strong style="color:var(--green)">✓ VP receipt received</strong>` +
+      `<div style="color:var(--dim);margin-top:.2rem;font-family:monospace;font-size:.68rem;word-break:break-all">` +
+      (msg.receiptJsonLd || '').slice(0, 160) + '…</div>';
+    container.prepend(notice);
+    const st = document.getElementById('conn-share-status');
+    if (st) { st.textContent = '✓ Receipt stored'; st.style.color = 'var(--green)'; }
+    return;
+  }
+  // data_response: show section
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--surface);border:1px solid var(--border);' +
+    'border-radius:8px;padding:.65rem .85rem;margin-bottom:.5rem';
+  const sectionLabel = msg.section || '—';
+  let preview = '';
+  try { const d = JSON.parse(msg.data); preview = JSON.stringify(d, null, 2).slice(0, 300); }
+  catch (_) { preview = String(msg.data || '').slice(0, 200); }
+  card.innerHTML = `<div style="font-size:.78rem;font-weight:600;margin-bottom:.3rem">${sectionLabel}</div>` +
+    `<pre style="font-size:.68rem;color:var(--dim);white-space:pre-wrap;word-break:break-all">${preview}</pre>`;
+  container.prepend(card);
 }
 
 function _connRequestCallFromVault() {

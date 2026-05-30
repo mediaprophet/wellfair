@@ -21,6 +21,7 @@ const CALL_ICE_CFG    = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 
 let _callGun       = null;
 let _callPc        = null;
+let _callDc        = null; // in-call data-sharing DataChannel
 let _callStream    = null;
 let _callSessionId = null;
 let _callGunNode   = null;
@@ -47,6 +48,10 @@ async function startCall(contactId) {
   };
 
   _callPc.ontrack = (ev) => _callRenderRemote(ev.streams[0]);
+
+  // Data-sharing channel — offer side creates it; answer side receives via ondatachannel
+  _callDc = _callPc.createDataChannel('wf-data');
+  _callSetupDc(_callDc);
 
   const offer = await _callPc.createOffer();
   await _callPc.setLocalDescription(offer);
@@ -90,6 +95,7 @@ async function answerCall(sessionId, gunNode) {
   };
 
   _callPc.ontrack = (ev) => _callRenderRemote(ev.streams[0]);
+  _callPc.ondatachannel = (ev) => { _callDc = ev.channel; _callSetupDc(_callDc); };
 
   // Wait for offer then answer
   _callGunNode.on(async (data) => {
@@ -138,6 +144,7 @@ async function endCall() {
     _callStream.getTracks().forEach(t => t.stop());
     _callStream = null;
   }
+  if (_callDc) { try { _callDc.close(); } catch (_) {} _callDc = null; }
   if (_callPc) {
     _callPc.close();
     _callPc = null;
@@ -163,6 +170,36 @@ function muteAudio(muted) {
 function muteVideo(muted) {
   if (!_callStream) return;
   _callStream.getVideoTracks().forEach(t => { t.enabled = !muted; });
+}
+
+// ── In-call data sharing (VC-11) ─────────────────────────────────────────────
+
+// Send a signed data section to the call peer over the data channel.
+function callSendData(id, section, data, sig, callSessionId) {
+  if (!_callDc || _callDc.readyState !== 'open') return;
+  _callDc.send(JSON.stringify({ type: 'data_response', id, section, data, sig, callSessionId }));
+}
+
+// Send a VP receipt to the call peer.
+function callSendReceipt(id, receiptJsonLd, callSessionId) {
+  if (!_callDc || _callDc.readyState !== 'open') return;
+  _callDc.send(JSON.stringify({ type: 'data_receipt', id, receiptJsonLd, callSessionId }));
+}
+
+// ── DataChannel setup ─────────────────────────────────────────────────────────
+
+function _callSetupDc(channel) {
+  channel.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === 'data_request') {
+        document.dispatchEvent(new CustomEvent('wf:data-request', { detail: msg }));
+      } else if (msg.type === 'data_response' || msg.type === 'data_receipt') {
+        document.dispatchEvent(new CustomEvent('wf:data-response', { detail: msg }));
+      }
+    } catch (_) {}
+  };
+  channel.onerror = (e) => console.warn('[Call] DataChannel error:', e);
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
