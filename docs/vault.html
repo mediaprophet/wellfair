@@ -313,6 +313,53 @@
     .hs-agree-key { font-size:.7rem; color:var(--dim); min-width:7rem; flex-shrink:0; }
     .hs-agree-val { font-family:monospace; font-size:.72rem; word-break:break-all; }
 
+    /* ── Queue sheet ─────────────────────────────────────────────────────── */
+    #queue-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:none; align-items:flex-end; justify-content:center;
+    }
+    .queue-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:88vh; display:flex; flex-direction:column;
+    }
+    .queue-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .queue-header h3 { font-size:.95rem; font-weight:700; }
+    .queue-scroll   { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .queue-tabs {
+      display:flex; gap:.35rem; margin-bottom:.75rem; flex-wrap:wrap;
+    }
+    .queue-tab {
+      padding:.28rem .65rem; border:1px solid var(--border); border-radius:20px;
+      font-size:.72rem; font-weight:600; cursor:pointer; background:transparent; color:var(--dim);
+    }
+    .queue-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .queue-job {
+      display:flex; align-items:flex-start; gap:.6rem;
+      padding:.55rem .65rem; border:1px solid var(--border); border-radius:8px; margin-bottom:.4rem;
+    }
+    .queue-job-icon { font-size:1rem; flex-shrink:0; margin-top:.1rem; }
+    .queue-job-body { flex:1; min-width:0; }
+    .queue-job-type { font-size:.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .queue-job-meta { font-size:.7rem; color:var(--dim); margin-top:.1rem; }
+    .queue-job-err  { font-size:.7rem; color:var(--red); margin-top:.1rem; }
+    .queue-prog { height:3px; background:var(--border); border-radius:2px; margin-top:.35rem; }
+    .queue-prog-bar { height:3px; background:var(--accent); border-radius:2px; width:0%; transition:width .3s; }
+    .queue-run-btn {
+      padding:.25rem .55rem; border:1px solid var(--border); border-radius:5px;
+      font-size:.7rem; cursor:pointer; background:transparent; color:var(--text); flex-shrink:0;
+    }
+    .queue-run-btn:hover { background:var(--bg); }
+    .queue-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+    .queue-settings { font-size:.8rem; margin-top:.5rem; }
+    .queue-settings label {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.35rem 0; border-bottom:1px solid var(--border); cursor:pointer; font-size:.82rem;
+    }
+    .queue-settings label:last-child { border-bottom:none; }
+
     /* ── In-call data sharing panel ──────────────────────────────────────── */
     #call-share-panel {
       position:fixed; inset:0; z-index:1800; display:none;
@@ -527,10 +574,20 @@
     </div>
   </div>
 
-  <!-- Contacts / Verified Directory -->
+  <!-- Contacts / Verified Directory + Queue -->
   <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
-    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
-            onclick="openDirectory()">👥 Contacts</button>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;flex:1"
+              onclick="openDirectory()">👥 Contacts</button>
+      <button class="btn btn-outline" id="queue-btn"
+              style="font-size:.78rem;padding:.3rem .8rem;flex:1;position:relative"
+              onclick="openQueue()">
+        ⏱ Queue
+        <span id="queue-badge" style="display:none;position:absolute;top:-5px;right:-5px;
+              background:var(--accent);color:#fff;border-radius:10px;font-size:.6rem;
+              padding:1px 5px;font-weight:700"></span>
+      </button>
+    </div>
   </div>
 
   <!-- Sanctuary mode -->
@@ -618,6 +675,49 @@
       <button class="btn btn-primary" style="width:100%;margin-top:.75rem;font-size:.82rem"
               onclick="saveMedication()">Save medication</button>
       <div id="med-save-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Queue sheet -->
+<div id="queue-sheet" onclick="if(event.target===this)closeQueue()">
+  <div class="queue-body">
+    <div class="queue-header">
+      <h3>⏱ Job Queue</h3>
+      <div style="display:flex;gap:.45rem;align-items:center">
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_queueRunAll()">▶ Run all</button>
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="closeQueue()">Close</button>
+      </div>
+    </div>
+    <div class="queue-scroll">
+      <!-- Filter tabs -->
+      <div class="queue-tabs" id="queue-tabs">
+        <button class="queue-tab active" data-filter="all"     onclick="_queueSetFilter('all')">All</button>
+        <button class="queue-tab"        data-filter="pending" onclick="_queueSetFilter('pending')">Pending</button>
+        <button class="queue-tab"        data-filter="running" onclick="_queueSetFilter('running')">Running</button>
+        <button class="queue-tab"        data-filter="done"    onclick="_queueSetFilter('done')">Done</button>
+        <button class="queue-tab"        data-filter="failed"  onclick="_queueSetFilter('failed')">Failed</button>
+      </div>
+      <!-- Job list -->
+      <div id="queue-job-list"></div>
+      <!-- Scheduler settings -->
+      <details style="margin-top:1rem">
+        <summary style="font-size:.78rem;font-weight:600;cursor:pointer;color:var(--dim)">
+          Scheduler settings
+        </summary>
+        <div class="queue-settings" style="margin-top:.5rem">
+          <label><input type="checkbox" id="sched-idle"     checked onchange="_schedUpdateSettings()" />
+            Run when idle (screen hidden)</label>
+          <label><input type="checkbox" id="sched-charging" checked onchange="_schedUpdateSettings()" />
+            Run when charging (or 00:00–06:00)</label>
+          <label><input type="checkbox" id="sched-desktop"  checked onchange="_schedUpdateSettings()" />
+            Offload to desktop when connected</label>
+        </div>
+      </details>
     </div>
   </div>
 </div>
@@ -1091,7 +1191,8 @@ function lockVault() {
    'anon-notify-panel','dir-panel','sanctuary-panel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-  document.getElementById('dir-sheet').style.display = 'none';
+  document.getElementById('dir-sheet').style.display   = 'none';
+  document.getElementById('queue-sheet').style.display = 'none';
   initDirectory(null);
   duressModeActive = false;
   document.body.classList.remove('sanctuary-active');
@@ -1415,6 +1516,99 @@ function _hsCopyPayload(inputId) {
 window.addEventListener('pagehide', () => {
   clearTimeout(dmsTimer);
   releaseWakeLock();
+});
+
+// ── VC-12b Queue UI ──────────────────────────────────────────────────────────
+
+let _queueFilter = 'all';
+
+function openQueue() {
+  document.getElementById('queue-sheet').style.display = 'flex';
+  _queueRender();
+}
+
+function closeQueue() {
+  document.getElementById('queue-sheet').style.display = 'none';
+}
+
+function _queueSetFilter(f) {
+  _queueFilter = f;
+  document.querySelectorAll('.queue-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.filter === f));
+  _queueRender();
+}
+
+async function _queueRender() {
+  const list = document.getElementById('queue-job-list');
+  if (!list) return;
+  let jobs = [];
+  try { jobs = await getJobList(); } catch (_) {}
+  jobs.sort((a, b) => (b.priority - a.priority) || (a.created_at < b.created_at ? -1 : 1));
+
+  const filtered = _queueFilter === 'all' ? jobs : jobs.filter(j => j.status === _queueFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="queue-empty">No ${_queueFilter === 'all' ? '' : _queueFilter + ' '}jobs.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(j => {
+    const icon = j.status === 'done'    ? '✅' :
+                 j.status === 'failed'  ? '❌' :
+                 j.status === 'running' ? '🔄' :
+                 j.status === 'cancelled'? '🚫' : '⏳';
+    const est = j.estimated_ms ? `~${(j.estimated_ms/1000).toFixed(1)}s` : '';
+    const retries = j.retry_count > 0 ? ` · retry ${j.retry_count}` : '';
+    const created = j.created_at ? new Date(j.created_at).toLocaleTimeString() : '';
+    return `
+      <div class="queue-job" id="qj-${j.id}">
+        <div class="queue-job-icon">${icon}</div>
+        <div class="queue-job-body">
+          <div class="queue-job-type">${j.type}</div>
+          <div class="queue-job-meta">${created}${est ? ' · ' + est : ''}${retries}</div>
+          ${j.error ? `<div class="queue-job-err">${j.error}</div>` : ''}
+          <div class="queue-prog"><div class="queue-prog-bar" id="qpb-${j.id}" style="width:0%"></div></div>
+        </div>
+        ${j.status === 'pending' || j.status === 'failed' ? `
+          <button class="queue-run-btn" onclick="runJobNow('${j.id}').then(()=>_queueRender())">▶</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function _queueRunAll() {
+  const jobs = await getJobList();
+  const pending = jobs.filter(j => j.status === 'pending');
+  for (const j of pending) await runJobNow(j.id);
+  _queueRender();
+}
+
+function _schedUpdateSettings() {
+  // Settings are read live in _checkConditions via the checkboxes.
+  // (Override the condition check to respect UI toggles.)
+}
+
+function _queueUpdateBadge() {
+  getJobList().then(jobs => {
+    const pending = jobs.filter(j => j.status === 'pending' || j.status === 'running').length;
+    const badge = document.getElementById('queue-badge');
+    if (!badge) return;
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline'; }
+    else              badge.style.display = 'none';
+  }).catch(() => {});
+}
+
+// Refresh queue panel on job events
+document.addEventListener('wf:job-enqueued', () => {
+  _queueUpdateBadge();
+  if (document.getElementById('queue-sheet').style.display === 'flex') _queueRender();
+});
+document.addEventListener('wf:job-updated', (ev) => {
+  _queueUpdateBadge();
+  if (document.getElementById('queue-sheet').style.display === 'flex') _queueRender();
+});
+document.addEventListener('wf:job-progress', (ev) => {
+  const bar = document.getElementById('qpb-' + ev.detail.id);
+  if (bar) bar.style.width = (ev.detail.pct || 0) + '%';
 });
 
 // ── VC-11 In-call data sharing ────────────────────────────────────────────────

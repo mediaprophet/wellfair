@@ -1011,6 +1011,7 @@ async function handleMessage(msg) {
   if (msg.type === 'data_response' || msg.type === 'data_receipt') {
     _connHandleDataResponse(msg); return;
   }
+  if (msg.type === 'job_offload') { _connHandleJobOffload(msg); return; }
   if (msg.type === 'session_info') {
     if (msg.vault_did) {
       document.getElementById('vault-did').textContent = msg.vault_did;
@@ -1567,6 +1568,46 @@ function _connHandleCallMsg(msg) {
       msg.callerDid ? msg.callerDid.slice(0, 36) + '…' : 'Unknown caller';
     document.getElementById('conn-call-notif').style.display = 'block';
   }
+}
+
+// ── VC-12 Desktop job offload ─────────────────────────────────────────────────
+
+async function _connHandleJobOffload(msg) {
+  const { job_id, job_type, payload } = msg;
+  let parsedPayload;
+  try { parsedPayload = JSON.parse(payload); } catch (_) { parsedPayload = payload; }
+
+  // Send progress heartbeat immediately
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 0, eta_ms: null });
+
+  try {
+    let result = null;
+
+    // Built-in handler stubs — expand as job types are registered
+    if (job_type === 'transcript.generate' || job_type === 'transcript.annotate') {
+      result = await _connRunTranscriptJob(job_type, parsedPayload, job_id);
+    } else {
+      // Unknown type — complete with empty result so vault doesn't hang
+      result = { skipped: true, reason: 'No desktop handler for ' + job_type };
+    }
+
+    if (dc && dc.readyState === 'open')
+      secureSend({ type: 'job_result', job_id, result });
+  } catch (e) {
+    if (dc && dc.readyState === 'open')
+      secureSend({ type: 'job_error', job_id, error: e.message });
+  }
+}
+
+async function _connRunTranscriptJob(type, payload, job_id) {
+  // Placeholder — real implementation comes in VC-13b
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 50, eta_ms: 500 });
+  await new Promise(r => setTimeout(r, 100));
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 100, eta_ms: 0 });
+  return { type, done: true };
 }
 
 // ── Section renderers — add owner-mode extra sections ─────────────────────────
