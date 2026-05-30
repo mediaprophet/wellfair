@@ -34,6 +34,7 @@ async function initNym() {
 }
 
 const nymAdapter = {
+  isActive() { return nymClient !== null; },
   async send(recipientAddress, payload) {
     if (!nymClient) throw new Error('Nym not initialised');
     const json = JSON.stringify(payload);

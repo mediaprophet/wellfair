@@ -45,6 +45,7 @@ async function dlAddEntry(fields) {
     sugar_g:    fields.sugar_g   != null ? _num(fields.sugar_g,  0) : null,
     sodium_mg:  fields.sodium_mg != null ? _num(fields.sodium_mg,0) : null,
     notes:      (fields.notes || '').trim(),
+    source:     fields.source     || 'manual',
     created_at: new Date().toISOString(),
   };
   await _dbPut(_ST_DIET_LOG, record);

@@ -701,6 +701,18 @@
       <div id="diet-add-form" style="display:none;border-top:1px solid var(--border);padding-top:.85rem;margin-top:.5rem">
         <p style="font-size:.82rem;font-weight:700;margin-bottom:.65rem">Add food entry</p>
 
+        <!-- Barcode scanner -->
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+          <button type="button" class="btn btn-outline"
+                  style="font-size:.78rem;padding:.25rem .65rem"
+                  onclick="_dlStartScan()">📷 Scan barcode</button>
+          <span id="dl-scan-status" style="font-size:.75rem;color:var(--dim)"></span>
+        </div>
+        <video id="dl-scan-video" autoplay playsinline muted
+               style="display:none;width:100%;max-height:200px;border-radius:8px;
+                      background:#000;margin-bottom:.5rem;object-fit:cover"></video>
+        <input type="hidden" id="dl-source" value="manual">
+
         <label class="diet-form-label">
           <span>Food name *</span>
           <input id="dl-name" class="diet-input" type="text" placeholder="e.g. Oatmeal" autocomplete="off">
@@ -1302,7 +1314,7 @@
 <script src="js/vault-idb.js?v=6"></script>
 <script src="js/vault-crypto.js?v=6"></script>
 <script src="js/vault-did.js?v=6"></script>
-<script src="js/vault-nym.js?v=6"></script>
+<script src="js/vault-nym.js?v=7"></script>
 <script src="js/vault-mock.js?v=6"></script>
 <!-- VC-7 Verified Directory — must load after vault-crypto (needs _sEnc/_sDec) -->
 <script src="js/vault-directory.js?v=6"></script>
@@ -1330,8 +1342,9 @@
 <script src="js/vault-meds-reminders.js?v=6"></script>
 <script src="js/vault-meds-lod.js?v=6"></script>
 <script src="js/vault-meds-manager.js?v=6"></script>
-<!-- Medication Sprint 6 — diet log -->
-<script src="js/vault-diet.js?v=6"></script>
+<!-- Medication Sprint 6 — diet log + DL-1 barcode scanning -->
+<script src="js/vault-diet.js?v=7"></script>
+<script src="js/vault-diet-barcode.js?v=7"></script>
 <script>
 'use strict';
 
@@ -2028,16 +2041,25 @@ function _dlNavDate(delta) {
   _dlRenderDay();
 }
 
+let _dlScanStop = null; // stopFn returned by dlStartBarcodeScanner
+
 function _dlShowAddForm() {
   const now = new Date();
   document.getElementById('dl-time').value =
     `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   document.getElementById('dl-save-status').textContent = '';
+  const scanSt = document.getElementById('dl-scan-status');
+  if (scanSt) scanSt.textContent = '';
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = 'manual';
   document.getElementById('diet-add-form').style.display = 'block';
   document.getElementById('diet-scroll').scrollTo({ top: 9999, behavior: 'smooth' });
 }
 
 function _dlHideAddForm() {
+  if (_dlScanStop) { _dlScanStop(); _dlScanStop = null; }
+  const scanSt = document.getElementById('dl-scan-status');
+  if (scanSt) scanSt.textContent = '';
   document.getElementById('diet-add-form').style.display = 'none';
   ['dl-name','dl-brand','dl-notes'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
@@ -2046,6 +2068,8 @@ function _dlHideAddForm() {
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('dl-qty').value = '1';
   document.getElementById('dl-optional').style.display = 'none';
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = 'manual';
 }
 
 function _dlToggleOptional(btn) {
@@ -2053,6 +2077,76 @@ function _dlToggleOptional(btn) {
   const open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
   btn.textContent  = open ? '▸ Optional fields' : '▾ Optional fields';
+}
+
+async function _dlStartScan() {
+  const statusEl = document.getElementById('dl-scan-status');
+  const videoEl  = document.getElementById('dl-scan-video');
+  if (!statusEl || !videoEl) return;
+
+  // Cancel any in-progress scan first
+  if (_dlScanStop) { _dlScanStop(); _dlScanStop = null; }
+
+  statusEl.textContent = 'Point at barcode — scanning…';
+  statusEl.style.color = 'var(--dim)';
+
+  try {
+    _dlScanStop = await dlStartBarcodeScanner(videoEl, async (barcode) => {
+      _dlScanStop = null;
+      statusEl.textContent = 'Looking up product…';
+      statusEl.style.color = 'var(--dim)';
+
+      const result = await dlLookupBarcode(barcode);
+      if (result.found) {
+        _dlFillFromScan(result.fields);
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = 'Found: ' + (result.fields.name || barcode);
+      } else {
+        statusEl.style.color = 'var(--yellow)';
+        statusEl.textContent = 'Product not found — enter manually';
+        const srcEl = document.getElementById('dl-source');
+        if (srcEl) srcEl.value = 'manual';
+      }
+    });
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = e.message;
+    _dlScanStop = null;
+  }
+}
+
+function _dlFillFromScan(fields) {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val != null && val !== '') el.value = val;
+  };
+  set('dl-name',    fields.name);
+  set('dl-brand',   fields.brand);
+  set('dl-qty',     fields.quantity);
+  set('dl-kcal',    fields.kcal);
+  set('dl-protein', fields.protein_g);
+  set('dl-carbs',   fields.carbs_g);
+  set('dl-fat',     fields.fat_g);
+  set('dl-fiber',   fields.fiber_g);
+  set('dl-sugar',   fields.sugar_g);
+  set('dl-sodium',  fields.sodium_mg);
+  set('dl-notes',   fields.notes);
+
+  const unitEl = document.getElementById('dl-unit');
+  if (unitEl && fields.unit) unitEl.value = fields.unit;
+
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = fields.source || 'barcode';
+
+  // Auto-expand optional fields when scan returned data for them
+  if (fields.brand || fields.fiber_g != null || fields.sugar_g != null || fields.sodium_mg != null) {
+    const opt = document.getElementById('dl-optional');
+    const btn = document.querySelector('.diet-optional-toggle');
+    if (opt && opt.style.display === 'none') {
+      opt.style.display = 'block';
+      if (btn) btn.textContent = '▾ Optional fields';
+    }
+  }
 }
 
 async function _dlSave() {
@@ -2077,6 +2171,7 @@ async function _dlSave() {
       sugar_g:    document.getElementById('dl-sugar')?.value  || null,
       sodium_mg:  document.getElementById('dl-sodium')?.value || null,
       notes:      document.getElementById('dl-notes')?.value,
+      source:     document.getElementById('dl-source')?.value || 'manual',
     });
     status.style.color = 'var(--green)';
     status.textContent = '✓ Saved';
