@@ -27,7 +27,28 @@ wf:bloodPressure     a rdf:Property ; rdfs:label "Blood pressure"@en .
 wf:sleep             a rdf:Property ; rdfs:label "Sleep"@en .
 wf:steps             a rdf:Property ; rdfs:label "Activity & steps"@en .
 wf:weight            a rdf:Property ; rdfs:label "Weight"@en .
-wf:medications       a rdf:Property ; rdfs:label "Current medications"@en .
+wf:medications          a rdf:Property ; rdfs:label "Current medications"@en .
+wf:medicationAdherence  a rdf:Property ; rdfs:label "Medication adherence log"@en ;
+    rdfs:comment "Daily take/skip log. Clinical profiles only — not shared with emergency responders."@en .
+wf:medicationHistory    a rdf:Property ; rdfs:label "Ceased / historical medications"@en .
+wf:medicationInteractions a rdf:Property ; rdfs:label "Drug interaction alerts"@en ;
+    rdfs:comment "Interaction alerts derived from current medication list and substance logs."@en .
+
+# Pharmacological linked-data vocabulary (SPARQL endpoint references)
+@prefix rxnorm: <http://purl.bioontology.org/ontology/RXNORM/> .
+@prefix atc:    <http://purl.bioontology.org/ontology/ATC/> .
+@prefix chembl: <http://rdf.ebi.ac.uk/terms/chembl#> .
+@prefix wd:     <http://www.wikidata.org/entity/> .
+@prefix wdt:    <http://www.wikidata.org/prop/direct/> .
+
+wf:rxcui          a rdf:Property ; rdfs:label "RxNorm CUI"@en ; rdfs:range xsd:string .
+wf:atcCode        a rdf:Property ; rdfs:label "ATC classification code"@en ; rdfs:range xsd:string .
+wf:linkedDataUri  a rdf:Property ; rdfs:label "Canonical linked-data URI for this substance"@en ;
+    rdfs:range xsd:anyURI ;
+    rdfs:comment "Wikidata or ChEMBL entity URI — enables pharmacological SPARQL queries without transmitting personal data."@en .
+wf:scheduleTimes  a rdf:Property ; rdfs:label "Scheduled dose times (HH:MM, local)"@en .
+wf:adherenceStatus a rdf:Property ; rdfs:label "Adherence status for a logged dose"@en ;
+    rdfs:comment "One of: taken | skipped | late | unknown."@en .
 wf:allergies         a rdf:Property ; rdfs:label "Allergies & adverse reactions"@en .
 wf:conditions        a rdf:Property ; rdfs:label "Medical conditions"@en .
 wf:bloodType         a rdf:Property ; rdfs:label "Blood type & Rh factor"@en .
@@ -148,26 +169,29 @@ wf:OwnerWorkspaceProfile
     wf:accessMode         wf:ReadWrite ;
     wf:requiresAudit      false ;
     # All data paths available to the owner
-    sh:property [ sh:path wf:overview          ] ;
-    sh:property [ sh:path wf:heartRate         ] ;
-    sh:property [ sh:path wf:bloodPressure     ] ;
-    sh:property [ sh:path wf:sleep             ] ;
-    sh:property [ sh:path wf:steps             ] ;
-    sh:property [ sh:path wf:weight            ] ;
-    sh:property [ sh:path wf:medications       ] ;
-    sh:property [ sh:path wf:allergies         ] ;
-    sh:property [ sh:path wf:conditions        ] ;
-    sh:property [ sh:path wf:bloodType         ] ;
-    sh:property [ sh:path wf:dnr               ] ;
-    sh:property [ sh:path wf:emergencyContacts ] ;
-    sh:property [ sh:path wf:surgicalHistory   ] ;
-    sh:property [ sh:path wf:mentalHealth      ] ;
-    sh:property [ sh:path wf:sexualHealth      ] ;
-    sh:property [ sh:path wf:socialContext     ] ;
-    sh:property [ sh:path wf:documents         ] ;
-    sh:property [ sh:path wf:notes             ] ;
-    sh:property [ sh:path wf:auditLog          ] ;
-    sh:property [ sh:path wf:vaultSettings     ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:steps                  ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:bloodType              ] ;
+    sh:property [ sh:path wf:dnr                    ] ;
+    sh:property [ sh:path wf:emergencyContacts      ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] ;
+    sh:property [ sh:path wf:mentalHealth           ] ;
+    sh:property [ sh:path wf:sexualHealth           ] ;
+    sh:property [ sh:path wf:socialContext          ] ;
+    sh:property [ sh:path wf:documents              ] ;
+    sh:property [ sh:path wf:notes                  ] ;
+    sh:property [ sh:path wf:auditLog               ] ;
+    sh:property [ sh:path wf:vaultSettings          ] .
 
 
 # ── Emergency / First Responder ───────────────────────────────────────────────
@@ -224,15 +248,18 @@ wf:GeneralPractitionerProfile
     wf:uiIcon       "👨‍⚕️" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:ClinicalProfessionalVC ;
-    sh:property [ sh:path wf:overview      ] ;
-    sh:property [ sh:path wf:heartRate     ] ;
-    sh:property [ sh:path wf:bloodPressure ] ;
-    sh:property [ sh:path wf:sleep         ] ;
-    sh:property [ sh:path wf:steps         ] ;
-    sh:property [ sh:path wf:weight        ] ;
-    sh:property [ sh:path wf:medications   ] ;
-    sh:property [ sh:path wf:allergies     ] ;
-    sh:property [ sh:path wf:conditions    ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:steps                  ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] .
 
 
 # ── Specialist ────────────────────────────────────────────────────────────────
@@ -245,13 +272,16 @@ wf:SpecialistProfile
     wf:uiIcon       "🔬" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:ClinicalProfessionalVC ;
-    sh:property [ sh:path wf:overview        ] ;
-    sh:property [ sh:path wf:heartRate       ] ;
-    sh:property [ sh:path wf:bloodPressure   ] ;
-    sh:property [ sh:path wf:medications     ] ;
-    sh:property [ sh:path wf:allergies       ] ;
-    sh:property [ sh:path wf:conditions      ] ;
-    sh:property [ sh:path wf:surgicalHistory ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] .
 
 
 # ── Psychiatrist / Mental Health Clinician ────────────────────────────────────
@@ -264,10 +294,12 @@ wf:PsychiatristProfile
     wf:uiIcon       "🧠" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:MentalHealthPractitionerVC ;
-    sh:property [ sh:path wf:overview      ] ;
-    sh:property [ sh:path wf:mentalHealth  ] ;
-    sh:property [ sh:path wf:sleep         ] ;
-    sh:property [ sh:path wf:medications   ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:mentalHealth           ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationInteractions ] .
 
 
 # ── Social Worker ─────────────────────────────────────────────────────────────

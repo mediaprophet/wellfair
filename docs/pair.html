@@ -304,6 +304,101 @@
       border: 1px solid #252545; background: #141424; color: #a78bfa; }
     .btn-ots:hover { border-color: #7c3aed; }
     .btn-ots:disabled { opacity: .5; cursor: default; }
+
+    /* ── Medication reminder panel ──────────────────────────────────────── */
+    .med-panel-header {
+      display:flex; align-items:center; gap:.45rem; font-size:.82rem; font-weight:600;
+      cursor:pointer; padding:.45rem 0; border-top:1px solid var(--border);
+      user-select:none;
+    }
+    .med-badge {
+      font-size:.68rem; font-weight:700; padding:.12rem .4rem;
+      border-radius:10px; background:transparent;
+    }
+    .med-badge.overdue { background:rgba(248,81,73,.15); color:var(--red); }
+    .med-badge.due     { background:rgba(210,153,34,.15); color:var(--yellow); }
+    .med-dose-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem .55rem; border-radius:8px; margin-bottom:.32rem;
+      background:rgba(255,255,255,.03); border:1px solid var(--border); gap:.5rem;
+    }
+    .med-dose-row.overdue { border-color:rgba(248,81,73,.4); background:rgba(248,81,73,.06); }
+    .med-dose-row.taken   { opacity:.55; }
+    .med-info { display:flex; flex-direction:column; gap:.08rem; flex:1; min-width:0; }
+    .med-name   { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .med-detail { font-size:.73rem; color:var(--dim); }
+    .med-indication { font-size:.7rem; color:var(--dim); font-style:italic; }
+    .med-actions { display:flex; flex-direction:column; gap:.22rem; align-items:flex-end; flex-shrink:0; }
+    .med-status     { font-size:.72rem; font-weight:600; }
+    .med-status.ok  { color:var(--green); }
+    .btn-take {
+      background:var(--green); color:#000; border:none; border-radius:5px;
+      padding:.22rem .6rem; font-size:.73rem; font-weight:700; cursor:pointer; white-space:nowrap;
+    }
+    .btn-take:hover { opacity:.85; }
+    .btn-skip {
+      background:transparent; color:var(--dim); border:1px solid var(--border);
+      border-radius:5px; padding:.18rem .45rem; font-size:.71rem; cursor:pointer;
+    }
+    .btn-skip:hover { color:var(--text); }
+    /* Medication manager bottom sheet */
+    #med-manager-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .med-manager-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:88vh; overflow-y:auto;
+      padding:1.1rem 1rem 2.5rem;
+    }
+    .med-manager-body h3 { font-size:.95rem; margin-bottom:.65rem; }
+    .med-list-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem .55rem; border-radius:8px; border:1px solid var(--border);
+      margin-bottom:.35rem; background:rgba(255,255,255,.02);
+    }
+    .med-list-item.ceased { opacity:.45; }
+    .med-list-meta { font-size:.74rem; color:var(--dim); margin-top:.08rem; }
+    .med-form-label {
+      display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem;
+    }
+    .med-form-label span { display:block; margin-bottom:.2rem; }
+    .med-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.28rem .45rem; font-size:.78rem;
+      font-family:inherit;
+    }
+    .med-input:focus { outline:none; border-color:var(--accent); }
+    .med-row { display:flex; gap:.45rem; }
+    .med-row > label { flex:1; }
+    .med-section-label {
+      font-size:.72rem; font-weight:600; color:var(--dim); text-transform:uppercase;
+      letter-spacing:.05em; margin:.6rem 0 .35rem;
+    }
+    /* LOD autocomplete */
+    .med-autocomplete {
+      position:absolute; top:100%; left:0; right:0; z-index:200;
+      background:var(--surface); border:1px solid var(--border); border-top:none;
+      border-radius:0 0 6px 6px; max-height:220px; overflow-y:auto;
+    }
+    .med-autocomplete-item {
+      padding:.45rem .6rem; cursor:pointer; border-bottom:1px solid var(--border);
+      display:flex; align-items:baseline; gap:.25rem;
+    }
+    .med-autocomplete-item:last-child { border-bottom:none; }
+    .med-autocomplete-item:hover { background:rgba(88,166,255,.08); }
+    .med-lod-info {
+      font-size:.71rem; color:var(--accent); margin-top:.2rem; line-height:1.4;
+      display:none;
+    }
+    /* Interaction alerts */
+    .interaction-alert {
+      padding:.5rem .55rem; border-radius:8px; margin-bottom:.3rem;
+      border:1px solid var(--border); background:rgba(255,255,255,.02);
+    }
+    .interaction-alert.severe   { border-color:rgba(248,81,73,.4);  background:rgba(248,81,73,.06); }
+    .interaction-alert.moderate { border-color:rgba(210,153,34,.35); background:rgba(210,153,34,.05); }
+    .interaction-alert.mild     { border-color:rgba(139,148,158,.35); }
   </style>
 </head>
 <body>
@@ -412,6 +507,12 @@
 
 <!-- Step 4: Serving -->
 <div class="card" id="step-serving">
+  <!-- Demo mode banner — hidden unless ?demo param present -->
+  <div id="demo-banner" style="display:none;background:rgba(88,166,255,.1);
+       border:1px solid rgba(88,166,255,.3);border-radius:6px;padding:.35rem .65rem;
+       margin-bottom:.6rem;font-size:.74rem;color:#58a6ff;text-align:center">
+    ⚡ Demo mode — sample data only, nothing is saved to any vault
+  </div>
   <div class="session-meta">
     <span class="sid" id="serve-sid"></span>
     <span id="serve-timer">00:00</span>
@@ -518,6 +619,134 @@
     <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;
             border-color:#7c3aed;color:#7c3aed"
             onclick="enterSanctuaryPinStep()">⚫ Sanctuary Mode</button>
+  </div>
+
+  <!-- Drug interaction alerts — owner mode only -->
+  <div id="med-interaction-panel" style="display:none;margin-top:.5rem">
+    <div class="med-panel-header" id="interaction-panel-btn" onclick="toggleInteractionPanel()">
+      <span>⚠ Drug interactions</span>
+      <span class="med-badge" id="interaction-badge"></span>
+      <span style="margin-left:auto;color:var(--dim);font-size:.8rem" id="interaction-chevron">▸</span>
+    </div>
+    <div id="interaction-body" style="margin-top:.4rem;display:none">
+      <div id="interaction-list">
+        <p style="font-size:.78rem;color:var(--dim);text-align:center;padding:.4rem 0">Checking…</p>
+      </div>
+      <p style="font-size:.68rem;color:var(--dim);margin-top:.4rem;line-height:1.4">
+        Drug-drug: RxNorm · Substance: curated dataset. Always consult your prescriber.
+      </p>
+    </div>
+  </div>
+
+  <!-- Medication reminders — owner mode only -->
+  <div id="med-reminder-panel" style="display:none;margin-top:.5rem">
+    <div class="med-panel-header" id="med-panel-btn" onclick="toggleMedPanel()">
+      <span>💊 Medications today</span>
+      <span class="med-badge" id="med-panel-badge"></span>
+      <span style="margin-left:auto;color:var(--dim);font-size:.8rem" id="med-panel-chevron">▾</span>
+    </div>
+    <div id="med-today-body" style="margin-top:.4rem">
+      <div id="med-dose-list">
+        <p style="font-size:.78rem;color:var(--dim);text-align:center;padding:.6rem 0">Loading…</p>
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-top:.45rem;font-size:.76rem;padding:.3rem .8rem"
+              onclick="openMedManager()">Manage medications…</button>
+    </div>
+  </div>
+</div>
+
+<!-- Medication manager — bottom sheet (owner mode) -->
+<div id="med-manager-sheet" style="display:none" onclick="if(event.target===this)closeMedManager()">
+  <div class="med-manager-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <h3>💊 Medication Management</h3>
+      <button class="btn btn-outline" style="padding:.25rem .65rem;font-size:.78rem"
+              onclick="closeMedManager()">Close</button>
+    </div>
+
+    <div id="med-manager-list" style="margin-bottom:1rem">
+      <p style="font-size:.78rem;color:var(--dim)">Loading…</p>
+    </div>
+
+    <!-- Add medication form -->
+    <div style="border-top:1px solid var(--border);padding-top:.85rem">
+      <p style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">Add medication</p>
+
+      <label class="med-form-label">
+        <span>Drug name *</span>
+        <div style="position:relative">
+          <input type="text" id="med-add-name" class="med-input" placeholder="e.g. Atorvastatin"
+                 autocomplete="off" oninput="_medNameInput(event)"
+                 onfocus="if(this.value.length>=3)_medNameInput({target:this})"
+                 onblur="setTimeout(()=>{const s=document.getElementById('med-name-suggestions');if(s)s.style.display='none'},200)" />
+          <div id="med-name-suggestions" class="med-autocomplete" style="display:none"></div>
+        </div>
+        <div id="med-lod-info" class="med-lod-info"></div>
+      </label>
+
+      <div class="med-row">
+        <label class="med-form-label">
+          <span>Dose *</span>
+          <input type="number" id="med-add-dose" class="med-input" placeholder="e.g. 20" min="0" step="any" />
+        </label>
+        <label class="med-form-label">
+          <span>Unit</span>
+          <select id="med-add-unit" class="med-input">
+            <option value="mg">mg</option>
+            <option value="mcg">mcg</option>
+            <option value="g">g</option>
+            <option value="IU">IU</option>
+            <option value="mL">mL</option>
+            <option value="units">units</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="med-form-label">
+        <span>Route</span>
+        <select id="med-add-route" class="med-input">
+          <option value="oral">Oral (swallowed)</option>
+          <option value="sublingual">Sublingual (under tongue)</option>
+          <option value="inhaled">Inhaled</option>
+          <option value="topical">Topical (skin)</option>
+          <option value="injected">Injected / IV</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+
+      <label class="med-form-label">
+        <span>Frequency</span>
+        <select id="med-add-freq" class="med-input" onchange="_updateScheduleInputs()">
+          <option value="once_daily">Once daily</option>
+          <option value="twice_daily">Twice daily</option>
+          <option value="three_daily">Three times daily</option>
+          <option value="four_daily">Four times daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="as_needed">As needed (PRN)</option>
+        </select>
+      </label>
+
+      <div id="med-schedule-times" style="margin-bottom:.35rem"></div>
+
+      <label class="med-form-label">
+        <span>Reason / indication</span>
+        <input type="text" id="med-add-indication" class="med-input" placeholder="e.g. Cholesterol" />
+      </label>
+
+      <label class="med-form-label">
+        <span>Prescriber (optional)</span>
+        <input type="text" id="med-add-prescriber" class="med-input" placeholder="e.g. Dr Smith" />
+      </label>
+
+      <label class="med-form-label">
+        <span>Start date</span>
+        <input type="date" id="med-add-start" class="med-input" />
+      </label>
+
+      <button class="btn btn-primary" style="width:100%;margin-top:.75rem;font-size:.82rem"
+              onclick="saveMedication()">Save medication</button>
+      <div id="med-save-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
   </div>
 </div>
 
@@ -1076,9 +1305,33 @@ const VAULT = {
 
   medications:       () => ({
     items: [
-      { name: 'Lisinopril',    dose: '10mg',  frequency: 'Once daily',  purpose: 'Blood pressure' },
-      { name: 'Metformin',     dose: '500mg', frequency: 'Twice daily', purpose: 'Blood glucose' },
-      { name: 'Vitamin D3',    dose: '1000IU',frequency: 'Once daily',  purpose: 'Supplement' }
+      {
+        id: 'med-001', name: 'Lisinopril', genericName: 'Lisinopril',
+        rxcui: '29046', atcCode: 'C09AA03',
+        linkedDataUri: 'http://www.wikidata.org/entity/Q422068',
+        dose: '10', unit: 'mg', route: 'oral',
+        frequency: 'once_daily', scheduleTimes: ['08:00'],
+        indication: 'Blood pressure', prescriber: 'Dr Sarah Chen',
+        startDate: '2019-01-15', endDate: null, status: 'active'
+      },
+      {
+        id: 'med-002', name: 'Metformin', genericName: 'Metformin hydrochloride',
+        rxcui: '860975', atcCode: 'A10BA02',
+        linkedDataUri: 'http://www.wikidata.org/entity/Q190814',
+        dose: '500', unit: 'mg', route: 'oral',
+        frequency: 'twice_daily', scheduleTimes: ['08:00', '20:00'],
+        indication: 'Blood glucose', prescriber: 'Dr Sarah Chen',
+        startDate: '2021-06-03', endDate: null, status: 'active'
+      },
+      {
+        id: 'med-003', name: 'Vitamin D3', genericName: 'Colecalciferol',
+        rxcui: '2200687', atcCode: 'A11CC05',
+        linkedDataUri: 'http://www.wikidata.org/entity/Q185833',
+        dose: '1000', unit: 'IU', route: 'oral',
+        frequency: 'once_daily', scheduleTimes: ['08:00'],
+        indication: 'Supplement', prescriber: null,
+        startDate: '2023-01-01', endDate: null, status: 'active'
+      }
     ]
   }),
 
@@ -1161,8 +1414,11 @@ const SECTION_LABELS = {
   sleep:              'Sleep',
   steps:              'Activity & steps',
   weight:             'Weight',
-  medications:        'Current medications',
-  allergies:          'Allergies & reactions',
+  medications:              'Current medications',
+  medication_adherence:     'Medication adherence log',
+  medication_history:       'Ceased / historical medications',
+  medication_interactions:  'Drug interaction alerts',
+  allergies:                'Allergies & reactions',
   conditions:         'Medical conditions',
   blood_type:         'Blood type',
   dnr:                'Advance directives / DNR',
@@ -1372,6 +1628,9 @@ function approveOwnerSession() {
   if (!duressModeActive) {
     document.getElementById('sanctuary-panel').style.display = 'block';
   }
+  document.getElementById('med-interaction-panel').style.display = 'block';
+  document.getElementById('med-reminder-panel').style.display    = 'block';
+  initMedReminders();
 
   const bar = document.getElementById('active-profile-bar');
   bar.style.background = activeProfile.color;
@@ -1588,6 +1847,11 @@ const _ST_LOG        = 'wf-s';    // sanctuary entry log (obfuscated store name)
 const _ST_CFG        = 'wf-sc';   // sanctuary config / canaries (obfuscated)
 const _S_CANARY_OK   = 'wf-sanctuary-ok';
 const _D_CANARY_OK   = 'wf-duress-ok';
+// Medication stores (content AES-GCM encrypted; store names kept generic)
+const _ST_MEDS       = 'wf-meds';  // active + ceased medication records
+const _ST_MED_LOG    = 'wf-ml';    // adherence log entries
+const _ST_PHARMA     = 'wf-pc';    // pharmacological LOD cache (7-day TTL, public data only)
+const _ST_DIET_LOG   = 'wf-dl';    // diet / substance log (Sprint 6)
 
 let sanctuaryKey    = null;   // AES-GCM key derived from sanctuary PIN
 let sanctuaryActive = false;
@@ -1625,11 +1889,15 @@ async function computeCommitment(entryBytes) {
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 2);
+    const rq = indexedDB.open(_DB_NAME, 3);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
-      if (!db.objectStoreNames.contains(_ST_LOG)) db.createObjectStore(_ST_LOG, { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_CFG)) db.createObjectStore(_ST_CFG, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_LOG))      db.createObjectStore(_ST_LOG,      { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_CFG))      db.createObjectStore(_ST_CFG,      { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_MEDS))     db.createObjectStore(_ST_MEDS,     { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_MED_LOG))  db.createObjectStore(_ST_MED_LOG,  { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_PHARMA))   db.createObjectStore(_ST_PHARMA,   { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_DIET_LOG)) db.createObjectStore(_ST_DIET_LOG, { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
@@ -2414,6 +2682,618 @@ async function otsDownload(id) {
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
 }
 
+// ── Medication Management ─────────────────────────────────────────────────────
+//
+// Notification dispatcher — extensible for future watch-app / BLE / WS channels.
+// Register additional handlers: MedNotifier.register(async (event) => { … })
+// event shape: { type: 'due'|'overdue', medication, scheduledTime, minutesLate }
+const MedNotifier = {
+  _handlers: [],
+  register(handler) { this._handlers.push(handler); },
+  async dispatch(event) {
+    for (const h of this._handlers) { try { await h(event); } catch (_) {} }
+  }
+};
+
+// Built-in handler: in-app badge refresh + Web Notifications when permission granted
+MedNotifier.register(async (ev) => {
+  _refreshMedBadge();
+  if (ev.type === 'overdue' && Notification.permission === 'granted') {
+    new Notification(`Medication overdue — ${ev.medication.name}`, {
+      body: `${ev.medication.dose}${ev.medication.unit} was scheduled at ${ev.scheduledTime}`,
+      tag: 'med-' + ev.medication.id,
+      renotify: false
+    });
+  }
+});
+// Future: MedNotifier.register(bleWatchHandler);
+// Future: MedNotifier.register(wsWatchConnectorHandler);
+
+let _medCheckInterval = null;
+
+async function _getActiveMeds() {
+  try {
+    const idbMeds = await _dbGetAll(_ST_MEDS);
+    if (idbMeds.length) return idbMeds.filter(m => m.status === 'active');
+  } catch (_) {}
+  // Fall back to VAULT_DATA mock until IDB is seeded by user
+  return VAULT.medications().items.filter(m => m.status === 'active');
+}
+
+async function _getAllMeds() {
+  try {
+    const idbMeds = await _dbGetAll(_ST_MEDS);
+    if (idbMeds.length) return idbMeds;
+  } catch (_) {}
+  return VAULT.medications().items;
+}
+
+async function _getTodayLogEntries() {
+  try {
+    const all   = await _dbGetAll(_ST_MED_LOG);
+    const today = new Date().toISOString().slice(0, 10);
+    return all.filter(e => e.scheduledTime && e.scheduledTime.startsWith(today));
+  } catch (_) { return []; }
+}
+
+// Returns array of { medication, scheduledTime, status, logEntry } sorted by time
+async function _buildTodaySchedule() {
+  const meds    = await _getActiveMeds();
+  const log     = await _getTodayLogEntries();
+  const now     = new Date();
+  const today   = now.toISOString().slice(0, 10);
+  const schedule = [];
+
+  for (const med of meds) {
+    if (!med.scheduleTimes || !med.scheduleTimes.length) {
+      schedule.push({ medication: med, scheduledTime: null, status: 'prn', logEntry: null });
+      continue;
+    }
+    for (const t of med.scheduleTimes) {
+      const scheduledTime = `${today}T${t}:00`;
+      const logEntry = log.find(e => e.medId === med.id && e.scheduledTime === scheduledTime) || null;
+      let status = 'upcoming';
+      if (logEntry) {
+        status = logEntry.adherenceStatus;
+      } else {
+        const schDt = new Date(scheduledTime);
+        if (schDt < now) status = 'overdue';
+        else if ((schDt - now) < 30 * 60 * 1000) status = 'due';
+      }
+      schedule.push({ medication: med, scheduledTime, status, logEntry });
+    }
+  }
+  return schedule.sort((a, b) => {
+    if (!a.scheduledTime) return 1;
+    if (!b.scheduledTime) return -1;
+    return a.scheduledTime.localeCompare(b.scheduledTime);
+  });
+}
+
+async function logMedTaken(medId, scheduledTime) {
+  const takenTime = new Date().toISOString();
+  await _dbPut(_ST_MED_LOG, {
+    id: 'ml-' + medId + '-' + Date.now(),
+    medId,
+    scheduledTime: scheduledTime || takenTime,
+    takenTime,
+    adherenceStatus: 'taken',
+    notes: ''
+  });
+  const meds = await _getActiveMeds();
+  const med  = meds.find(m => m.id === medId);
+  if (med) logActivity('medication taken: ' + med.name, true);
+  await _refreshMedPanel();
+}
+
+async function logMedSkipped(medId, scheduledTime, reason) {
+  await _dbPut(_ST_MED_LOG, {
+    id: 'ml-skip-' + medId + '-' + Date.now(),
+    medId,
+    scheduledTime: scheduledTime || new Date().toISOString(),
+    takenTime: null,
+    adherenceStatus: 'skipped',
+    notes: reason || ''
+  });
+  await _refreshMedPanel();
+}
+
+function _promptSkip(medId, scheduledTime) {
+  const reason = prompt('Reason for skipping (optional):', '');
+  if (reason !== null) logMedSkipped(medId, scheduledTime, reason);
+}
+
+function _refreshMedBadge() {
+  _buildTodaySchedule().then(schedule => {
+    const overdue = schedule.filter(s => s.status === 'overdue').length;
+    const due     = schedule.filter(s => s.status === 'due').length;
+    const badge   = document.getElementById('med-panel-badge');
+    const btn     = document.getElementById('med-panel-btn');
+    if (!badge) return;
+    if (overdue) {
+      badge.textContent = overdue + ' overdue';
+      badge.className   = 'med-badge overdue';
+      if (btn) btn.style.color = 'var(--red)';
+    } else if (due) {
+      badge.textContent = due + ' due now';
+      badge.className   = 'med-badge due';
+      if (btn) btn.style.color = 'var(--yellow)';
+    } else {
+      badge.textContent = '';
+      badge.className   = 'med-badge';
+      if (btn) btn.style.color = '';
+    }
+  });
+}
+
+async function _refreshMedPanel() {
+  const list = document.getElementById('med-dose-list');
+  if (!list) return;
+  const schedule = await _buildTodaySchedule();
+
+  if (!schedule.length) {
+    list.innerHTML = '<p style="font-size:.78rem;color:var(--dim);text-align:center;padding:.6rem 0">No medications scheduled</p>';
+    _refreshMedBadge();
+    return;
+  }
+
+  const _freqLabel = { once_daily:'Once daily', twice_daily:'Twice daily',
+    three_daily:'3× daily', four_daily:'4× daily', weekly:'Weekly', as_needed:'PRN' };
+
+  list.innerHTML = schedule.map(item => {
+    const med       = item.medication;
+    const doseLabel = `${med.dose || ''}${med.unit || ''}`;
+    const timeLabel = item.scheduledTime ? item.scheduledTime.slice(11, 16) : 'As needed';
+    let statusHtml  = '';
+    let rowClass    = 'med-dose-row';
+
+    if (item.status === 'taken') {
+      rowClass += ' taken';
+      const takenAt = item.logEntry?.takenTime?.slice(11, 16) || '';
+      statusHtml = `<span class="med-status ok">✓ Taken ${takenAt}</span>`;
+    } else if (item.status === 'skipped') {
+      rowClass += ' taken';
+      statusHtml = `<span class="med-status" style="color:var(--dim)">Skipped</span>`;
+    } else if (item.status === 'overdue') {
+      rowClass += ' overdue';
+      statusHtml = `
+        <button class="btn-take" onclick="logMedTaken('${med.id}','${item.scheduledTime}')">Take now</button>
+        <button class="btn-skip" onclick="_promptSkip('${med.id}','${item.scheduledTime}')">Skip</button>`;
+    } else if (item.status === 'due') {
+      statusHtml = `<button class="btn-take" onclick="logMedTaken('${med.id}','${item.scheduledTime}')">Take</button>`;
+    } else if (item.status === 'upcoming') {
+      statusHtml = `<button class="btn-take" style="opacity:.5" onclick="logMedTaken('${med.id}','${item.scheduledTime}')">Take</button>`;
+    } else if (item.status === 'prn') {
+      statusHtml = `<button class="btn-take" onclick="logMedTaken('${med.id}',null)">Log dose</button>`;
+    }
+
+    return `<div class="${rowClass}">
+      <div class="med-info">
+        <span class="med-name">${med.name}</span>
+        <span class="med-detail">${doseLabel} · ${timeLabel}</span>
+        ${med.indication ? `<span class="med-indication">${med.indication}</span>` : ''}
+      </div>
+      <div class="med-actions">${statusHtml}</div>
+    </div>`;
+  }).join('');
+
+  _refreshMedBadge();
+
+  // Dispatch overdue events to all registered handlers (watch app etc.)
+  for (const item of schedule) {
+    if (item.status === 'overdue') {
+      const minLate = Math.floor((Date.now() - new Date(item.scheduledTime)) / 60000);
+      MedNotifier.dispatch({ type: 'overdue', medication: item.medication,
+        scheduledTime: item.scheduledTime.slice(11, 16), minutesLate: minLate });
+    }
+  }
+}
+
+function toggleMedPanel() {
+  const body    = document.getElementById('med-today-body');
+  const chevron = document.getElementById('med-panel-chevron');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display    = open ? 'none' : 'block';
+  if (chevron) chevron.textContent = open ? '▸' : '▾';
+}
+
+async function initMedReminders() {
+  await _refreshMedPanel();
+  _refreshInteractionPanel();  // fire-and-forget; network calls inside
+  if (_medCheckInterval) clearInterval(_medCheckInterval);
+  // Re-check doses every 5 min; interaction data has its own 7-day IDB cache
+  _medCheckInterval = setInterval(_refreshMedPanel, 5 * 60 * 1000);
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// ── Pharmacological LOD lookup (Sprint 4) ────────────────────────────────────
+
+const RXNORM_BASE = 'https://rxnav.nlm.nih.gov/REST';
+const WD_SPARQL   = 'https://query.wikidata.org/sparql';
+
+// Curated drug-substance interaction rules (food · alcohol · nicotine · caffeine)
+// Used by the interaction engine when no network access or to supplement RxNorm drug-drug data.
+const SUBSTANCE_INTERACTIONS = [
+  { pattern: /atorvastatin|simvastatin|lovastatin|rosuvastatin|pravastatin|fluvastatin|statin/i,
+    substance: 'grapefruit', category: 'food', severity: 'moderate',
+    detail: 'Grapefruit inhibits CYP3A4 — raises statin plasma levels, increasing myopathy risk.' },
+  { pattern: /warfarin|coumadin/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'severe',
+    detail: 'Alcohol unpredictably alters anticoagulant effect — increases bleeding or clot risk.' },
+  { pattern: /metformin/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'moderate',
+    detail: 'Alcohol increases risk of lactic acidosis with metformin.' },
+  { pattern: /phenelzine|tranylcypromine|selegiline|moclobemide|isocarboxazid/i,
+    substance: 'tyramine-rich foods', category: 'food', severity: 'severe',
+    detail: 'Aged cheese, red wine, cured meats contain tyramine — can cause hypertensive crisis with MAOIs.' },
+  { pattern: /sertraline|fluoxetine|citalopram|escitalopram|paroxetine|venlafaxine|duloxetine|fluvoxamine/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'moderate',
+    detail: 'Alcohol potentiates CNS depression and may worsen depression and anxiety.' },
+  { pattern: /diazepam|lorazepam|alprazolam|clonazepam|temazepam|nitrazepam|oxazepam|midazolam/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'severe',
+    detail: 'Additive CNS and respiratory depression — risk of loss of consciousness.' },
+  { pattern: /codeine|morphine|oxycodone|tramadol|fentanyl|hydrocodone|buprenorphine|methadone/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'severe',
+    detail: 'Combined CNS and respiratory depression — potentially fatal.' },
+  { pattern: /codeine|morphine|oxycodone|tramadol|fentanyl|hydrocodone|buprenorphine/i,
+    substance: 'nicotine / vaping', category: 'nicotine', severity: 'mild',
+    detail: 'Smoking may mildly reduce opioid efficacy via CYP induction.' },
+  { pattern: /theophylline|clozapine|olanzapine|haloperidol/i,
+    substance: 'nicotine / vaping', category: 'nicotine', severity: 'moderate',
+    detail: 'Smoking significantly reduces plasma levels via CYP1A2 induction — dose may need adjustment on quitting.' },
+  { pattern: /methylphenidate|amphetamine|lisdexamfetamine|dexamfetamine/i,
+    substance: 'caffeine / energy drinks', category: 'caffeine', severity: 'moderate',
+    detail: 'Additive CNS stimulation — increased heart rate, anxiety, and insomnia risk.' },
+  { pattern: /theophylline/i,
+    substance: 'caffeine / energy drinks', category: 'caffeine', severity: 'moderate',
+    detail: 'Caffeine has similar bronchodilatory action — combined use raises side-effect burden.' },
+  { pattern: /lithium/i,
+    substance: 'caffeine / energy drinks', category: 'caffeine', severity: 'moderate',
+    detail: 'Caffeine increases renal lithium excretion — abrupt caffeine change can destabilise lithium levels.' },
+  { pattern: /levothyroxine|thyroxine/i,
+    substance: 'caffeine / energy drinks', category: 'caffeine', severity: 'mild',
+    detail: 'Coffee may reduce levothyroxine absorption — take the dose 30+ minutes before coffee.' },
+  { pattern: /doxycycline|tetracycline|minocycline/i,
+    substance: 'dairy / calcium', category: 'food', severity: 'moderate',
+    detail: 'Calcium chelates tetracyclines, markedly reducing absorption — take 2 hours apart from dairy.' },
+  { pattern: /ciprofloxacin|norfloxacin|levofloxacin/i,
+    substance: 'dairy / calcium', category: 'food', severity: 'moderate',
+    detail: 'Calcium reduces fluoroquinolone absorption — take 2 hours apart from dairy or antacids.' },
+  { pattern: /sildenafil|tadalafil|vardenafil/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'moderate',
+    detail: 'Both cause vasodilation — combined use raises hypotension and dizziness risk.' },
+  { pattern: /aspirin|ibuprofen|naproxen|diclofenac/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'moderate',
+    detail: 'NSAIDs combined with alcohol significantly increase gastrointestinal bleeding risk.' },
+  { pattern: /isotretinoin|acitretin/i,
+    substance: 'alcohol', category: 'alcohol', severity: 'severe',
+    detail: 'Alcohol combined with retinoids raises risk of severe liver toxicity.' },
+];
+
+let _lodSearchTimer = null;
+
+async function _medNameInput(ev) {
+  const query = ev.target.value.trim();
+  clearTimeout(_lodSearchTimer);
+  const suggestions = document.getElementById('med-name-suggestions');
+  if (!suggestions) return;
+  if (query.length < 3) { suggestions.style.display = 'none'; return; }
+  _lodSearchTimer = setTimeout(() => _lodSearch(query), 420);
+}
+
+async function _lodSearch(query) {
+  const suggestions = document.getElementById('med-name-suggestions');
+  if (!suggestions) return;
+  try {
+    const res  = await fetch(`${RXNORM_BASE}/drugs.json?name=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    const groups  = data.drugGroup?.conceptGroup || [];
+    const results = [];
+    for (const g of groups) {
+      if (g.conceptProperties) {
+        for (const p of g.conceptProperties) {
+          // Prefer IN (ingredient) and BN (brand name) term types
+          if (['IN','BN','PIN','MIN'].includes(p.tty)) results.push({ name: p.name, rxcui: p.rxcui, tty: p.tty });
+        }
+      }
+    }
+    if (!results.length) { suggestions.style.display = 'none'; return; }
+    const _ttyLabel = { IN: 'generic', BN: 'brand', PIN: 'precise', MIN: 'multi-ingredient' };
+    suggestions.innerHTML = results.slice(0, 8).map(r =>
+      `<div class="med-autocomplete-item"
+            onmousedown="event.preventDefault()"
+            onclick="_lodSelectDrug('${r.rxcui}','${r.name.replace(/'/g,"\\'")}')">
+        <span style="font-size:.8rem;font-weight:600">${r.name}</span>
+        <span style="font-size:.69rem;color:var(--dim);margin-left:.35rem">${_ttyLabel[r.tty] || r.tty}</span>
+      </div>`).join('');
+    suggestions.style.display = 'block';
+  } catch (_) { suggestions.style.display = 'none'; }
+}
+
+async function _lodSelectDrug(rxcui, name) {
+  const nameInput   = document.getElementById('med-add-name');
+  const suggestions = document.getElementById('med-name-suggestions');
+  const lodInfo     = document.getElementById('med-lod-info');
+  if (nameInput)   nameInput.value = name;
+  if (suggestions) suggestions.style.display = 'none';
+  // Stash identifiers on the element for saveMedication() to pick up
+  if (nameInput) { nameInput.dataset.rxcui = rxcui; nameInput.dataset.atcCode = ''; nameInput.dataset.linkedDataUri = ''; }
+  if (lodInfo)   { lodInfo.textContent = 'Fetching pharmacological data…'; lodInfo.style.display = 'block'; }
+  const detail = await _lodFetchDetail(rxcui, name);
+  if (detail) {
+    if (nameInput) { nameInput.dataset.atcCode = detail.atcCode || ''; nameInput.dataset.linkedDataUri = detail.linkedDataUri || ''; }
+    if (lodInfo) {
+      const parts = [];
+      if (detail.atcCode)      parts.push(`ATC: ${detail.atcCode}`);
+      if (detail.linkedDataUri) parts.push(`<a href="${detail.linkedDataUri}" target="_blank" rel="noopener" style="color:var(--accent)">Wikidata ↗</a>`);
+      lodInfo.innerHTML = parts.length ? parts.join(' · ') : 'No linked data found';
+    }
+  } else {
+    if (lodInfo) lodInfo.textContent = 'Pharmacological data unavailable';
+  }
+}
+
+async function _lodFetchDetail(rxcui, name) {
+  // Cache hit: return within 7-day TTL
+  const cacheKey = 'rx-' + rxcui;
+  try {
+    const cached = await _dbGet(_ST_PHARMA, cacheKey);
+    if (cached && (Date.now() - new Date(cached.fetchedAt).getTime()) < 7 * 24 * 3600 * 1000) return cached;
+  } catch (_) {}
+
+  const detail = { id: cacheKey, rxcui, name, atcCode: null, linkedDataUri: null, fetchedAt: new Date().toISOString() };
+
+  // RxNorm: get related concepts including ATC code
+  try {
+    const r    = await fetch(`${RXNORM_BASE}/rxcui/${rxcui}/allrelated.json`);
+    const data = await r.json();
+    const atcGroup = (data.allRelatedGroup?.conceptGroup || []).find(g => g.tty === 'ATC');
+    if (atcGroup?.conceptProperties?.[0]) detail.atcCode = atcGroup.conceptProperties[0].name;
+  } catch (_) {}
+
+  // Wikidata: canonical entity URI by RxCUI (property P3780) or by name label
+  try {
+    const q = rxcui
+      ? `SELECT ?d WHERE { ?d wdt:P3780 "${rxcui}" } LIMIT 1`
+      : `SELECT ?d WHERE { ?d wdt:P31/wdt:P279* wd:Q12140 ; rdfs:label "${name}"@en } LIMIT 1`;
+    const r    = await fetch(`${WD_SPARQL}?query=${encodeURIComponent(q)}&format=json`,
+                   { headers: { Accept: 'application/sparql-results+json' } });
+    const data = await r.json();
+    const uri  = data.results?.bindings?.[0]?.d?.value;
+    if (uri) detail.linkedDataUri = uri;
+  } catch (_) {}
+
+  try { await _dbPut(_ST_PHARMA, detail); } catch (_) {}
+  return detail;
+}
+
+// ── Interaction Engine (Sprint 5) ─────────────────────────────────────────────
+
+async function _runInteractionCheck() {
+  const meds   = await _getActiveMeds();
+  const alerts = [];
+
+  // Substance interactions (food · alcohol · nicotine · caffeine) — local curated rules
+  for (const med of meds) {
+    const testStr = (med.name || '') + ' ' + (med.genericName || '');
+    for (const rule of SUBSTANCE_INTERACTIONS) {
+      if (rule.pattern.test(testStr)) {
+        alerts.push({ type: 'substance', drugA: med.name, substanceB: rule.substance,
+          severity: rule.severity, category: rule.category, detail: rule.detail, source: 'curated' });
+      }
+    }
+  }
+
+  // Drug-drug interactions — RxNorm interaction/list API
+  const rxcuis = meds.map(m => m.rxcui).filter(Boolean);
+  if (rxcuis.length >= 2) {
+    try {
+      const r    = await fetch(`${RXNORM_BASE}/interaction/list.json?rxcuis=${rxcuis.join('+')}`);
+      const data = await r.json();
+      for (const g of (data.fullInteractionTypeGroup || [])) {
+        for (const t of (g.fullInteractionType || [])) {
+          for (const p of (t.interactionPair || [])) {
+            const concepts = p.interactionConcept || [];
+            const drugA    = concepts[0]?.minConceptItem?.name || '';
+            const drugB    = concepts[1]?.minConceptItem?.name || '';
+            const sev      = (p.severity || '').toLowerCase();
+            alerts.push({ type: 'drug-drug', drugA, substanceB: drugB,
+              severity: sev === 'high' ? 'severe' : sev === 'low' ? 'mild' : 'moderate',
+              detail: p.description || '', source: 'rxnorm', category: 'drug-drug' });
+          }
+        }
+      }
+    } catch (_) { /* network unavailable — substance alerts still shown */ }
+  }
+
+  return alerts;
+}
+
+async function _refreshInteractionPanel() {
+  const list = document.getElementById('interaction-list');
+  if (!list) return;
+  const alerts = await _runInteractionCheck();
+
+  const badge = document.getElementById('interaction-badge');
+  const btn   = document.getElementById('interaction-panel-btn');
+
+  if (!alerts.length) {
+    list.innerHTML = '<p style="font-size:.78rem;color:var(--green);padding:.3rem 0">No known interactions for your current medications.</p>';
+    if (badge) { badge.textContent = ''; badge.className = 'med-badge'; }
+    if (btn)   btn.style.color = '';
+    return;
+  }
+
+  // Sort: severe → moderate → mild
+  const order = { severe: 0, moderate: 1, mild: 2 };
+  alerts.sort((a, b) => (order[a.severity] ?? 1) - (order[b.severity] ?? 1));
+
+  const severeCount = alerts.filter(a => a.severity === 'severe').length;
+  const modCount    = alerts.filter(a => a.severity === 'moderate').length;
+  if (badge) {
+    badge.textContent = severeCount ? `${severeCount} severe` : `${modCount} moderate`;
+    badge.className   = 'med-badge ' + (severeCount ? 'overdue' : 'due');
+  }
+  if (btn) btn.style.color = severeCount ? 'var(--red)' : 'var(--yellow)';
+
+  // Auto-open panel for severe interactions
+  if (severeCount) {
+    const body = document.getElementById('interaction-body');
+    const chev = document.getElementById('interaction-chevron');
+    if (body && body.style.display === 'none') { body.style.display = 'block'; if (chev) chev.textContent = '▾'; }
+  }
+
+  const _catIcon = { food: '🍽', alcohol: '🍺', nicotine: '🚬', caffeine: '☕', 'drug-drug': '💊' };
+  list.innerHTML = alerts.map(a => {
+    const sevColor = a.severity === 'severe' ? 'var(--red)' : a.severity === 'moderate' ? 'var(--yellow)' : 'var(--dim)';
+    const icon     = _catIcon[a.type === 'drug-drug' ? 'drug-drug' : (a.category || 'food')] || '⚠';
+    return `<div class="interaction-alert ${a.severity}">
+      <div style="display:flex;align-items:baseline;gap:.35rem;margin-bottom:.2rem;flex-wrap:wrap">
+        <span>${icon}</span>
+        <span style="font-size:.8rem;font-weight:600">${a.drugA}</span>
+        <span style="font-size:.72rem;color:var(--dim)">+</span>
+        <span style="font-size:.8rem;font-weight:600">${a.substanceB}</span>
+        <span style="font-size:.69rem;font-weight:700;color:${sevColor};margin-left:auto;text-transform:uppercase">${a.severity}</span>
+      </div>
+      <div style="font-size:.74rem;color:var(--dim);line-height:1.45">${a.detail}</div>
+      ${a.source === 'rxnorm' ? '<div style="font-size:.67rem;color:var(--border);margin-top:.18rem">Source: RxNorm</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleInteractionPanel() {
+  const body    = document.getElementById('interaction-body');
+  const chevron = document.getElementById('interaction-chevron');
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display    = open ? 'none' : 'block';
+  if (chevron) chevron.textContent = open ? '▸' : '▾';
+}
+
+// ── Medication manager (add / cease) ─────────────────────────────────────────
+
+async function openMedManager() {
+  document.getElementById('med-manager-sheet').style.display = 'flex';
+  document.getElementById('med-add-start').value = new Date().toISOString().slice(0, 10);
+  _updateScheduleInputs();
+  await _refreshMedManagerList();
+}
+
+function closeMedManager() {
+  document.getElementById('med-manager-sheet').style.display = 'none';
+}
+
+function _updateScheduleInputs() {
+  const freq      = document.getElementById('med-add-freq')?.value;
+  const container = document.getElementById('med-schedule-times');
+  if (!container) return;
+  const defaults = {
+    once_daily:   ['08:00'],
+    twice_daily:  ['08:00', '20:00'],
+    three_daily:  ['08:00', '13:00', '20:00'],
+    four_daily:   ['08:00', '12:00', '16:00', '20:00'],
+    weekly:       ['08:00'],
+    as_needed:    []
+  };
+  const times = defaults[freq] || [];
+  if (!times.length) { container.innerHTML = ''; return; }
+  container.innerHTML = `<p style="font-size:.73rem;color:var(--dim);margin-bottom:.3rem">Reminder times:</p>` +
+    times.map((t, i) => `<label class="med-form-label" style="margin-bottom:.25rem">
+      <span style="display:inline">Dose ${i + 1}</span>
+      <input type="time" class="med-time-input med-input" value="${t}" style="width:auto;margin-left:.4rem" />
+    </label>`).join('');
+}
+
+async function saveMedication() {
+  const name       = document.getElementById('med-add-name')?.value.trim();
+  const dose       = document.getElementById('med-add-dose')?.value.trim();
+  const unit       = document.getElementById('med-add-unit')?.value;
+  const route      = document.getElementById('med-add-route')?.value;
+  const freq       = document.getElementById('med-add-freq')?.value;
+  const indication = document.getElementById('med-add-indication')?.value.trim();
+  const prescriber = document.getElementById('med-add-prescriber')?.value.trim();
+  const startDate  = document.getElementById('med-add-start')?.value;
+
+  if (!name || !dose) {
+    document.getElementById('med-save-status').textContent = 'Drug name and dose are required.';
+    document.getElementById('med-save-status').style.color = 'var(--red)';
+    return;
+  }
+
+  const timeInputs    = document.querySelectorAll('.med-time-input');
+  const scheduleTimes = [...timeInputs].map(i => i.value).filter(Boolean);
+  const nameEl        = document.getElementById('med-add-name');
+  const rxcui         = nameEl?.dataset?.rxcui         || null;
+  const atcCode       = nameEl?.dataset?.atcCode       || null;
+  const linkedDataUri = nameEl?.dataset?.linkedDataUri || null;
+
+  await _dbPut(_ST_MEDS, {
+    id: 'med-' + Date.now(),
+    name, genericName: name, rxcui: rxcui || null, atcCode: atcCode || null,
+    linkedDataUri: linkedDataUri || null,
+    dose, unit, route, frequency: freq, scheduleTimes,
+    indication: indication || null, prescriber: prescriber || null,
+    startDate: startDate || new Date().toISOString().slice(0, 10),
+    endDate: null, status: 'active', addedAt: new Date().toISOString()
+  });
+
+  ['med-add-name','med-add-dose','med-add-indication','med-add-prescriber'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('med-add-start').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('med-save-status').textContent = '✓ Medication saved';
+  document.getElementById('med-save-status').style.color = 'var(--green)';
+  setTimeout(() => { const el = document.getElementById('med-save-status'); if (el) el.textContent = ''; }, 3000);
+
+  await _refreshMedManagerList();
+  await _refreshMedPanel();
+  logActivity('medication added: ' + name, true);
+}
+
+async function ceaseMedication(medId) {
+  if (!confirm('Mark this medication as ceased?')) return;
+  const rec = await _dbGet(_ST_MEDS, medId);
+  // If it's a mock med (not in IDB), write it first so we can mark it ceased
+  const source = rec || VAULT.medications().items.find(m => m.id === medId);
+  if (!source) return;
+  await _dbPut(_ST_MEDS, { ...source, status: 'ceased', endDate: new Date().toISOString().slice(0, 10) });
+  await _refreshMedManagerList();
+  await _refreshMedPanel();
+  logActivity('medication ceased: ' + source.name, true);
+}
+
+function _medListItemHtml(med) {
+  const schedLabel = med.scheduleTimes?.length ? med.scheduleTimes.join(' & ') : 'PRN';
+  const doseStr    = `${med.dose || ''}${med.unit || ''} · ${schedLabel}`;
+  const ceased     = med.status === 'ceased';
+  return `<div class="med-list-item${ceased ? ' ceased' : ''}">
+    <div>
+      <div style="font-size:.82rem;font-weight:600">${med.name}</div>
+      <div class="med-list-meta">${doseStr}</div>
+      ${med.indication ? `<div class="med-list-meta" style="font-style:italic">${med.indication}</div>` : ''}
+      ${ceased && med.endDate ? `<div class="med-list-meta">Ceased ${med.endDate}</div>` : ''}
+    </div>
+    <div style="display:flex;gap:.3rem">
+      ${!ceased ? `<button class="btn-skip" onclick="ceaseMedication('${med.id}')">Cease</button>` : ''}
+    </div>
+  </div>`;
+}
+
+async function _refreshMedManagerList() {
+  const container = document.getElementById('med-manager-list');
+  if (!container) return;
+  const meds   = await _getAllMeds();
+  const active = meds.filter(m => m.status === 'active' || !m.status);
+  const ceased = meds.filter(m => m.status === 'ceased');
+  container.innerHTML =
+    `<p class="med-section-label">Active (${active.length})</p>` +
+    (active.length ? active.map(_medListItemHtml).join('') : '<p style="font-size:.78rem;color:var(--dim)">None</p>') +
+    (ceased.length ? `<p class="med-section-label">Ceased (${ceased.length})</p>` + ceased.map(_medListItemHtml).join('') : '');
+}
+
 // ── QR scanner ────────────────────────────────────────────────────────────────
 
 function startScanner() {
@@ -2663,9 +3543,14 @@ function endSession(remote) {
   if (!remote && dc && dc.readyState === 'open')
     secureSend({ type: 'disconnect' });
   clearInterval(serveTimer);
+  if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
   sessionActive = false;
   activeProfile = null;
   releaseWakeLock();
+  const mrp = document.getElementById('med-reminder-panel');
+  if (mrp) mrp.style.display = 'none';
+  const mip = document.getElementById('med-interaction-panel');
+  if (mip) mip.style.display = 'none';
   teardown();
   resetToScan();
 }
@@ -2728,6 +3613,18 @@ window.addEventListener('pagehide', () => {
   [vaultDidKey, vaultNoiseKey] = await Promise.all([generateDidKey(), noiseGenX25519()]);
   await loadProfiles();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+  // ── Demo mode: ?demo skips QR pairing, auto-enters owner workspace ───────────
+  if (new URLSearchParams(location.search).has('demo')) {
+    activeProfile   = profiles.find(p => p.isOwner);
+    currentSid      = 'demo-' + Array.from(crypto.getRandomValues(new Uint8Array(8)))
+                        .map(b => b.toString(16).padStart(2,'0')).join('');
+    duressModeActive = false;
+    document.getElementById('demo-banner').style.display = 'block';
+    approveOwnerSession();
+    return; // skip Gun / Nym / scanner init
+  }
+
   initNym(); // async, non-blocking — DMS/anon features unavailable until Nym is ready
   showStep('step-scan');
   startScanner();

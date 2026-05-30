@@ -301,6 +301,14 @@
 <!-- ── App shell (shown after connection) ── -->
 <div id="screen-app">
 
+  <!-- Demo mode banner -->
+  <div id="demo-banner" style="display:none;background:rgba(88,166,255,.08);
+       border-bottom:1px solid rgba(88,166,255,.2);padding:.3rem 1.25rem;
+       font-size:.75rem;color:#58a6ff;text-align:center">
+    ⚡ Demo mode — sample data, no vault connected &nbsp;·&nbsp;
+    <a href="connector/" style="color:#58a6ff">Exit demo</a>
+  </div>
+
   <div class="owner-strip" id="owner-strip">
     🔐 Owner workspace — all data read/write. Changes are saved to your vault on your phone.
   </div>
@@ -401,6 +409,121 @@ let sessionDidKey  = null;  // ephemeral did:key for this connector session — 
 let sessionNoiseKey = null; // ephemeral X25519 keypair for Noise_XX — memory only
 let vaultPublicKey  = null; // vault's Ed25519 CryptoKey — cached from session_info for sig verification
 let _hiddenTimer    = null; // visibilitychange grace period before auto-disconnect
+
+// ── Demo mode ─────────────────────────────────────────────────────────────────
+const DEMO_MODE = new URLSearchParams(location.search).has('demo');
+
+const DEMO_VAULT = {
+  overview: {
+    metrics: {
+      heart_rate:  { value: 68,   unit: 'bpm',   status: 'normal' },
+      steps_today: { value: 4231, unit: 'steps', status: 'below_goal' },
+      sleep_last:  { value: 6.5,  unit: 'hrs',   status: 'borderline' },
+      blood_pressure: { value: '118/76', unit: 'mmHg', status: 'normal' }
+    },
+    alerts: []
+  },
+  heart_rate: {
+    latest: 68, avg_7d: 71, min_7d: 58, max_7d: 89, unit: 'bpm',
+    readings: [
+      {time:'08:00',value:72},{time:'10:00',value:75},{time:'12:00',value:80},
+      {time:'14:00',value:77},{time:'15:00',value:68},{time:'18:00',value:74},{time:'21:00',value:65}
+    ]
+  },
+  blood_pressure: {
+    latest: '118/76', systolic_avg: 121, diastolic_avg: 78, unit: 'mmHg', trend: 'stable',
+    readings: [{date:'Mon',s:120,d:78},{date:'Tue',s:118,d:76},{date:'Wed',s:124,d:80},
+               {date:'Thu',s:119,d:77},{date:'Fri',s:122,d:79}]
+  },
+  sleep: {
+    last_night_h: 6.5, avg_7d_h: 6.8, quality: 'moderate',
+    log: [{date:'Mon',hours:7.2,quality:'good'},{date:'Tue',hours:5.9,quality:'poor'},
+          {date:'Wed',hours:7.5,quality:'good'},{date:'Thu',hours:6.8,quality:'moderate'},
+          {date:'Fri',hours:8.1,quality:'good'},{date:'Sat',hours:6.5,quality:'moderate'},
+          {date:'Sun',hours:6.5,quality:'moderate'}]
+  },
+  steps: {
+    today: 4231, avg_7d: 6840, goal: 8000,
+    log: [{date:'Mon',steps:7240},{date:'Tue',steps:5910},{date:'Wed',steps:8102},
+          {date:'Thu',steps:6140},{date:'Fri',steps:7900},{date:'Sat',steps:5200},
+          {date:'Sun',steps:4231}]
+  },
+  weight: {
+    latest_kg: 72.4, trend: 'stable ↔',
+    log: [{date:'21 May',kg:72.8},{date:'23 May',kg:72.6},
+          {date:'25 May',kg:72.5},{date:'27 May',kg:72.4},{date:'29 May',kg:72.4}]
+  },
+  medications: {
+    items: [
+      { id:'med-001', name:'Lisinopril', dose:'10', unit:'mg', route:'oral',
+        frequency:'once_daily', scheduleTimes:['08:00'], indication:'Blood pressure',
+        prescriber:'Dr Sarah Chen', startDate:'2019-01-15', status:'active',
+        atcCode:'C09AA03', linkedDataUri:'http://www.wikidata.org/entity/Q422068' },
+      { id:'med-002', name:'Metformin', dose:'500', unit:'mg', route:'oral',
+        frequency:'twice_daily', scheduleTimes:['08:00','20:00'], indication:'Blood glucose',
+        prescriber:'Dr Sarah Chen', startDate:'2021-06-03', status:'active',
+        atcCode:'A10BA02', linkedDataUri:'http://www.wikidata.org/entity/Q190814' },
+      { id:'med-003', name:'Vitamin D3', dose:'1000', unit:'IU', route:'oral',
+        frequency:'once_daily', scheduleTimes:['08:00'], indication:'Supplement',
+        prescriber:null, startDate:'2023-01-01', status:'active',
+        atcCode:'A11CC05', linkedDataUri:'http://www.wikidata.org/entity/Q185833' }
+    ]
+  },
+  conditions: {
+    items: [
+      { name:'Hypertension',    diagnosed:'2019', status:'managed' },
+      { name:'Type 2 Diabetes', diagnosed:'2021', status:'managed' },
+      { name:'Mild asthma',     diagnosed:'2005', status:'intermittent' }
+    ]
+  },
+  allergies: {
+    items: [
+      { substance:'Penicillin', reaction:'Anaphylaxis',      severity:'severe'   },
+      { substance:'Latex',      reaction:'Contact urticaria', severity:'moderate' },
+      { substance:'Ibuprofen',  reaction:'GI bleeding',       severity:'moderate' }
+    ]
+  },
+  blood_type:  { type:'A+', rh_factor:'positive', confirmed:'2018-03-12' },
+  dnr: {
+    dnr_in_place: false, advance_directive: true,
+    directive_summary: 'No mechanical ventilation if brain-dead. Organ donation consented.',
+    document_location: 'On file with GP — Dr Sarah Chen, Southwark Health Centre',
+    last_reviewed: '2024-11-01'
+  },
+  emergency_contacts: {
+    contacts: [
+      { name:'Alex Rivera',   relation:'Partner', phone:'+44 7700 900123', notify_first:true },
+      { name:'Maria Torres',  relation:'Sister',  phone:'+44 7700 900456' },
+      { name:'Dr Sarah Chen', relation:'GP',      phone:'+44 20 7946 0321' }
+    ]
+  },
+  surgical_history: {
+    procedures: [
+      { procedure:'Appendectomy',     date:'2003-07', hospital:'Kings College Hospital' },
+      { procedure:'Knee arthroscopy', date:'2017-03', hospital:'St Thomas Hospital' }
+    ],
+    implants: [], blood_transfusions: false
+  },
+  mental_health: {
+    current_diagnoses: [{ name:'Generalised Anxiety Disorder', status:'managed', since:'2020' }],
+    current_support: 'CBT — 6-weekly sessions',
+    crisis_plan_in_place: true, crisis_contact: 'Mind Helpline 0300 123 3393'
+  },
+  sexual_health: {
+    last_sti_screen: '2025-02-14', sti_screen_result: 'negative',
+    screen_provider: 'SH:24 (postal kit)', conditions: [],
+    note: 'All clear as of last screen.'
+  },
+  social_context: {
+    housing_status: 'Stable — private rented, 1-bed flat',
+    employment_status: 'Self-employed, variable income',
+    support_network: 'Partner, 1 sibling nearby, active GP',
+    current_stressors: ['Financial pressure', 'Caring responsibilities'],
+    safeguarding_flags: []
+  },
+  notes: { entries: [] },
+  documents: { items: [] }
+};
 
 // ── FinalizationRegistry — GC confirmation (dev diagnostic) ───────────────────
 const _gcRegistry = new FinalizationRegistry(label =>
@@ -733,11 +856,30 @@ function renderSection(section, data) {
       </table>`;
 
   } else if (section === 'medications' && data.items) {
+    const _fLbl = { once_daily:'Once daily', twice_daily:'Twice daily',
+      three_daily:'3× daily', four_daily:'4× daily', weekly:'Weekly', as_needed:'PRN' };
+    const active = data.items.filter(m => m.status !== 'ceased');
+    const ceased = data.items.filter(m => m.status === 'ceased');
     body = `<table class="data-table">
-      <tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Purpose</th></tr>
-      ${data.items.map(m=>`<tr><td>${m.name}</td><td class="val">${m.dose}</td>
-        <td>${m.frequency}</td><td style="color:var(--dim)">${m.purpose}</td></tr>`).join('')}
-    </table>`;
+      <tr><th>Medication</th><th>Dose</th><th>Schedule</th><th>Indication</th><th>Since</th></tr>
+      ${active.map(m => {
+        const dose  = m.dose ? `${m.dose}${m.unit || ''}` : (m.dose || '—');
+        const sched = m.scheduleTimes?.length ? m.scheduleTimes.join(' & ')
+                      : (_fLbl[m.frequency] || m.frequency || '—');
+        const lod   = m.linkedDataUri
+          ? ` <a href="${m.linkedDataUri}" target="_blank" rel="noopener"
+               style="font-size:.7rem;color:var(--accent)" title="Pharmacological data">↗</a>` : '';
+        return `<tr>
+          <td>${m.name}${lod}</td>
+          <td class="val">${dose}</td>
+          <td>${sched}</td>
+          <td style="color:var(--dim)">${m.indication || m.purpose || '—'}</td>
+          <td style="color:var(--dim)">${m.startDate || '—'}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+    ${ceased.length ? `<p style="font-size:.78rem;color:var(--dim);margin-top:.6rem">
+      Ceased: ${ceased.map(m => m.name).join(', ')}</p>` : ''}`;
 
   } else if (section === 'conditions' && data.items) {
     body = `<table class="data-table">
@@ -791,6 +933,12 @@ function renderSection(section, data) {
 // ── Messaging ────────────────────────────────────────────────────────────────
 
 function requestSection(section) {
+  if (DEMO_MODE) {
+    const data = DEMO_VAULT[section];
+    if (data) renderSection(section, data);
+    else renderContent(`<p style="padding:2rem;color:var(--dim)">Section not available in demo mode.</p>`);
+    return;
+  }
   if (!dc || dc.readyState !== 'open') return;
   showLoading();
   const id = 'r' + (++reqCounter);
@@ -876,6 +1024,7 @@ function teardown() {
 }
 
 function disconnect() {
+  if (DEMO_MODE) { location.href = 'connector/'; return; }
   if (dc && dc.readyState === 'open') secureSend({ type: 'disconnect' });
   teardown();
   // Return to pair screen
@@ -1227,6 +1376,20 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
       `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
     return;
   }
+  // ── Demo mode: ?demo skips WebRTC, shows all sections from local mock data ──
+  if (DEMO_MODE) {
+    document.getElementById('demo-banner').style.display  = 'block';
+    document.getElementById('owner-strip').classList.add('visible');
+    document.querySelectorAll('.owner-nav').forEach(el => {
+      el.style.display = el.tagName === 'BUTTON' ? 'flex' : 'block';
+    });
+    document.getElementById('conn-label').textContent   = 'Demo mode';
+    document.getElementById('vault-did').textContent    = 'sample data — no vault';
+    isOwnerMode = true;
+    showAppShell();
+    return;
+  }
+
   startSession();
 })();
 </script>

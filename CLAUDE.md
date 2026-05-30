@@ -99,9 +99,25 @@ See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the full checklist.
 
 ```
 docs/
+  vault.html             Daily-use vault (PIN → meds, sanctuary, DMS, anon notify)
+  webconnect.html        WebRTC pairing bridge (QR scan → profile → consent → serving)
   connector/index.html   Desktop connector (Noise initiator, Ed25519 verify)
-  pair.html              Phone vault (Noise responder, Ed25519 sign, Nym DMS + anon notify)
-  nym-test.html          Nym SDK validation harness — run before activating Nym in pair.html
+  pair.html              LEGACY — original monolithic page, kept as working fallback
+  nym-test.html          Nym SDK validation harness — run before activating NYM_SDK_URL
+  js/
+    vault-idb.js               IDB helpers + store constants
+    vault-crypto.js            Key derivation, AES-GCM, commitments, toB64/fromB64
+    vault-did.js               did:key (Ed25519) generation
+    vault-nym.js               Nym adapter, DMS, anonymous notification
+    vault-mock.js              VAULT mock data + SECTION_LABELS
+    vault-sanctuary-pins.js    PIN state machine, canary/setup, duress check, wake lock
+    vault-sanctuary-log.js     Unvarnished Log, Tripwire Dashboard, Synthesis Engine
+    vault-sanctuary-evidence.js  Evidentiary Export, VP generation, OpenTimestamps
+    vault-meds-reminders.js    MedNotifier, today schedule, take/skip, reminder panel
+    vault-meds-lod.js          SUBSTANCE_INTERACTIONS, RxNorm/Wikidata, interaction engine
+    vault-meds-manager.js      Add/cease medication sheet
+    noise-xx.js                Noise_XX_25519_AESGCM_SHA256 (webconnect only)
+    profiles.js                Profile loading, rendering, emergency pre-auth (webconnect only)
   profiles/
     access-profiles.ttl  SHACL access profile shapes (canonical)
     profiles.json        JS-loadable profile registry
@@ -118,7 +134,9 @@ instructions/
 ```
 python -m http.server 3000 --directory docs
 ```
-Then open `http://localhost:3000/connector/` (desktop) and `http://localhost:3000/pair.html` (phone/tab).
+- Phone/daily vault: `http://localhost:3000/vault.html`
+- Desktop pairing: `http://localhost:3000/webconnect.html` (phone) + `http://localhost:3000/connector/` (desktop)
+- Legacy: `http://localhost:3000/pair.html` (original monolithic page — still works)
 
 ## Related external repos
 

@@ -15,7 +15,8 @@
       "readWrite": true,
       "sections": [
         "overview", "heart_rate", "blood_pressure", "sleep", "steps", "weight",
-        "medications", "allergies", "conditions", "blood_type", "dnr",
+        "medications", "medication_adherence", "medication_history", "medication_interactions",
+        "allergies", "conditions", "blood_type", "dnr",
         "emergency_contacts", "surgical_history", "mental_health",
         "sexual_health", "social_context", "documents", "notes", "audit_log"
       ]
@@ -60,9 +61,9 @@
       "requiresAudit": false,
       "credentialRequired": "clinical_professional_vc",
       "sections": [
-        "overview", "heart_rate", "blood_pressure",
-        "sleep", "steps", "weight",
-        "medications", "allergies", "conditions"
+        "overview", "heart_rate", "blood_pressure", "sleep", "steps", "weight",
+        "medications", "medication_adherence", "medication_history", "medication_interactions",
+        "allergies", "conditions"
       ]
     },
     {
@@ -76,7 +77,8 @@
       "credentialRequired": "clinical_professional_vc",
       "sections": [
         "overview", "heart_rate", "blood_pressure",
-        "medications", "allergies", "conditions", "surgical_history"
+        "medications", "medication_adherence", "medication_history", "medication_interactions",
+        "allergies", "conditions", "surgical_history"
       ]
     },
     {
@@ -89,7 +91,8 @@
       "requiresAudit": false,
       "credentialRequired": "mental_health_practitioner_vc",
       "sections": [
-        "overview", "mental_health", "sleep", "medications"
+        "overview", "mental_health", "sleep",
+        "medications", "medication_adherence", "medication_interactions"
       ]
     },
     {

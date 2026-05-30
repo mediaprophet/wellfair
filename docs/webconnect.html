@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>WellFair — Connect</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0d6efd" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <style>
+    :root {
+      --bg:      #f8f9fa; --surface: #ffffff; --border:  #dee2e6;
+      --text:    #212529; --dim:     #6c757d; --accent:  #0d6efd;
+      --green:   #198754; --yellow:  #e67e22; --red:     #dc3545;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh; display: flex; flex-direction: column;
+      align-items: center; padding: 1.25rem 1rem 3rem;
+    }
+    header { text-align:center; margin-bottom:1rem; width:100%; max-width:440px; }
+    header h1 { font-size:1.2rem; font-weight:700; }
+    header p  { color:var(--dim); font-size:0.85rem; margin-top:0.2rem; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem;
+      width: 100%; max-width: 440px; margin-bottom: 0.875rem;
+    }
+    .card h2 { font-size:0.95rem; font-weight:600; margin-bottom:0.875rem; }
+
+    /* Scanner */
+    #reader { width:100%; border-radius:8px; overflow:hidden; background:#000; }
+    #reader video { width:100% !important; }
+    .or-div {
+      display:flex; align-items:center; gap:.6rem;
+      margin:.875rem 0; color:var(--dim); font-size:.78rem;
+    }
+    .or-div::before, .or-div::after { content:''; flex:1; border-top:1px solid var(--border); }
+    label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
+    input[type="text"] {
+      width:100%; padding:.55rem .7rem; border:1px solid var(--border);
+      border-radius:8px; font-size:.88rem; font-family:monospace;
+    }
+    input[type="text"]:focus { outline:2px solid var(--accent); border-color:transparent; }
+
+    /* Status dots */
+    .status-row {
+      display:flex; align-items:center; gap:.45rem;
+      font-size:.8rem; color:var(--dim); margin-top:.875rem;
+    }
+    .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--yellow); }
+    .dot.ok    { background:var(--green); }
+    .dot.err   { background:var(--red); }
+    .dot.pulse { background:var(--accent); animation:pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* Profile cards */
+    .profile-list { display:flex; flex-direction:column; gap:.6rem; }
+    .profile-card {
+      display:flex; align-items:flex-start; gap:.75rem; padding:.875rem;
+      border:2px solid var(--border); border-radius:10px;
+      cursor:pointer; transition: border-color .15s, background .15s;
+    }
+    .profile-card:hover { background:#f0f4ff; }
+    .profile-card.emergency-card { border-color:#f5c6cb; background:#fff8f8; }
+    .profile-card.emergency-card:hover { background:#ffeaea; }
+    .profile-icon { font-size:1.5rem; flex-shrink:0; width:2rem; text-align:center; }
+    .profile-info { flex:1; min-width:0; }
+    .profile-name { font-size:.9rem; font-weight:600; margin-bottom:.2rem; }
+    .profile-desc { font-size:.78rem; color:var(--dim); line-height:1.4; }
+    .profile-badge {
+      display:inline-block; margin-top:.35rem; font-size:.7rem; font-weight:600;
+      padding:.15rem .4rem; border-radius:4px; background:#f0f4ff; color:var(--accent);
+    }
+    .profile-badge.emergency { background:#fff0f0; color:var(--red); }
+    .profile-badge.pin       { background:#fff8e1; color:#b7791f; }
+    .emergency-warning {
+      margin:.75rem 0 .5rem; padding:.65rem .875rem;
+      background:#fff0f0; border:1px solid #f5c6cb; border-radius:8px;
+      font-size:.8rem; color:var(--red); line-height:1.5;
+    }
+    .emergency-warning strong { display:block; margin-bottom:.2rem; }
+
+    /* Consent */
+    .info-box {
+      background:#f0f4ff; border:1px solid #c7d6ff;
+      border-radius:8px; padding:.75rem .875rem;
+      font-size:.82rem; margin-bottom:1rem; line-height:1.5;
+    }
+    .info-box strong { display:block; margin-bottom:.2rem; font-size:.88rem; }
+    .profile-pill {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.2rem .55rem; border-radius:20px;
+      font-size:.78rem; font-weight:600; color:#fff; margin-bottom:.75rem;
+    }
+    .check-list { list-style:none; }
+    .check-list li {
+      display:flex; align-items:center; gap:.55rem;
+      padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.88rem;
+    }
+    .check-list li:last-child { border-bottom:none; }
+    input[type="checkbox"] { width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; }
+    .warn { font-size:.75rem; color:var(--dim); margin-top:.875rem; line-height:1.5; }
+
+    /* Serving */
+    .session-meta {
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:.875rem;
+    }
+    .session-meta .sid { font-family:monospace; font-size:.72rem; color:var(--dim); }
+    #serve-timer { font-family:monospace; font-size:.85rem; font-weight:600; color:var(--accent); }
+    .active-profile-bar {
+      display:flex; align-items:center; gap:.5rem; padding:.55rem .75rem;
+      border-radius:8px; margin-bottom:.875rem; font-size:.82rem; font-weight:600; color:#fff;
+    }
+    .activity-log {
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      padding:.625rem .75rem; max-height:160px; overflow-y:auto;
+      font-size:.78rem; font-family:monospace;
+    }
+    .log-line { padding:.2rem 0; border-bottom:1px solid var(--border); color:var(--dim); }
+    .log-line:last-child { border-bottom:none; }
+    .log-line .ts      { color:var(--border); margin-right:.4rem; }
+    .log-line .section { color:var(--accent); }
+    .log-emergency { background:rgba(220,38,38,.06); border-radius:4px; padding:.3rem .4rem; }
+    .log-emergency .ts { font-size:.68rem; font-family:monospace; }
+    .log-did { font-size:.62rem; font-family:monospace; color:var(--dim); opacity:.7;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:.1rem; }
+
+    /* PIN */
+    .owner-banner {
+      background: #1a1a2e; color: #fff; border-radius: 10px;
+      padding: 1rem; text-align: center; margin-bottom: 1rem;
+    }
+    .owner-banner .icon { font-size: 2rem; margin-bottom: .4rem; }
+    .owner-banner h3 { font-size: 1rem; font-weight: 700; }
+    .owner-banner p  { font-size: .78rem; opacity: .7; margin-top: .2rem; }
+    .pin-row { display:flex; justify-content:center; gap:.5rem; margin: 1.25rem 0; }
+    .pin-dot {
+      width:14px; height:14px; border-radius:50%;
+      border:2px solid var(--border); background:transparent;
+      transition:background .15s, border-color .15s;
+    }
+    .pin-dot.filled { background:var(--accent); border-color:var(--accent); }
+    .pin-dot.error  { background:var(--red);    border-color:var(--red); }
+    .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; max-width:240px; margin:0 auto; }
+    .numpad-key {
+      padding:.75rem; border:1px solid var(--border); border-radius:8px;
+      font-size:1.1rem; font-weight:600; background:var(--surface);
+      cursor:pointer; text-align:center; user-select:none;
+    }
+    .numpad-key:active { background:var(--bg); }
+    .numpad-key.del    { font-size:.9rem; color:var(--dim); }
+    .pin-hint { text-align:center; font-size:.78rem; color:var(--dim); margin-top:.75rem; }
+
+    /* Buttons */
+    .btn {
+      display:block; width:100%; padding:.65rem; border:none; border-radius:8px;
+      font-size:.9rem; font-weight:600; cursor:pointer;
+      margin-top:.875rem; text-align:center; text-decoration:none;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-danger  { background:var(--red);    color:#fff; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn:hover   { opacity:.88; }
+    .btn:disabled { opacity:.4; cursor:default; }
+    .back-link {
+      font-size:.82rem; color:var(--dim); cursor:pointer;
+      margin-bottom:.75rem; display:inline-flex; align-items:center; gap:.25rem;
+    }
+    .back-link:hover { color:var(--text); }
+
+    /* Steps */
+    #step-scan, #step-profile, #step-pin, #step-consent, #step-serving { display:none; }
+    #step-scan.active, #step-profile.active, #step-pin.active,
+    #step-consent.active, #step-serving.active { display:block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WellFair Connect</h1>
+  <p>Pair with a desktop session</p>
+</header>
+
+<!-- Demo banner -->
+<div id="demo-banner" style="display:none;background:rgba(88,166,255,.1);
+     border:1px solid rgba(88,166,255,.3);border-radius:6px;padding:.35rem .65rem;
+     margin-bottom:.6rem;font-size:.74rem;color:#58a6ff;text-align:center">
+  ⚡ Demo mode · <a href="webconnect.html" style="color:#58a6ff">Exit demo</a>
+</div>
+
+<!-- Step 1: Scan or manual entry -->
+<div class="card" id="step-scan">
+  <h2>Scan desktop QR</h2>
+  <div id="reader"></div>
+  <div class="or-div">or enter session ID</div>
+  <label for="manual-sid">Session ID</label>
+  <input type="text" id="manual-sid" placeholder="paste session ID from desktop"
+         autocomplete="off" spellcheck="false" />
+  <div class="status-row">
+    <div class="dot pulse" id="scan-dot"></div>
+    <span id="scan-status">Point camera at the QR on the desktop</span>
+  </div>
+  <button class="btn btn-primary" onclick="connectManual()">Connect with ID</button>
+</div>
+
+<!-- Step 2: Profile selection -->
+<div class="card" id="step-profile">
+  <span class="back-link" onclick="cancelSession()">← Cancel</span>
+  <h2>Who are you sharing with?</h2>
+  <div class="emergency-warning" id="emergency-warning" style="display:none">
+    <strong>Emergency profiles</strong>
+    These profiles allow access without your real-time consent if you are unconscious.
+    Only activate them if you have pre-configured this session for emergency use.
+  </div>
+  <div class="profile-list" id="profile-list"></div>
+</div>
+
+<!-- Step 2b: Owner PIN (authenticate before serving as owner) -->
+<div class="card" id="step-pin">
+  <span class="back-link" onclick="showStep('step-profile')">← Change profile</span>
+  <div class="owner-banner">
+    <div class="icon">🔐</div>
+    <h3>Owner Workspace</h3>
+    <p>Enter your vault PIN to serve this desktop session as owner</p>
+  </div>
+  <div class="pin-row" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="numpad">
+    <div class="numpad-key" onclick="pinKey('1')">1</div>
+    <div class="numpad-key" onclick="pinKey('2')">2</div>
+    <div class="numpad-key" onclick="pinKey('3')">3</div>
+    <div class="numpad-key" onclick="pinKey('4')">4</div>
+    <div class="numpad-key" onclick="pinKey('5')">5</div>
+    <div class="numpad-key" onclick="pinKey('6')">6</div>
+    <div class="numpad-key" onclick="pinKey('7')">7</div>
+    <div class="numpad-key" onclick="pinKey('8')">8</div>
+    <div class="numpad-key" onclick="pinKey('9')">9</div>
+    <div class="numpad-key" style="visibility:hidden"></div>
+    <div class="numpad-key" onclick="pinKey('0')">0</div>
+    <div class="numpad-key del" onclick="pinKey('del')">⌫</div>
+  </div>
+  <p class="pin-hint" id="pin-hint">Enter your vault PIN</p>
+</div>
+
+<!-- Step 3: Consent (non-owner profiles) -->
+<div class="card" id="step-consent">
+  <span class="back-link" onclick="showStep('step-profile')">← Change profile</span>
+  <h2>Confirm access</h2>
+  <div id="consent-profile-pill"></div>
+  <div class="info-box">
+    <strong>Desktop session requesting vault access</strong>
+    Session: <span id="consent-sid" style="font-family:monospace;font-size:.78rem"></span>
+  </div>
+  <p style="font-size:.82rem;color:var(--dim);margin-bottom:.6rem">Allow access to:</p>
+  <ul class="check-list" id="section-checklist"></ul>
+  <p class="warn">
+    The desktop receives data only when it requests it.
+    Nothing is stored on the desktop — closing that tab destroys everything.
+  </p>
+  <div class="status-row">
+    <div class="dot pulse" id="consent-dot"></div>
+    <span id="consent-status">Connecting…</span>
+  </div>
+  <button class="btn btn-primary" id="approve-btn" onclick="approveSession()" disabled>Allow access</button>
+  <button class="btn btn-outline" onclick="cancelSession()">Cancel</button>
+</div>
+
+<!-- Step 4: Serving -->
+<div class="card" id="step-serving">
+  <div class="session-meta">
+    <span class="sid" id="serve-sid"></span>
+    <span id="serve-timer">00:00</span>
+  </div>
+  <div class="active-profile-bar" id="active-profile-bar"></div>
+  <div class="status-row" style="margin-top:0;margin-bottom:.5rem">
+    <div class="dot ok"></div>
+    <span id="serve-mode-label" style="color:var(--green);font-size:.82rem">Vault serving desktop requests</span>
+  </div>
+  <div id="owner-write-row" style="display:none;font-size:.78rem;color:var(--dim);margin-bottom:.5rem">
+    <span id="write-count">0</span> changes saved to vault this session
+  </div>
+  <p style="font-size:.78rem;color:var(--dim);margin-bottom:.5rem">Activity log</p>
+  <div class="activity-log" id="activity-log">
+    <div class="log-line"><span class="ts">--:--</span>Waiting for requests…</div>
+  </div>
+  <button class="btn btn-danger" onclick="endSession(false)">End session</button>
+
+  <!-- Emergency pre-auth (owner mode only) -->
+  <div id="emergency-preauth-panel" style="display:none;margin-top:1rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="togglePreauthPanel()">⚙ Emergency access settings</button>
+    <div id="emergency-preauth-body" style="display:none;margin-top:.6rem;
+         background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .5rem">
+        Pre-authorize emergency profiles so responders get immediate access
+        without requiring your real-time consent. Applies to the next session only.
+      </p>
+      <ul style="list-style:none;margin:0;padding:0" id="preauth-checklist"></ul>
+    </div>
+  </div>
+
+  <!-- Link to full vault app -->
+  <a href="vault.html" class="btn btn-outline"
+     style="margin-top:.75rem;font-size:.82rem;text-decoration:none">
+    🔐 Open Vault app
+  </a>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
+<script src="js/vault-idb.js"></script>
+<script src="js/vault-crypto.js"></script>
+<script src="js/vault-did.js"></script>
+<script src="js/vault-nym.js"></script>
+<script src="js/vault-mock.js"></script>
+<script src="js/noise-xx.js"></script>
+<script src="js/profiles.js"></script>
+<script>
+'use strict';
+
+// ── Transport constants ───────────────────────────────────────────────────────
+const RELAYS       = ['https://gun.eco/gun', 'https://relay.peer.ooo/gun'];
+const GUN_NS       = 'wf-v1-signal';
+const ICE_CFG      = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const SESSION_TTL_MS = 30 * 60 * 1000;
+
+// ── Session state ─────────────────────────────────────────────────────────────
+let gun, pc, dc, currentSid, scanner, serveTimer;
+let offerHandled   = false;
+let _relayTimer    = null;
+let sessionActive  = false;
+let serveStart     = null;
+let writeCount     = 0;
+let vaultDidKey    = null;
+let vaultNoiseKey  = null;
+let gunSessionNode  = null;
+let sessionTtlTimer = null;
+let connectorDid    = null;
+
+const _gcRegistry = new FinalizationRegistry(label =>
+  console.debug('[WellFair] GC confirmed:', label));
+
+// ── PIN state (authenticates owner for serving — no vault UI opened here) ────
+const VAULT_PIN = '1234';
+let pinEntry = '';
+
+// ── Step management ───────────────────────────────────────────────────────────
+function showStep(id) {
+  ['step-scan','step-profile','step-pin','step-consent','step-serving'].forEach(s =>
+    document.getElementById(s).classList.toggle('active', s === id));
+}
+function setScanStatus(msg, state) {
+  document.getElementById('scan-status').textContent = msg;
+  document.getElementById('scan-dot').className = 'dot ' + (state || 'pulse');
+}
+function setConsentStatus(msg, state) {
+  document.getElementById('consent-status').textContent = msg;
+  document.getElementById('consent-dot').className = 'dot ' + (state || 'pulse');
+}
+
+// ── PIN entry (owner authentication only — no vault workspace shown) ──────────
+function resetPin() {
+  pinEntry = '';
+  updatePinDots('');
+  document.getElementById('pin-hint').textContent = 'Enter your vault PIN';
+  document.getElementById('pin-hint').style.color = '';
+}
+function updatePinDots(state) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinEntry.length && state !== 'error');
+    d.classList.toggle('error',  state === 'error');
+  }
+}
+async function pinKey(k) {
+  if (k === 'del') { pinEntry = pinEntry.slice(0, -1); updatePinDots(''); return; }
+  if (pinEntry.length >= 4) return;
+  pinEntry += k;
+  updatePinDots('');
+  if (pinEntry.length === 4) {
+    const entered = pinEntry;
+    if (entered === VAULT_PIN) {
+      document.getElementById('pin-hint').textContent = '✓ Verified';
+      document.getElementById('pin-hint').style.color = 'var(--green)';
+      setTimeout(approveOwnerSession, 400);
+    } else {
+      updatePinDots('error');
+      document.getElementById('pin-hint').textContent = 'Incorrect PIN — try again';
+      document.getElementById('pin-hint').style.color = 'var(--red)';
+      setTimeout(resetPin, 1200);
+    }
+  }
+}
+
+// ── Owner serving session ─────────────────────────────────────────────────────
+function approveOwnerSession() {
+  allowedSections = new Set(activeProfile.sections);
+  sessionActive   = true;
+  serveStart      = Date.now();
+  writeCount      = 0;
+  acquireWakeLock();
+
+  document.getElementById('serve-sid').textContent = currentSid.slice(0,16) + '…';
+  document.getElementById('owner-write-row').style.display = 'block';
+  document.getElementById('serve-mode-label').textContent  = 'Owner workspace active';
+  document.getElementById('emergency-preauth-panel').style.display = 'block';
+
+  const bar = document.getElementById('active-profile-bar');
+  bar.style.background = activeProfile.color;
+  bar.textContent = activeProfile.icon + '  ' + activeProfile.label;
+
+  showStep('step-serving');
+
+  serveTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - serveStart) / 1000);
+    document.getElementById('serve-timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  sessionTtlTimer = setTimeout(() => {
+    if (gunSessionNode) { gunSessionNode.put(null); gunSessionNode = null; }
+    endSession(true);
+  }, SESSION_TTL_MS);
+
+  if (dc && dc.readyState === 'open') {
+    secureSend({
+      type:      'session_info',
+      vault_did: vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+      profile:   { id: activeProfile.id, label: activeProfile.label,
+                   color: activeProfile.color, icon: activeProfile.icon,
+                   isOwner: true, readWrite: true },
+      sections:  [...allowedSections]
+    });
+  }
+}
+
+// Wake lock (keep screen on during active session)
+let _wakeLock = null;
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    document.addEventListener('visibilitychange', async () => {
+      if (_wakeLock === null && document.visibilityState === 'visible') await acquireWakeLock();
+    });
+  } catch (_) {}
+}
+function releaseWakeLock() {
+  if (_wakeLock) { try { _wakeLock.release(); } catch (_) {} _wakeLock = null; }
+}
+
+// ── Non-owner consent / section selection ────────────────────────────────────
+function approveSession() {
+  allowedSections = new Set();
+  document.querySelectorAll('#section-checklist input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) allowedSections.add(cb.id.replace('chk-', ''));
+  });
+  sessionActive = true; serveStart = Date.now();
+  acquireWakeLock();
+
+  document.getElementById('serve-sid').textContent = currentSid.slice(0,16) + '…';
+  const bar = document.getElementById('active-profile-bar');
+  bar.style.background = activeProfile.color;
+  bar.textContent = activeProfile.icon + '  ' + activeProfile.label;
+  showStep('step-serving');
+
+  serveTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - serveStart) / 1000);
+    document.getElementById('serve-timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  sessionTtlTimer = setTimeout(() => {
+    if (gunSessionNode) { gunSessionNode.put(null); gunSessionNode = null; }
+    endSession(true);
+  }, SESSION_TTL_MS);
+
+  if (dc && dc.readyState === 'open') {
+    secureSend({
+      type:     'session_info',
+      vault_did: vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+      profile:  { id: activeProfile.id, label: activeProfile.label,
+                  color: activeProfile.color, icon: activeProfile.icon },
+      sections: [...allowedSections]
+    });
+  }
+}
+
+// ── Handle desktop requests ───────────────────────────────────────────────────
+async function handleDesktopMessage(msg) {
+  if (msg.type === 'hello')      { if (msg.did) connectorDid = msg.did; return; }
+  if (msg.type === 'disconnect') { endSession(true); return; }
+
+  if (msg.type === 'request') {
+    const { id, section } = msg;
+    if (!allowedSections.has(section)) {
+      secureSend({ type: 'error', id, message: 'section not permitted by active profile' });
+      logActivity(section, false); return;
+    }
+    const dataFn = VAULT[section];
+    if (!dataFn) { secureSend({ type: 'error', id, message: 'section not found in vault' }); return; }
+    let data;
+    if (section === 'medications') {
+      try {
+        const idbMeds = await _dbGetAll(_ST_MEDS);
+        if (idbMeds.length) { data = { items: idbMeds }; }
+      } catch (_) {}
+    }
+    if (data === undefined) data = dataFn();
+    const sigBytes = new TextEncoder().encode(section + ':' + JSON.stringify(data));
+    const sigRaw   = new Uint8Array(await crypto.subtle.sign({ name:'Ed25519' }, vaultDidKey.privateKey, sigBytes));
+    secureSend({ type: 'response', id, section, data, sig: toB64(sigRaw) });
+    logActivity(section, true); return;
+  }
+
+  if (msg.type === 'write_section') {
+    if (!activeProfile?.readWrite) {
+      secureSend({ type: 'error', id: msg.id, message: 'write not permitted by active profile' }); return;
+    }
+    writeCount++;
+    document.getElementById('write-count').textContent = writeCount;
+    logActivity(msg.section + ' [saved]', true);
+    secureSend({ type: 'vault_write_ack', id: msg.id, section: msg.section }); return;
+  }
+
+  if (msg.type === 'store_document') {
+    if (!activeProfile?.readWrite) {
+      secureSend({ type: 'error', id: msg.id, message: 'write not permitted' }); return;
+    }
+    writeCount++;
+    document.getElementById('write-count').textContent = writeCount;
+    logActivity('document: ' + (msg.filename || 'unnamed'), true);
+    secureSend({ type: 'vault_write_ack', id: msg.id, filename: msg.filename }); return;
+  }
+}
+
+// ── Activity log ──────────────────────────────────────────────────────────────
+function logActivity(section, permitted) {
+  const log = document.getElementById('activity-log');
+  const now = new Date();
+  const isEmergency = activeProfile && activeProfile.emergencyOnly;
+  const ts  = isEmergency
+    ? now.toISOString().replace('T',' ').slice(0,19)
+    : now.toTimeString().slice(0,5);
+  const line = document.createElement('div');
+  line.className = 'log-line' + (isEmergency ? ' log-emergency' : '');
+  const label   = SECTION_LABELS[section] || section;
+  const didHtml = (isEmergency && connectorDid) ? `<div class="log-did">${connectorDid}</div>` : '';
+  line.innerHTML = permitted
+    ? `<span class="ts">${ts}</span><span class="section">${label}</span>${didHtml}`
+    : `<span class="ts">${ts}</span><span style="color:var(--red)">✗ ${label} (blocked)</span>${didHtml}`;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ── Session lifecycle ─────────────────────────────────────────────────────────
+function cancelSession() {
+  clearTimeout(_relayTimer); _relayTimer = null;
+  teardown();
+  resetToScan();
+}
+
+function endSession(remote) {
+  clearInterval(serveTimer); serveTimer = null;
+  clearTimeout(sessionTtlTimer); sessionTtlTimer = null;
+  sessionActive = false;
+  releaseWakeLock();
+  if (!remote && dc && dc.readyState === 'open') {
+    try { secureSend({ type: 'disconnect' }); } catch (_) {}
+  }
+  teardown();
+  resetToScan();
+}
+
+function teardown() {
+  clearTimeout(sessionTtlTimer); sessionTtlTimer = null;
+  clearTimeout(_relayTimer); _relayTimer = null;
+  if (gunSessionNode) { try { gunSessionNode.put(null); } catch (_) {} gunSessionNode = null; }
+  if (_sessionSend) { _gcRegistry.register(_sessionSend, 'sessionSendKey'); }
+  if (_sessionRecv) { _gcRegistry.register(_sessionRecv, 'sessionRecvKey'); }
+  if (dc) { try { dc.close(); } catch (_) {} dc = null; }
+  if (pc) { try { pc.close(); } catch (_) {} pc = null; }
+  noiseReset();
+  connectorDid = null;
+}
+
+function resetToScan() {
+  offerHandled = false; currentSid = null;
+  document.getElementById('manual-sid').value = '';
+  document.getElementById('activity-log').innerHTML =
+    '<div class="log-line"><span class="ts">--:--</span>Waiting for requests…</div>';
+  document.getElementById('emergency-preauth-panel').style.display = 'none';
+  document.getElementById('emergency-preauth-body').style.display  = 'none';
+  showStep('step-scan');
+  setScanStatus('Point camera at the QR on the desktop');
+  startScanner();
+}
+
+// ── QR scanner ────────────────────────────────────────────────────────────────
+function startScanner() {
+  if (!window.Html5Qrcode) { setScanStatus('QR library not loaded', 'err'); return; }
+  scanner = new Html5Qrcode('reader');
+  scanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 200, height: 200 } },
+    text => {
+      try {
+        const d = JSON.parse(text);
+        if (d.sid) { stopScanner(); connectToSession(d.sid, d.r || RELAYS[0]); }
+      } catch (_) { setScanStatus('Invalid QR — try again', 'err'); }
+    },
+    () => {}
+  ).catch(() => setScanStatus('Camera unavailable — use manual entry below', 'err'));
+}
+function stopScanner() {
+  if (scanner) { scanner.stop().catch(() => {}); scanner = null; }
+}
+function connectManual() {
+  const sid = document.getElementById('manual-sid').value.trim();
+  if (sid.length < 16) { setScanStatus('Session ID too short', 'err'); return; }
+  stopScanner();
+  connectToSession(sid, RELAYS[0]);
+}
+
+// ── Gun + WebRTC connection ───────────────────────────────────────────────────
+function connectToSession(sid, relay) {
+  currentSid = sid; offerHandled = false;
+  renderProfileList();
+  showStep('step-profile');
+
+  clearTimeout(_relayTimer);
+  gun = Gun([relay, ...RELAYS.filter(r => r !== relay)]);
+  const node = gun.get(GUN_NS).get(sid);
+  gunSessionNode = node;
+
+  _relayTimer = setTimeout(() => {
+    if (!offerHandled) {
+      cancelSession();
+      setScanStatus('Relay unreachable — check connection, then re-scan', 'err');
+    }
+  }, 12000);
+
+  node.on(async (data) => {
+    if (offerHandled || !data || !data.offer) return;
+    clearTimeout(_relayTimer); _relayTimer = null;
+    offerHandled = true;
+    await handleOffer(data.offer, node);
+  });
+}
+
+async function handleOffer(offerJSON, node) {
+  pc = new RTCPeerConnection(ICE_CFG);
+
+  pc.ondatachannel = e => {
+    dc = e.channel;
+    dc.onmessage = async ev => {
+      if (!_handshakeDone) {
+        try { const m = JSON.parse(ev.data); if (m && m.type === 'noise') noiseEnqueue(m); } catch (_) {}
+        return;
+      }
+      let msg;
+      try { msg = await secureRecv(ev.data); } catch (_) { return; }
+      if (!sessionActive) return;
+      try { await handleDesktopMessage(msg); } catch (_) {}
+    };
+    dc.onopen = async () => {
+      const msg1 = await noiseAwait();
+      try {
+        const { sendKey, recvKey } = await runNoiseResponder(vaultNoiseKey, msg1);
+        _sessionSend = sendKey; _sessionRecv = recvKey; _handshakeDone = true;
+        if (gunSessionNode) {
+          try { gunSessionNode.get('answer').put({ sdp: null, t: null }); } catch (_) {}
+        }
+        // Send session_info if already approved (emergency auto-approve case)
+        if (sessionActive && activeProfile) {
+          secureSend({
+            type:      'session_info',
+            vault_did: vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+            profile:   { id: activeProfile.id, label: activeProfile.label,
+                         color: activeProfile.color, icon: activeProfile.icon,
+                         isOwner: !!activeProfile.isOwner, readWrite: !!activeProfile.readWrite },
+            sections:  [...allowedSections]
+          });
+        }
+        setConsentStatus('Connected — ready to approve', 'ok');
+        document.getElementById('approve-btn').disabled = false;
+      } catch (e) {
+        setConsentStatus('Handshake failed: ' + e.message, 'err');
+      }
+    };
+    dc.onclose = () => { if (sessionActive) endSession(true); };
+  };
+
+  const offer = JSON.parse(offerJSON);
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  await waitForICE(pc);
+
+  node.get('answer').put({
+    sdp: JSON.stringify(pc.localDescription),
+    t:   Date.now()
+  });
+
+  dcRawSend({ type: 'noise', msg: 1,
+    e: toB64(new Uint8Array(await crypto.subtle.exportKey('raw', vaultNoiseKey.pubKey))) });
+}
+
+function waitForICE(p) {
+  return new Promise(res => {
+    if (p.iceGatheringState === 'complete') { res(); return; }
+    p.onicegatheringstatechange = () => { if (p.iceGatheringState === 'complete') res(); };
+    setTimeout(res, 4000);
+  });
+}
+
+window.addEventListener('pagehide', () => { endSession(false); });
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const _missing = [];
+  try { await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign', 'verify']); } catch (_) { _missing.push('Ed25519'); }
+  try { await crypto.subtle.generateKey({ name: 'X25519'  }, false, ['deriveBits']);       } catch (_) { _missing.push('X25519');  }
+  if (_missing.length) {
+    document.body.innerHTML =
+      `<div style="font-family:system-ui;max-width:36rem;margin:4rem auto;padding:1.5rem;` +
+      `background:#1a1a2e;color:#e2e8f0;border-radius:.75rem;border:1px solid #e53e3e">` +
+      `<h2 style="margin:0 0 .75rem;color:#fc8181">Browser not supported</h2>` +
+      `<p style="line-height:1.6;margin:0 0 .75rem">WellFair requires WebCrypto algorithms ` +
+      `not available in this browser: <strong style="color:#fc8181">${_missing.join(', ')}</strong>.</p>` +
+      `<p style="line-height:1.6;margin:0">Please use <strong>Chrome 111+</strong>, ` +
+      `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
+    return;
+  }
+
+  [vaultDidKey, vaultNoiseKey] = await Promise.all([generateDidKey(), noiseGenX25519()]);
+  await loadProfiles();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+  // Demo mode: skip pairing, go straight to owner serving
+  if (new URLSearchParams(location.search).has('demo')) {
+    activeProfile   = profiles.find(p => p.isOwner) || { id: 'owner', label: 'Owner',
+      icon: '🔐', color: '#1a1a2e', sections: Object.keys(SECTION_LABELS), isOwner: true, readWrite: true };
+    currentSid      = 'demo-' + Array.from(crypto.getRandomValues(new Uint8Array(8)))
+                        .map(b => b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('demo-banner').style.display = 'block';
+    approveOwnerSession();
+    return;
+  }
+
+  initNym();
+  showStep('step-scan');
+  startScanner();
+})();
+</script>
+</body>
+</html>
