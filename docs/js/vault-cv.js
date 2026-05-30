@@ -62,6 +62,22 @@ function setModuleConsent(module, granted) {
   _updateConsentUI();
 }
 
+// Check if a specific module's worker is currently running.
+function agentHasModule(module) {
+  return !!_agentWorkers[module];
+}
+
+// Send a frame (ImageBitmap) to a vision worker. Bitmap ownership is transferred.
+// Silently closes the bitmap if the worker is not running.
+function agentSendFrame(module, bitmap) {
+  const w = _agentWorkers[module];
+  if (!w) {
+    if (bitmap && typeof bitmap.close === 'function') bitmap.close();
+    return;
+  }
+  w.postMessage({ bitmap }, [bitmap]);
+}
+
 async function stopAgent() {
   // Send stop signal before closing
   if (_agentDc && _agentDc.readyState === 'open') {
@@ -90,16 +106,30 @@ const VaultCV = {
   initAgent,
   setModuleConsent,
   stopAgent,
+  agentHasModule,
+  agentSendFrame,
   CV_MODULE,
+};
+
+// ── Worker file name map (module → file stem in docs/js/workers/) ──────────
+
+const _WORKER_FILE = {
+  [CV_MODULE.EMOTION]:    'cv-emotion',
+  [CV_MODULE.RPG]:        'cv-rpg',
+  [CV_MODULE.PROSODY]:    'audio-prosody',
+  [CV_MODULE.LINGUISTIC]: 'text-linguistic',
 };
 
 // ── Internal helpers ───────────────────────────────────────────────────────
 
 function _spawnWorker(module) {
   if (_agentWorkers[module]) return; // already running
-  const path = 'js/workers/' + module + '.worker.js';
+  const stem = _WORKER_FILE[module] || module;
+  const path = 'js/workers/' + stem + '.worker.js';
   try {
-    const w = new Worker(path, { type: 'module' });
+    // Classic worker (not module) — required for MediaPipe's internal importScripts() calls.
+    // Workers use dynamic import() for their own ESM dependencies.
+    const w = new Worker(path);
     w.onmessage = (ev) => _onWorkerMessage(module, ev.data);
     w.onerror   = (e)  => console.warn('[AgentController] worker error:', module, e.message);
     _agentWorkers[module] = w;
@@ -120,6 +150,16 @@ function _terminateWorker(module) {
 }
 
 function _onWorkerMessage(module, payload) {
+  // Lifecycle messages (ready, error) are not telemetry data
+  if (payload && payload.type === 'ready') {
+    console.debug('[AgentController] worker ready:', module);
+    return;
+  }
+  if (payload && payload.type === 'error') {
+    console.warn('[AgentController] worker init error:', module, payload.error);
+    return;
+  }
+
   _agentFrame[module] = payload;
   // Emit a telemetry frame once all active workers have reported
   const active = Object.keys(_agentWorkers);

@@ -1303,6 +1303,12 @@
   </div>
 </div>
 
+<!-- WA-2 Call video elements — hidden; used for MediaPipe frame analysis -->
+<video id="call-local-video"  autoplay playsinline muted
+       style="display:none;position:absolute;width:1px;height:1px;pointer-events:none"></video>
+<video id="call-remote-video" autoplay playsinline
+       style="display:none;position:absolute;width:1px;height:1px;pointer-events:none"></video>
+
 <!-- VC-11 in-call data sharing approval panel -->
 <div id="call-share-panel" style="display:none;position:fixed;inset:0;z-index:1800;
      align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65)">
@@ -1364,7 +1370,7 @@
 <!-- VC-10 Call session — must load after vault-comms-gate.js -->
 <script src="js/vault-comms-call.js?v=6"></script>
 <!-- WA-1 AgentController — must load after vault-comms-call.js -->
-<script src="js/vault-cv.js?v=7"></script>
+<script src="js/vault-cv.js?v=7.2"></script>
 <!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
 <script src="js/vault-scheduler.js?v=6"></script>
 <!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->

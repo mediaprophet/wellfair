@@ -27,6 +27,11 @@ let _callSessionId = null;
 let _callGunNode   = null;
 const _guestTokens = new Map(); // sessionId → token (hex)
 
+// WA-2 frame loop state
+let _callRafId   = null;
+let _callFrameTs = 0;
+const _FRAME_MS  = 100; // ~10fps cap — matches MediaPipe throughput on mid-range hardware
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 // Initiate a call to a contact. Returns { sessionId, callLink }.
@@ -53,6 +58,7 @@ async function startCall(contactId) {
   _callDc = _callPc.createDataChannel('wf-data');
   _callSetupDc(_callDc);
   if (typeof initAgent === 'function') initAgent(sessionId, _callDc);
+  _callStartFrameLoop();
 
   const offer = await _callPc.createOffer();
   await _callPc.setLocalDescription(offer);
@@ -103,6 +109,7 @@ async function answerCall(sessionId, gunNode) {
     _callDc = ev.channel;
     _callSetupDc(_callDc);
     if (typeof initAgent === 'function') initAgent(_callSessionId, _callDc);
+    _callStartFrameLoop();
   };
 
   // Wait for offer then answer
@@ -148,6 +155,7 @@ function verifyGuestToken(sessionId, token) {
 
 // Tear down the current call cleanly.
 async function endCall() {
+  _callStopFrameLoop();
   if (typeof stopAgent === 'function') await stopAgent().catch(() => {});
   if (_callStream) {
     _callStream.getTracks().forEach(t => t.stop());
@@ -255,4 +263,62 @@ function _callRenderRemote(stream) {
 // Notify vault.html UI of call lifecycle events (VC-10b wires these to the panel).
 function _callNotifyUI(ev) {
   document.dispatchEvent(new CustomEvent('wf:call', { detail: ev }));
+}
+
+// ── WA-2 Vision frame capture loop ───────────────────────────────────────────
+
+function _callStartFrameLoop() {
+  if (_callRafId) return;
+
+  // Wire local stream to hidden video so we can draw it to canvas
+  const localVid = document.getElementById('call-local-video');
+  if (localVid && _callStream) {
+    localVid.srcObject = _callStream;
+    localVid.play().catch(() => {});
+  }
+
+  const tick = () => {
+    _callRafId = requestAnimationFrame(tick);
+    const now = performance.now();
+    if (now - _callFrameTs < _FRAME_MS) return;
+    if (!_callStream || !_callSessionId) return;
+    if (typeof agentHasModule !== 'function') return;
+
+    // Only capture if a vision module needs frames
+    const needsEmotion = agentHasModule(CV_MODULE.EMOTION);
+    const needsRpg     = agentHasModule(CV_MODULE.RPG);
+    if (!needsEmotion && !needsRpg) return;
+
+    const vEl = document.getElementById('call-local-video');
+    if (!vEl || vEl.readyState < 2 || vEl.videoWidth === 0) return;
+
+    _callFrameTs = now;
+    try {
+      const canvas = new OffscreenCanvas(vEl.videoWidth, vEl.videoHeight);
+      canvas.getContext('2d').drawImage(vEl, 0, 0);
+
+      if (needsEmotion && needsRpg) {
+        // Both active: need two separate bitmaps (bitmap is transferable, can't split)
+        const bm1 = canvas.transferToImageBitmap();
+        createImageBitmap(vEl).then(bm2 => {
+          agentSendFrame(CV_MODULE.EMOTION, bm1);
+          agentSendFrame(CV_MODULE.RPG, bm2);
+        }).catch(() => { bm1.close(); });
+      } else {
+        const bm = canvas.transferToImageBitmap();
+        if (needsEmotion) agentSendFrame(CV_MODULE.EMOTION, bm);
+        else              agentSendFrame(CV_MODULE.RPG, bm);
+      }
+    } catch (e) {
+      console.warn('[Call] frame capture:', e.message);
+    }
+  };
+  tick();
+}
+
+function _callStopFrameLoop() {
+  if (_callRafId) { cancelAnimationFrame(_callRafId); _callRafId = null; }
+  _callFrameTs = 0;
+  const localVid = document.getElementById('call-local-video');
+  if (localVid) { localVid.srcObject = null; }
 }
