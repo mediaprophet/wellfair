@@ -185,6 +185,38 @@
     .bar-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin:0.75rem 0; }
     .bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; opacity:0.7; min-height:3px; }
 
+    /* ── Calls panel ── */
+    .calls-idle { text-align:center; padding:2.5rem 1rem; color:var(--dim); }
+    .calls-idle .c-icon { font-size:2.4rem; margin-bottom:.5rem; }
+    .calls-idle p { font-size:.85rem; margin-bottom:.75rem; }
+    .call-active {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:1rem 1.1rem; margin-bottom:1rem;
+    }
+    .call-active .ca-header {
+      display:flex; align-items:center; gap:.6rem; margin-bottom:.65rem;
+    }
+    .call-active .ca-dot { width:9px; height:9px; border-radius:50%; background:var(--green); animation:pulse 1.2s infinite; }
+    .call-active .ca-name { font-weight:600; font-size:.95rem; flex:1; }
+    .call-active .ca-timer { font-family:monospace; font-size:.78rem; color:var(--dim); }
+    .call-link-row { display:flex; gap:.5rem; align-items:center; margin-bottom:.75rem; }
+    .call-link-row input {
+      flex:1; background:var(--bg); border:1px solid var(--border); border-radius:5px;
+      padding:.35rem .6rem; color:var(--dim); font-size:.72rem; font-family:monospace;
+    }
+    .call-controls-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .call-controls-row .btn { flex:1; min-width:80px; padding:.42rem .5rem; font-size:.78rem; }
+    .call-notif {
+      position:fixed; bottom:1rem; right:1rem; z-index:3000;
+      background:var(--surface); border:1px solid var(--accent);
+      border-radius:10px; padding:1rem; min-width:220px; box-shadow:0 4px 16px rgba(0,0,0,.4);
+      display:none;
+    }
+    .call-notif-title { font-size:.88rem; font-weight:700; margin-bottom:.25rem; }
+    .call-notif-sub   { font-size:.75rem; color:var(--dim); margin-bottom:.65rem; word-break:break-all; }
+    .call-notif-btns  { display:flex; gap:.45rem; }
+    .call-notif-btns .btn { flex:1; padding:.38rem .5rem; font-size:.78rem; }
+
     /* Notice */
     .ephem-notice {
       margin-top: 1.5rem;
@@ -360,6 +392,12 @@
         <span class="icon">⚠️</span> Allergies
       </button>
 
+      <!-- Calls — always visible after connection -->
+      <div class="sidebar-label" style="margin-top:.75rem">Comms</div>
+      <button class="nav-item" data-section="calls">
+        <span class="icon">📞</span> Calls
+      </button>
+
       <!-- Owner-only sections — hidden until owner mode -->
       <div class="nav-divider owner-nav" style="display:none">Workspace</div>
       <button class="nav-item owner-nav" data-section="documents" style="display:none">
@@ -385,6 +423,16 @@
     </div>
   </div>
 
+</div>
+
+<!-- Incoming call notification (toast, fixed bottom-right) -->
+<div id="conn-call-notif" class="call-notif">
+  <div class="call-notif-title">📞 Incoming call</div>
+  <div class="call-notif-sub" id="conn-notif-caller">—</div>
+  <div class="call-notif-btns">
+    <button class="btn btn-primary" onclick="_connAcceptCall()">Accept</button>
+    <button class="btn btn-ghost"   onclick="_connDismissNotif()">Dismiss</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
@@ -933,6 +981,7 @@ function renderSection(section, data) {
 // ── Messaging ────────────────────────────────────────────────────────────────
 
 function requestSection(section) {
+  if (section === 'calls') { renderCallsPanel(); return; }
   if (DEMO_MODE) {
     const data = DEMO_VAULT[section];
     if (data) renderSection(section, data);
@@ -956,6 +1005,9 @@ function requestSection(section) {
 }
 
 async function handleMessage(msg) {
+  if (['call_started','call_answered','call_ended','call_incoming'].includes(msg.type)) {
+    _connHandleCallMsg(msg); return;
+  }
   if (msg.type === 'session_info') {
     if (msg.vault_did) {
       document.getElementById('vault-did').textContent = msg.vault_did;
@@ -1312,6 +1364,141 @@ function saveNotes() {
     type: 'write_section', id, section: 'notes',
     data: { text, saved_at: new Date().toISOString() }
   });
+}
+
+// ── Calls panel ──────────────────────────────────────────────────────────────
+
+let _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+let _connCallSecs  = 0;
+let _connCallTimer = null;
+
+function renderCallsPanel() {
+  if (_connCallState.active) {
+    _connRenderActiveCall();
+  } else {
+    renderContent(`
+      <div class="content-header">
+        <h2>Calls</h2>
+        <p>Start a call with a verified contact via your vault</p>
+      </div>
+      <div class="calls-idle">
+        <div class="c-icon">📞</div>
+        <p>No active call. Ask your vault phone to initiate a call, or use the button below
+           to request a call to a contact on your phone.</p>
+        <button class="btn btn-primary" style="width:auto;display:inline-block;padding:.55rem 1.4rem"
+                onclick="_connRequestCallFromVault()">
+          Start call from vault
+        </button>
+      </div>
+    `);
+  }
+}
+
+function _connRenderActiveCall() {
+  const mins = String(Math.floor(_connCallSecs / 60)).padStart(2, '0');
+  const secs = String(_connCallSecs % 60).padStart(2, '0');
+  renderContent(`
+    <div class="content-header"><h2>Active Call</h2><p>Call in progress via vault</p></div>
+    <div class="call-active">
+      <div class="ca-header">
+        <div class="ca-dot"></div>
+        <div class="ca-name">${_connCallState.callerDid
+          ? _connCallState.callerDid.slice(0, 24) + '…' : 'Connected'}</div>
+        <div class="ca-timer" id="conn-call-timer">${mins}:${secs}</div>
+      </div>
+      ${_connCallState.callLink ? `
+        <div class="call-link-row">
+          <input readonly value="${_connCallState.callLink}" id="conn-call-link-inp" />
+          <button class="btn btn-ghost" style="width:auto;padding:.35rem .7rem;font-size:.75rem"
+                  onclick="navigator.clipboard.writeText('${_connCallState.callLink}')
+                           .then(()=>this.textContent='Copied!')">Copy link</button>
+        </div>` : ''}
+      <div class="call-controls-row">
+        <button class="btn btn-ghost"   onclick="_connSendCallCtrl('mute_audio')">🎙 Mute</button>
+        <button class="btn btn-ghost"   onclick="_connSendCallCtrl('mute_video')">📷 Video</button>
+        <button class="btn btn-primary" style="background:var(--red);color:#fff"
+                onclick="_connEndCall()">End call</button>
+      </div>
+    </div>
+    <p class="ephem-notice">
+      Video stream is handled by your vault phone. This panel shows call controls only.
+    </p>
+  `);
+}
+
+function _connRequestCallFromVault() {
+  if (!dc || dc.readyState !== 'open') {
+    renderContent('<p style="padding:2rem;color:var(--red)">Not connected to vault.</p>');
+    return;
+  }
+  secureSend({ type: 'initiate_call', contactId: null });
+  renderContent('<div class="loading"><div class="spinner"></div> Requesting call from vault…</div>');
+}
+
+function _connSendCallCtrl(action) {
+  if (!dc || dc.readyState !== 'open') return;
+  secureSend({ type: 'call_control', action, sessionId: _connCallState.sessionId });
+}
+
+function _connEndCall() {
+  if (_connCallState.active) {
+    secureSend({ type: 'call_control', action: 'end', sessionId: _connCallState.sessionId });
+  }
+  _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+  clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+  renderCallsPanel();
+}
+
+function _connAcceptCall() {
+  _connDismissNotif();
+  secureSend({ type: 'call_control', action: 'accept', sessionId: _connCallState.sessionId });
+}
+
+function _connDismissNotif() {
+  document.getElementById('conn-call-notif').style.display = 'none';
+}
+
+function _connHandleCallMsg(msg) {
+  if (msg.type === 'call_started' || msg.type === 'call_answered') {
+    _connCallState = {
+      active:    true,
+      sessionId: msg.sessionId || _connCallState.sessionId,
+      callLink:  msg.callLink  || _connCallState.callLink,
+      callerDid: msg.callerDid || _connCallState.callerDid,
+    };
+    _connCallSecs = 0;
+    clearInterval(_connCallTimer);
+    _connCallTimer = setInterval(() => {
+      _connCallSecs++;
+      const el = document.getElementById('conn-call-timer');
+      if (el) {
+        const m = String(Math.floor(_connCallSecs / 60)).padStart(2, '0');
+        const s = String(_connCallSecs % 60).padStart(2, '0');
+        el.textContent = m + ':' + s;
+      }
+    }, 1000);
+    // Switch to Calls panel if not already there
+    const callBtn = document.querySelector('[data-section="calls"]');
+    if (callBtn) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      callBtn.classList.add('active');
+    }
+    renderCallsPanel();
+    return;
+  }
+  if (msg.type === 'call_ended') {
+    _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+    clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+    renderCallsPanel();
+    return;
+  }
+  if (msg.type === 'call_incoming') {
+    _connCallState.sessionId = msg.sessionId;
+    _connCallState.callerDid = msg.callerDid;
+    document.getElementById('conn-notif-caller').textContent =
+      msg.callerDid ? msg.callerDid.slice(0, 36) + '…' : 'Unknown caller';
+    document.getElementById('conn-call-notif').style.display = 'block';
+  }
 }
 
 // ── Section renderers — add owner-mode extra sections ─────────────────────────
