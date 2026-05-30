@@ -21,10 +21,13 @@ const _ST_JOBS       = 'wf-jobs';          // background job queue
 const _ST_EVENTS     = 'wf-events';        // call event log with hash chain
 // WA-1 — Webizen Agent telemetry (added in v7)
 const _ST_TELEMETRY  = 'wf-telemetry';     // session telemetry samples
+// HCW-1 — Human-Centric Wallet (added in v8)
+const _ST_WALLET     = 'wf-wallet';        // wallet provider metadata
+const _ST_TXLOG      = 'wf-txlog';         // local transaction log (never transmitted)
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 7);
+    const rq = indexedDB.open(_DB_NAME, 8);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -43,6 +46,9 @@ function _openDB() {
       if (!db.objectStoreNames.contains(_ST_EVENTS))     db.createObjectStore(_ST_EVENTS,     { keyPath: 'id' });
       // v7 — WA-1 Webizen Agent telemetry
       if (!db.objectStoreNames.contains(_ST_TELEMETRY))  db.createObjectStore(_ST_TELEMETRY,  { keyPath: 'id' });
+      // v8 — HCW-1 Human-Centric Wallet
+      if (!db.objectStoreNames.contains(_ST_WALLET))     db.createObjectStore(_ST_WALLET,     { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_TXLOG))      db.createObjectStore(_ST_TXLOG,      { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);

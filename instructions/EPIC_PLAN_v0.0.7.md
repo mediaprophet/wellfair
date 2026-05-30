@@ -779,7 +779,7 @@ vault.html
 
 | Session | Date | Milestone | Status | Handover file |
 |---------|------|-----------|--------|---------------|
-| HCW-1 | | vault-wallet.js + Lightning + IDB v8 | not started | |
+| HCW-1 | 2026-05-31 | vault-wallet.js + Lightning + IDB v8 | complete | instructions/HANDOVER_HCW-1_2026-05-31.md |
 | HCW-2 | | Nym token auto-swap + bandwidth abstraction | not started | |
 | HCW-3 | | Exchange on-ramp widget (MoonPay/Transak) | not started | |
 | HCW-4 | | Care credit issuance + ODRL-signed JSON-LD | not started | |
