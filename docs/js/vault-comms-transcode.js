@@ -83,6 +83,11 @@ function startRealtimeTranscription(stream, sessionId, langHint) {
         }).catch(() => {});
       }
 
+      // WA-5 — forward raw segment to the linguistic analysis worker (no STT duplication)
+      if (typeof agentSendText === 'function') {
+        agentSendText(text, new Date().toISOString());
+      }
+
       // If the user's vault language differs, enqueue a translation job
       const vaultLang = _txcVaultLang();
       if (vaultLang && vaultLang !== _txcLangHint && typeof enqueueJob === 'function') {

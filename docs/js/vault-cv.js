@@ -90,6 +90,14 @@ function agentSendFrame(module, bitmap) {
   w.postMessage({ bitmap }, [bitmap]);
 }
 
+// Forward a transcript segment to the LINGUISTIC worker (WA-5).
+// Called from vault-comms-transcode.js after each speech.segment event.
+function agentSendText(text, ts) {
+  const w = _agentWorkers[CV_MODULE.LINGUISTIC];
+  if (!w || !text) return;
+  w.postMessage({ text, ts: ts || new Date().toISOString() });
+}
+
 async function stopAgent() {
   _teardownAudio(); // stop audio pipeline before workers
   // Send stop signal before closing
