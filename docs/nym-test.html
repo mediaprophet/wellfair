@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WellFair — Nym SDK Validation</title>
+  <style>
+    body { background: #0d1117; color: #e6edf3; font-family: monospace;
+           padding: 2rem; margin: 0; line-height: 1.6; }
+    h1   { font-size: 1.1rem; color: #58a6ff; margin-bottom: 1rem; }
+    pre  { background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+           padding: 1rem; white-space: pre-wrap; word-break: break-all; }
+    .ok  { color: #3fb950; }
+    .err { color: #f85149; }
+    .dim { color: #8b949e; }
+    .btn { padding: .5rem 1.2rem; background: #58a6ff; color: #000; border: none;
+           border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 1rem;
+           font-family: inherit; font-size: .9rem; }
+    .btn:hover { opacity: .85; }
+  </style>
+</head>
+<body>
+<h1>WellFair — Nym SDK Validation Harness</h1>
+<button class="btn" onclick="runChecks()">Run checks</button>
+<pre id="log">Click "Run checks" to start.
+
+Prerequisites:
+  • Served via: python -m http.server 3000 --directory docs
+  • Service Worker must be active for COOP/COEP headers (shared ArrayBuffer).
+    If this is your first visit: hard-reload (Ctrl+Shift+R), then soft-reload.
+    Or visit /app.html once first, then return here.</pre>
+
+<script>
+// ── Configuration ─────────────────────────────────────────────────────────────
+// Update NYM_SDK_URL once you confirm the correct CDN/local path.
+// Download locally with: npm pack @nymproject/sdk-full-fat
+// then serve from docs/nym-sdk/ and set to '/nym-sdk/index.mjs'.
+const NYM_SDK_URL = 'https://unpkg.com/@nymproject/sdk-full-fat@1.2.1/dist/esm/index.js';
+
+// Use Nym Sandbox (testnet) for development — free test tokens via Nym Discord faucet.
+// Verify current endpoint at: https://nymtech.net/docs/network/overview
+// Sandbox testnet (dev):  https://sandbox-nym-api1.nymtech.net/api
+// Mainnet (production):   https://validator.nymtech.net/api
+const NYM_API_URL = 'https://sandbox-nym-api1.nymtech.net/api';
+
+const logEl = document.getElementById('log');
+let buf = '';
+
+function out(msg, cls) {
+  const safe = String(msg).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  buf += cls ? `<span class="${cls}">${safe}</span>\n` : safe + '\n';
+  logEl.innerHTML = buf;
+}
+
+async function runChecks() {
+  buf = '';
+
+  // ── Cross-origin isolation ──────────────────────────────────────────────────
+  out('── Cross-origin isolation ─────────────────────────────');
+  const isolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
+  out('  crossOriginIsolated : ' + isolated, isolated ? 'ok' : 'err');
+  out('  SharedArrayBuffer   : ' + (typeof SharedArrayBuffer !== 'undefined'
+    ? 'available ✓' : 'UNAVAILABLE ✗'), typeof SharedArrayBuffer !== 'undefined' ? 'ok' : 'err');
+  if (!isolated) {
+    out('', null);
+    out('  Service Worker (sw.js) injects COOP/COEP headers.', 'dim');
+    out('  Hard-reload (Ctrl+Shift+R) to activate the SW, then soft-reload.', 'dim');
+    out('  Continuing — SDK import may fail without SharedArrayBuffer.', 'dim');
+  }
+
+  // ── Service Worker status ───────────────────────────────────────────────────
+  out('', null);
+  out('── Service Worker ─────────────────────────────────────');
+  if ('serviceWorker' in navigator) {
+    let reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      try {
+        reg = await navigator.serviceWorker.register('/sw.js');
+        out('  SW registered — reload this page to activate it', 'dim');
+      } catch (e) {
+        out('  SW registration failed: ' + e.message, 'err');
+      }
+    } else if (reg.active) {
+      out('  SW active: ' + reg.active.scriptURL, 'ok');
+    } else {
+      const pending = reg.installing || reg.waiting;
+      out('  SW registered, state: ' + pending?.state + ' (reload to activate)', 'dim');
+    }
+  } else {
+    out('  serviceWorker not supported in this browser', 'err');
+  }
+
+  // ── Nym SDK import ──────────────────────────────────────────────────────────
+  out('', null);
+  out('── Nym SDK import ─────────────────────────────────────');
+  out('  URL: ' + NYM_SDK_URL, 'dim');
+  const t0 = performance.now();
+  let sdk;
+  try {
+    sdk = await import(NYM_SDK_URL);
+    out('  import() : ' + (performance.now() - t0).toFixed(0) + 'ms ✓', 'ok');
+  } catch (e) {
+    out('  import() failed: ' + e.message, 'err');
+    out('  Check NYM_SDK_URL. For local serving:', 'dim');
+    out('    npm pack @nymproject/sdk-full-fat', 'dim');
+    out('    unpack into docs/nym-sdk/, set NYM_SDK_URL = \'/nym-sdk/index.mjs\'', 'dim');
+    return;
+  }
+
+  const factory = sdk.createNymMixnetClient ?? sdk.default?.createNymMixnetClient;
+  if (!factory) {
+    out('  createNymMixnetClient not found in SDK', 'err');
+    out('  Available exports: ' + Object.keys(sdk).slice(0, 20).join(', '), 'dim');
+    return;
+  }
+  out('  createNymMixnetClient found ✓', 'ok');
+
+  // ── Nym client cold-start ───────────────────────────────────────────────────
+  out('', null);
+  out('── Nym client init (cold start typically 3–8 s) ───────');
+  const t1 = performance.now();
+  let client;
+  try {
+    client = await factory();
+    await client.client.start({
+      clientId: 'wellfair-validate-' + Date.now(),
+      nymApiUrl: NYM_API_URL,
+    });
+    const ms = (performance.now() - t1).toFixed(0);
+    out('  Started in ' + ms + ' ms ✓', 'ok');
+
+    const addr = await client.client.selfAddress();
+    out('  Nym address: ' + addr, 'ok');
+
+    // ── SURB send test ────────────────────────────────────────────────────────
+    out('', null);
+    out('── SURB attach test ───────────────────────────────────');
+    try {
+      await client.client.sendMessage({
+        payload: { message: 'wellfair-surb-test', mimeType: 'text/plain' },
+        recipient: addr,
+        replySurbs: 3,
+      });
+      out('  Self-message with replySurbs:3 sent ✓', 'ok');
+    } catch (e) {
+      out('  SURB attach failed: ' + e.message, 'err');
+      out('  replySurbs API may differ in this SDK version — check docs.', 'dim');
+    }
+
+    await client.client.stop();
+
+    out('', null);
+    out('── Result ─────────────────────────────────────────────');
+    out('  ALL CHECKS PASSED', 'ok');
+    out('  Cold start: ' + ms + ' ms — show a loading indicator in the UI', 'dim');
+    out('  Update NYM_SDK_URL in pair.html to: ' + NYM_SDK_URL, 'dim');
+  } catch (e) {
+    out('  Init failed: ' + e.message, 'err');
+    out(e.stack, 'dim');
+  }
+}
+
+// Register SW so this page also gets COOP/COEP on subsequent loads
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

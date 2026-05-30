@@ -1,0 +1,57 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix me:     <urn:wellfair:user:mock-comorbid:> .
+
+# =============================================================================
+# Mock Profile: Type 2 Diabetes + Essential Hypertension + Early CKD
+# THE PRIMARY HICKAM'S DICTUM TEST CASE.
+#
+# Expected evaluation result (multi-condition accumulation):
+#   - fma:Left_kidney, fma:Right_kidney → HIGH (from both DM and HTN rules;
+#     highest severity wins; must appear ONCE with severity "high")
+#   - fma:Left_renal_artery, fma:Right_renal_artery → HIGH (DM + HTN)
+#   - fma:Heart, fma:Left_coronary_artery, fma:Right_coronary_artery → HIGH (HTN)
+#   - fma:Retina → HIGH (DM, HbA1c 8.6 > 8.0 threshold)
+#   - fma:Pancreas → HIGH (DM)
+#   - fma:Brain, fma:Cerebral_cortex → MEDIUM (HTN)
+#   - fma:Aorta → MEDIUM (HTN)
+#   - fma:Cardiovascular_system → MEDIUM (DM peripheral vascular)
+#   - fma:Spinal_cord → MEDIUM (DM peripheral neuropathy)
+#
+# Verify: no structure is suppressed because multiple rulesets named it.
+# Verify: kidney appears exactly once (not duplicated from two rulesets).
+# Verify: severity is correctly escalated to the maximum across all sources.
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – DM2 + Hypertension + CKD (Hickam test)" ;
+    app:subjectId "mock-comorbid" .
+
+# Conditions (all three simultaneous)
+me:subject app:userFact snomed:44054006 .   # Type 2 diabetes mellitus
+me:subject app:userFact snomed:59621000 .   # Essential hypertension
+me:subject app:userFact snomed:709044004 .  # Chronic kidney disease
+
+# Metrics – all three conditions active and measurably abnormal
+me:metric_hba1c           app:prologName "hba1c" ;           app:value "8.6"^^xsd:decimal ; app:subject me:subject .
+me:metric_fasting_glucose  app:prologName "fasting_glucose" ;  app:value "10.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_systolic_bp      app:prologName "systolic_bp" ;      app:value "148"^^xsd:decimal ; app:subject me:subject .
+me:metric_diastolic_bp     app:prologName "diastolic_bp" ;     app:value "92"^^xsd:decimal ;  app:subject me:subject .
+me:metric_heart_rate       app:prologName "heart_rate" ;       app:value "84"^^xsd:decimal ;  app:subject me:subject .
+me:metric_egfr             app:prologName "egfr" ;             app:value "42"^^xsd:decimal ;  app:subject me:subject .  # CKD G3b
+me:metric_uacr             app:prologName "uacr" ;             app:value "28.6"^^xsd:decimal ; app:subject me:subject .
+me:metric_creatinine       app:prologName "creatinine" ;       app:value "142"^^xsd:decimal ; app:subject me:subject .
+me:metric_total_chol       app:prologName "total_cholesterol" ; app:value "6.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_ldl              app:prologName "ldl" ;              app:value "4.2"^^xsd:decimal ;  app:subject me:subject .
+me:metric_crp_hs           app:prologName "crp_hs" ;           app:value "5.6"^^xsd:decimal ;  app:subject me:subject .
+me:metric_tsh              app:prologName "tsh" ;              app:value "2.8"^^xsd:decimal ;  app:subject me:subject .
+me:metric_cortisol_am      app:prologName "cortisol_am" ;      app:value "488"^^xsd:decimal ;  app:subject me:subject .
+me:metric_sleep_eff        app:prologName "sleep_efficiency" ;  app:value "64"^^xsd:decimal ;  app:subject me:subject .
+me:metric_phq9             app:prologName "phq9_score" ;       app:value "10"^^xsd:decimal ;   app:subject me:subject .
+me:metric_bmi              app:prologName "bmi" ;              app:value "33.6"^^xsd:decimal ; app:subject me:subject .
+me:metric_vitamin_d        app:prologName "vitamin_d" ;        app:value "29"^^xsd:decimal ;   app:subject me:subject .
+me:metric_spo2             app:prologName "spo2" ;             app:value "96"^^xsd:decimal ;   app:subject me:subject .

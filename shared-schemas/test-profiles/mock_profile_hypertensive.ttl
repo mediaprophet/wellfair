@@ -1,0 +1,38 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix me:     <urn:wellfair:user:mock-hypertensive:> .
+
+# =============================================================================
+# Mock Profile: Essential Hypertension (Stage 2, isolated)
+# Expected evaluation result:
+#   - MUST trigger: fma:Heart, fma:Left_coronary_artery, fma:Right_coronary_artery (high)
+#   - MUST trigger: fma:Left_kidney, fma:Right_kidney, fma:Left_renal_artery, fma:Right_renal_artery (high)
+#   - MUST trigger: fma:Brain, fma:Cerebral_cortex (medium)
+#   - MUST trigger: fma:Aorta (medium)
+#   - MUST NOT trigger: diabetes-specific targets (no DM condition, HbA1c normal)
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – Essential Hypertension Stage 2" ;
+    app:subjectId "mock-hypertensive" .
+
+# Conditions
+me:subject app:userFact snomed:59621000 .   # Essential hypertension
+
+# Metrics – severely elevated BP, otherwise normal
+me:metric_systolic_bp     app:prologName "systolic_bp" ;     app:value "162"^^xsd:decimal ; app:subject me:subject .
+me:metric_diastolic_bp    app:prologName "diastolic_bp" ;    app:value "98"^^xsd:decimal ;  app:subject me:subject .
+me:metric_heart_rate      app:prologName "heart_rate" ;      app:value "82"^^xsd:decimal ;  app:subject me:subject .
+me:metric_hba1c           app:prologName "hba1c" ;           app:value "5.4"^^xsd:decimal ; app:subject me:subject .
+me:metric_egfr            app:prologName "egfr" ;            app:value "64"^^xsd:decimal ;  app:subject me:subject .
+me:metric_uacr            app:prologName "uacr" ;            app:value "6.8"^^xsd:decimal ; app:subject me:subject .
+me:metric_total_chol      app:prologName "total_cholesterol" ; app:value "5.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_ldl             app:prologName "ldl" ;             app:value "3.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_crp_hs          app:prologName "crp_hs" ;          app:value "3.8"^^xsd:decimal ; app:subject me:subject .
+me:metric_sleep_eff       app:prologName "sleep_efficiency" ; app:value "74"^^xsd:decimal ; app:subject me:subject .
+me:metric_phq9            app:prologName "phq9_score" ;      app:value "4"^^xsd:decimal ;   app:subject me:subject .
+me:metric_bmi             app:prologName "bmi" ;             app:value "27.8"^^xsd:decimal ; app:subject me:subject .

@@ -1,0 +1,41 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix me:     <urn:wellfair:user:mock-healthy:> .
+
+# =============================================================================
+# Mock Profile: Healthy Baseline
+# Expected evaluation result: NO implications triggered across all rulesets.
+# Use to verify that rules do not produce false positives.
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – Healthy Baseline" ;
+    app:subjectId "mock-healthy" .
+
+# No conditions asserted (no user_fact triples).
+
+# Metrics – all within normal reference ranges
+me:metric_hba1c          app:prologName "hba1c" ;          app:value "5.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_fasting_glucose app:prologName "fasting_glucose" ; app:value "4.8"^^xsd:decimal ; app:subject me:subject .
+me:metric_systolic_bp     app:prologName "systolic_bp" ;     app:value "112"^^xsd:decimal ; app:subject me:subject .
+me:metric_diastolic_bp    app:prologName "diastolic_bp" ;    app:value "72"^^xsd:decimal ;  app:subject me:subject .
+me:metric_heart_rate      app:prologName "heart_rate" ;      app:value "64"^^xsd:decimal ;  app:subject me:subject .
+me:metric_hrv_rmssd       app:prologName "hrv_rmssd" ;       app:value "62"^^xsd:decimal ;  app:subject me:subject .
+me:metric_egfr            app:prologName "egfr" ;            app:value "95"^^xsd:decimal ;  app:subject me:subject .
+me:metric_uacr            app:prologName "uacr" ;            app:value "1.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_total_chol      app:prologName "total_cholesterol" ; app:value "4.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_ldl             app:prologName "ldl" ;             app:value "2.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_hdl             app:prologName "hdl" ;             app:value "1.6"^^xsd:decimal ; app:subject me:subject .
+me:metric_crp_hs          app:prologName "crp_hs" ;          app:value "0.8"^^xsd:decimal ; app:subject me:subject .
+me:metric_tsh             app:prologName "tsh" ;             app:value "2.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_cortisol_am     app:prologName "cortisol_am" ;     app:value "380"^^xsd:decimal ; app:subject me:subject .
+me:metric_sleep_eff       app:prologName "sleep_efficiency" ; app:value "88"^^xsd:decimal ; app:subject me:subject .
+me:metric_phq9            app:prologName "phq9_score" ;      app:value "2"^^xsd:decimal ;   app:subject me:subject .
+me:metric_gad7            app:prologName "gad7_score" ;      app:value "1"^^xsd:decimal ;   app:subject me:subject .
+me:metric_vitamin_d       app:prologName "vitamin_d" ;       app:value "78"^^xsd:decimal ;  app:subject me:subject .
+me:metric_bmi             app:prologName "bmi" ;             app:value "22.4"^^xsd:decimal ; app:subject me:subject .
+me:metric_spo2            app:prologName "spo2" ;            app:value "99"^^xsd:decimal ;  app:subject me:subject .

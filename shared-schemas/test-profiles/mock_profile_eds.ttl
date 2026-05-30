@@ -1,0 +1,52 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix hp:     <http://purl.obolibrary.org/obo/HP_> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix me:     <urn:wellfair:user:mock-eds:> .
+
+# =============================================================================
+# Mock Profile: Ehlers-Danlos Syndrome (Hypermobile Type)
+# Expected evaluation result:
+#   - MUST trigger (via hierarchy traversal, NOT direct URI match):
+#       All major joints: fma:Left_shoulder_joint, fma:Right_shoulder_joint,
+#       fma:Left_hip_joint, fma:Right_hip_joint, fma:Left_knee_joint,
+#       fma:Right_knee_joint, fma:Left_ankle_joint, fma:Right_ankle_joint,
+#       fma:Left_wrist_joint, fma:Right_wrist_joint (all high)
+#   - MUST trigger: fma:Vertebral_column (high — spinal instability)
+#   - MUST trigger: fma:Pelvic_diaphragm (medium — pelvic floor laxity)
+#   - MUST trigger: fma:Aorta, fma:Cardiovascular_system (medium — vascular EDS risk)
+#   - MUST NOT trigger: diabetic, hypertensive, or PTSD-specific targets
+#
+# Key test for diffuse-condition hierarchy traversal (Stage D2).
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – EDS Hypermobile Type" ;
+    app:subjectId "mock-eds" .
+
+# Conditions
+me:subject app:userFact snomed:398114001 .   # Ehlers-Danlos syndrome
+
+# Phenotypic flags (HPO — used by HPO-based rulesets)
+me:subject app:userFact hp:0001382 .        # HP:0001382 Joint hypermobility
+me:subject app:userFact hp:0000974 .        # HP:0000974 Hyperextensible skin
+me:subject app:userFact hp:0002827 .        # HP:0002827 Hip dislocation
+me:subject app:userFact hp:0010761 .        # HP:0010761 Broad columella (craniofacial)
+me:subject app:userFact hp:0001655 .        # HP:0001655 Patent foramen ovale (cardiac)
+
+# Metrics – normal cardiovascular/metabolic, elevated inflammatory markers
+me:metric_hba1c        app:prologName "hba1c" ;           app:value "5.3"^^xsd:decimal ; app:subject me:subject .
+me:metric_systolic_bp  app:prologName "systolic_bp" ;     app:value "104"^^xsd:decimal ; app:subject me:subject .
+me:metric_diastolic_bp app:prologName "diastolic_bp" ;    app:value "66"^^xsd:decimal ;  app:subject me:subject .
+me:metric_heart_rate   app:prologName "heart_rate" ;      app:value "92"^^xsd:decimal ;  app:subject me:subject .
+me:metric_hrv_rmssd    app:prologName "hrv_rmssd" ;       app:value "24"^^xsd:decimal ;  app:subject me:subject .
+me:metric_crp_hs       app:prologName "crp_hs" ;          app:value "5.1"^^xsd:decimal ; app:subject me:subject .
+me:metric_vitamin_d    app:prologName "vitamin_d" ;       app:value "32"^^xsd:decimal ;  app:subject me:subject .
+me:metric_sleep_eff    app:prologName "sleep_efficiency" ; app:value "62"^^xsd:decimal ; app:subject me:subject .
+me:metric_phq9         app:prologName "phq9_score" ;      app:value "11"^^xsd:decimal ;  app:subject me:subject .
+me:metric_gad7         app:prologName "gad7_score" ;      app:value "9"^^xsd:decimal ;   app:subject me:subject .
+me:metric_egfr         app:prologName "egfr" ;            app:value "88"^^xsd:decimal ;  app:subject me:subject .
+me:metric_bmi          app:prologName "bmi" ;             app:value "19.8"^^xsd:decimal ; app:subject me:subject .

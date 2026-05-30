@@ -1,0 +1,2737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>WellFair — Vault</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0d6efd" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="WellFair" />
+  <style>
+    :root {
+      --bg:      #f8f9fa;
+      --surface: #ffffff;
+      --border:  #dee2e6;
+      --text:    #212529;
+      --dim:     #6c757d;
+      --accent:  #0d6efd;
+      --green:   #198754;
+      --yellow:  #e67e22;
+      --red:     #dc3545;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem 1rem 3rem;
+    }
+    header { text-align:center; margin-bottom:1rem; width:100%; max-width:440px; }
+    header h1 { font-size:1.2rem; font-weight:700; }
+    header p  { color:var(--dim); font-size:0.85rem; margin-top:0.2rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      width: 100%; max-width: 440px;
+      margin-bottom: 0.875rem;
+    }
+    .card h2 { font-size:0.95rem; font-weight:600; margin-bottom:0.875rem; }
+
+    /* ── Owner PIN entry ── */
+    .owner-banner {
+      background: #1a1a2e; color: #fff;
+      border-radius: 10px; padding: 1rem;
+      text-align: center; margin-bottom: 1rem;
+    }
+    .owner-banner .icon { font-size: 2rem; margin-bottom: .4rem; }
+    .owner-banner h3 { font-size: 1rem; font-weight: 700; }
+    .owner-banner p  { font-size: .78rem; opacity: .7; margin-top: .2rem; }
+    .pin-row {
+      display: flex; justify-content: center; gap: .5rem;
+      margin: 1.25rem 0;
+    }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid var(--border); background: transparent;
+      transition: background .15s, border-color .15s;
+    }
+    .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+    .pin-dot.error  { background: var(--red);    border-color: var(--red); }
+    .numpad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: .5rem; max-width: 240px; margin: 0 auto;
+    }
+    .numpad-key {
+      padding: .75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 1.1rem; font-weight: 600;
+      background: var(--surface); cursor: pointer;
+      text-align: center; user-select: none;
+    }
+    .numpad-key:active { background: var(--bg); }
+    .numpad-key.del    { font-size: .9rem; color: var(--dim); }
+    .pin-hint { text-align:center; font-size:.78rem; color:var(--dim); margin-top:.75rem; }
+
+    /* ── Scanner ── */
+    #reader { width:100%; border-radius:8px; overflow:hidden; background:#000; }
+    #reader video { width:100% !important; }
+    .or-div {
+      display:flex; align-items:center; gap:.6rem;
+      margin:.875rem 0; color:var(--dim); font-size:.78rem;
+    }
+    .or-div::before, .or-div::after { content:''; flex:1; border-top:1px solid var(--border); }
+    label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
+    input[type="text"] {
+      width:100%; padding:.55rem .7rem;
+      border:1px solid var(--border); border-radius:8px;
+      font-size:.88rem; font-family:monospace;
+    }
+    input[type="text"]:focus { outline:2px solid var(--accent); border-color:transparent; }
+
+    /* ── Status dots ── */
+    .status-row {
+      display:flex; align-items:center; gap:.45rem;
+      font-size:.8rem; color:var(--dim); margin-top:.875rem;
+    }
+    .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--yellow); }
+    .dot.ok    { background:var(--green); }
+    .dot.err   { background:var(--red); }
+    .dot.pulse { background:var(--accent); animation:pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Profile selection ── */
+    .profile-list { display:flex; flex-direction:column; gap:.6rem; }
+    .profile-card {
+      display:flex; align-items:flex-start; gap:.75rem;
+      padding:.875rem;
+      border:2px solid var(--border); border-radius:10px;
+      cursor:pointer; transition: border-color .15s, background .15s;
+    }
+    .profile-card:hover { background:#f0f4ff; }
+    .profile-card.emergency-card { border-color:#f5c6cb; background:#fff8f8; }
+    .profile-card.emergency-card:hover { background:#ffeaea; }
+    .profile-icon { font-size:1.5rem; flex-shrink:0; width:2rem; text-align:center; }
+    .profile-info { flex:1; min-width:0; }
+    .profile-name { font-size:.9rem; font-weight:600; margin-bottom:.2rem; }
+    .profile-desc { font-size:.78rem; color:var(--dim); line-height:1.4; }
+    .profile-badge {
+      display:inline-block; margin-top:.35rem;
+      font-size:.7rem; font-weight:600; padding:.15rem .4rem;
+      border-radius:4px; background:#f0f4ff; color:var(--accent);
+    }
+    .profile-badge.emergency { background:#fff0f0; color:var(--red); }
+    .profile-badge.pin       { background:#fff8e1; color:#b7791f; }
+    .emergency-warning {
+      margin:.75rem 0 .5rem;
+      padding:.65rem .875rem;
+      background:#fff0f0; border:1px solid #f5c6cb; border-radius:8px;
+      font-size:.8rem; color:var(--red); line-height:1.5;
+    }
+    .emergency-warning strong { display:block; margin-bottom:.2rem; }
+
+    /* ── Consent ── */
+    .info-box {
+      background:#f0f4ff; border:1px solid #c7d6ff;
+      border-radius:8px; padding:.75rem .875rem;
+      font-size:.82rem; margin-bottom:1rem; line-height:1.5;
+    }
+    .info-box strong { display:block; margin-bottom:.2rem; font-size:.88rem; }
+    .profile-pill {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.2rem .55rem; border-radius:20px;
+      font-size:.78rem; font-weight:600; color:#fff;
+      margin-bottom:.75rem;
+    }
+    .check-list { list-style:none; }
+    .check-list li {
+      display:flex; align-items:center; gap:.55rem;
+      padding:.5rem 0; border-bottom:1px solid var(--border); font-size:.88rem;
+    }
+    .check-list li:last-child { border-bottom:none; }
+    input[type="checkbox"] { width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; }
+    .warn { font-size:.75rem; color:var(--dim); margin-top:.875rem; line-height:1.5; }
+
+    /* ── Serving ── */
+    .session-meta {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:.875rem;
+    }
+    .session-meta .sid { font-family:monospace; font-size:.72rem; color:var(--dim); }
+    #serve-timer { font-family:monospace; font-size:.85rem; font-weight:600; color:var(--accent); }
+    .active-profile-bar {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.55rem .75rem; border-radius:8px;
+      margin-bottom:.875rem; font-size:.82rem; font-weight:600; color:#fff;
+    }
+    .activity-log {
+      background:var(--bg); border:1px solid var(--border);
+      border-radius:8px; padding:.625rem .75rem;
+      max-height:160px; overflow-y:auto;
+      font-size:.78rem; font-family:monospace;
+    }
+    .log-line { padding:.2rem 0; border-bottom:1px solid var(--border); color:var(--dim); }
+    .log-line:last-child { border-bottom:none; }
+    .log-line .ts      { color:var(--border); margin-right:.4rem; }
+    .log-line .section { color:var(--accent); }
+    .log-emergency { background:rgba(220,38,38,.06); border-radius:4px; padding:.3rem .4rem; }
+    .log-emergency .ts { font-size:.68rem; font-family:monospace; }
+    .log-did { font-size:.62rem; font-family:monospace; color:var(--dim); opacity:.7;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:.1rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display:block; width:100%; padding:.65rem;
+      border:none; border-radius:8px;
+      font-size:.9rem; font-weight:600; cursor:pointer;
+      margin-top:.875rem; text-align:center;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-danger  { background:var(--red);    color:#fff; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn:hover   { opacity:.88; }
+    .btn:disabled { opacity:.4; cursor:default; }
+
+    /* Back link */
+    .back-link {
+      font-size:.82rem; color:var(--dim); cursor:pointer;
+      margin-bottom:.75rem; display:inline-flex; align-items:center; gap:.25rem;
+    }
+    .back-link:hover { color:var(--text); }
+
+    /* ── Sanctuary Mode dark theme ─────────────────────────────────────────── */
+    /* Overrides CSS vars so all inherited styles automatically adopt dark palette */
+    body.sanctuary-active {
+      --bg:      #0a0a12;
+      --surface: #141424;
+      --border:  #252545;
+      --text:    #e2e8f0;
+      --dim:     #8892a8;
+      --accent:  #7c3aed;
+      --green:   #16a34a;
+      --red:     #dc2626;
+      --yellow:  #d97706;
+    }
+    /* Steps: sanctuary steps participate in the same active/hidden toggle */
+    #step-scan, #step-profile, #step-pin, #step-consent, #step-serving,
+    #step-sanctuary-pin, #step-sanctuary { display:none; }
+    #step-scan.active, #step-profile.active, #step-pin.active,
+    #step-consent.active, #step-serving.active,
+    #step-sanctuary-pin.active, #step-sanctuary.active { display:block; }
+
+    /* Sanctuary banner (dark header inside card) */
+    .sanctuary-banner {
+      background: #1a1a2e; color: #e2e8f0;
+      border-radius: 10px; padding: 1rem;
+      text-align: center; margin-bottom: 1rem;
+    }
+    .sanctuary-banner .icon { font-size: 2rem; margin-bottom: .4rem; }
+    .sanctuary-banner h3 { font-size: 1rem; font-weight: 700; }
+    .sanctuary-banner p  { font-size: .78rem; opacity: .7; margin-top: .2rem; }
+
+    /* Sanctuary log entry cards */
+    .sanctuary-entry {
+      border: 1px solid #2d2d4a; border-radius: 8px;
+      padding: .6rem; margin-bottom: .5rem; font-size: .82rem;
+      background: #0d0d1a;
+    }
+    .sanctuary-entry .se-type { font-weight: 600; margin-bottom: .25rem; }
+    .sanctuary-entry .se-type.assertion  { color: #a78bfa; }
+    .sanctuary-entry .se-type.hypothesis { color: #60a5fa; }
+    .sanctuary-entry .se-content { color: #e2e8f0; margin-bottom: .25rem; line-height: 1.4; }
+    .sanctuary-entry .se-meta   { font-size: .68rem; color: #8892a8; }
+    .sanctuary-entry .se-anchor { font-family: monospace; }
+
+    /* Dark-mode form controls in sanctuary panels */
+    .s-input {
+      display: block; width: 100%;
+      background: #0d0d1a; border: 1px solid #252545; color: #e2e8f0;
+      border-radius: 6px; padding: .3rem .5rem; font-size: .82rem;
+      margin-top: .25rem; font-family: inherit;
+    }
+    .s-input:focus { outline: 2px solid #7c3aed; border-color: transparent; }
+    .s-label { display: block; font-size: .78rem; color: #8892a8; margin-bottom: .5rem; }
+    .btn-sanctuary { background: #7c3aed; color: #fff; }
+    .btn-sanctuary:hover { opacity: .88; }
+    .btn-sanctuary-outline {
+      background: transparent; border: 1px solid #7c3aed; color: #7c3aed;
+    }
+    /* ── Tripwire / Synthesis / Evidentiary panels ────────────────────────── */
+    .tw-entry {
+      border: 1px solid #2d2d4a; border-radius: 8px;
+      padding: .6rem; margin-bottom: .5rem; font-size: .82rem; background: #0d0d1a;
+    }
+    .tw-entry .tw-cat {
+      font-weight: 600; color: #f87171; font-size: .7rem;
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: .2rem;
+    }
+    .tw-entry .tw-content { color: #e2e8f0; margin-bottom: .3rem; line-height: 1.4; }
+    .tw-entry .tw-meta { font-size: .68rem; color: #8892a8; margin-bottom: .35rem; }
+    .tw-resolve { display: flex; gap: .3rem; flex-wrap: wrap; }
+    .tw-resolve button {
+      font-size: .7rem; padding: .18rem .45rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid #252545; background: #141424; color: #8892a8;
+    }
+    .tw-resolve button:hover, .tw-resolve button.res-active
+      { border-color: #7c3aed; color: #a78bfa; }
+    .synth-hit {
+      background: #0d0d1a; border-left: 2px solid #7c3aed;
+      border-radius: 0 6px 6px 0; padding: .5rem .6rem;
+      margin-bottom: .4rem; font-size: .8rem;
+    }
+    .synth-hit .sh-content { color: #e2e8f0; line-height: 1.4; }
+    .synth-hit .sh-meta { font-size: .68rem; color: #8892a8; margin-top: .2rem; }
+    .vp-json {
+      background: #0d0d1a; border: 1px solid #252545; border-radius: 8px;
+      padding: .6rem; margin-top: .6rem; font-size: .68rem;
+      font-family: monospace; color: #a78bfa; word-break: break-all;
+      max-height: 180px; overflow: auto; white-space: pre-wrap;
+    }
+    .ev-row { display: flex; align-items: flex-start; gap: .5rem; margin-bottom: .45rem; }
+    .ev-row input[type=checkbox] { margin-top: .15rem; accent-color: #7c3aed; flex-shrink: 0; }
+    .ev-row-text { font-size: .8rem; color: #e2e8f0; line-height: 1.35; }
+    .ev-row-meta { font-size: .68rem; color: #8892a8; }
+    .ev-row-anchor { font-size: .68rem; color: #8892a8; margin-top: .25rem; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    .btn-ots { font-size: .7rem; padding: .2rem .5rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid #252545; background: #141424; color: #a78bfa; }
+    .btn-ots:hover { border-color: #7c3aed; }
+    .btn-ots:disabled { opacity: .5; cursor: default; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WellFair Vault</h1>
+  <p>Pair with a desktop session</p>
+</header>
+
+<!-- Step 1: Scan or manual entry -->
+<div class="card" id="step-scan">
+  <h2>Scan desktop QR</h2>
+  <div id="reader"></div>
+  <div class="or-div">or enter session ID</div>
+  <label for="manual-sid">Session ID</label>
+  <input type="text" id="manual-sid" placeholder="paste session ID from desktop"
+         autocomplete="off" spellcheck="false" />
+  <div class="status-row">
+    <div class="dot pulse" id="scan-dot"></div>
+    <span id="scan-status">Point camera at the QR on the desktop</span>
+  </div>
+  <button class="btn btn-primary" onclick="connectManual()">Connect with ID</button>
+</div>
+
+<!-- Step 2: Profile selection -->
+<div class="card" id="step-profile">
+  <span class="back-link" onclick="cancelSession()">← Cancel</span>
+  <h2>Who are you sharing with?</h2>
+
+  <div class="emergency-warning" id="emergency-warning" style="display:none">
+    <strong>Emergency profiles</strong>
+    These profiles allow access without your real-time consent if you are unconscious.
+    Only activate them if you have pre-configured this session for emergency use.
+  </div>
+
+  <div class="profile-list" id="profile-list">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- Step 2b: Owner PIN (shown instead of consent when owner profile selected) -->
+<div class="card" id="step-pin">
+  <span class="back-link" onclick="showStep('step-profile')">← Change profile</span>
+
+  <div class="owner-banner">
+    <div class="icon">🔐</div>
+    <h3>Owner Workspace</h3>
+    <p>Enter your vault PIN to open your workspace on this desktop</p>
+  </div>
+
+  <div class="pin-row" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+
+  <div class="numpad">
+    <div class="numpad-key" onclick="pinKey('1')">1</div>
+    <div class="numpad-key" onclick="pinKey('2')">2</div>
+    <div class="numpad-key" onclick="pinKey('3')">3</div>
+    <div class="numpad-key" onclick="pinKey('4')">4</div>
+    <div class="numpad-key" onclick="pinKey('5')">5</div>
+    <div class="numpad-key" onclick="pinKey('6')">6</div>
+    <div class="numpad-key" onclick="pinKey('7')">7</div>
+    <div class="numpad-key" onclick="pinKey('8')">8</div>
+    <div class="numpad-key" onclick="pinKey('9')">9</div>
+    <div class="numpad-key" style="visibility:hidden"></div>
+    <div class="numpad-key" onclick="pinKey('0')">0</div>
+    <div class="numpad-key del" onclick="pinKey('del')">⌫</div>
+  </div>
+
+  <p class="pin-hint" id="pin-hint">Enter your 4-digit vault PIN</p>
+</div>
+
+<!-- Step 3: Consent -->
+<div class="card" id="step-consent">
+  <span class="back-link" onclick="showStep('step-profile')">← Change profile</span>
+  <h2>Confirm access</h2>
+
+  <div id="consent-profile-pill"></div>
+
+  <div class="info-box">
+    <strong>Desktop session requesting vault access</strong>
+    Session: <span id="consent-sid" style="font-family:monospace;font-size:.78rem"></span>
+  </div>
+
+  <p style="font-size:.82rem;color:var(--dim);margin-bottom:.6rem">Allow access to:</p>
+  <ul class="check-list" id="section-checklist">
+    <!-- Populated by selected profile -->
+  </ul>
+
+  <p class="warn">
+    The desktop receives data only when it requests it.
+    Nothing is stored on the desktop — closing that tab destroys everything.
+  </p>
+
+  <div class="status-row">
+    <div class="dot pulse" id="consent-dot"></div>
+    <span id="consent-status">Connecting…</span>
+  </div>
+
+  <button class="btn btn-primary" id="approve-btn" onclick="approveSession()" disabled>Allow access</button>
+  <button class="btn btn-outline" onclick="cancelSession()">Cancel</button>
+</div>
+
+<!-- Step 4: Serving -->
+<div class="card" id="step-serving">
+  <div class="session-meta">
+    <span class="sid" id="serve-sid"></span>
+    <span id="serve-timer">00:00</span>
+  </div>
+  <div class="active-profile-bar" id="active-profile-bar">
+    <!-- Profile name shown here -->
+  </div>
+  <div class="status-row" style="margin-top:0;margin-bottom:.5rem">
+    <div class="dot ok"></div>
+    <span id="serve-mode-label" style="color:var(--green);font-size:.82rem">Vault serving desktop requests</span>
+  </div>
+  <div id="owner-write-row" style="display:none;font-size:.78rem;color:var(--dim);margin-bottom:.5rem">
+    <span id="write-count">0</span> changes saved to vault this session
+  </div>
+  <p style="font-size:.78rem;color:var(--dim);margin-bottom:.5rem">Activity log</p>
+  <div class="activity-log" id="activity-log">
+    <div class="log-line"><span class="ts">--:--</span>Waiting for requests…</div>
+  </div>
+  <button class="btn btn-danger" onclick="endSession(false)">End session</button>
+
+  <!-- Emergency pre-auth panel — owner mode only -->
+  <div id="emergency-preauth-panel" style="display:none;margin-top:1rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="togglePreauthPanel()">⚙ Emergency access settings</button>
+    <div id="emergency-preauth-body" style="display:none;margin-top:.6rem;
+         background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .5rem">
+        Pre-authorize emergency profiles so responders get immediate access
+        without requiring your real-time consent. Applies to the next session only.
+      </p>
+      <ul style="list-style:none;margin:0;padding:0" id="preauth-checklist">
+        <!-- Populated by JS -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- Dead Man's Switch — owner mode only -->
+  <div id="dms-panel" style="display:none;margin-top:.75rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="toggleDmsPanel()">⚡ Dead Man's Switch</button>
+    <div id="dms-body" style="display:none;margin-top:.6rem;
+         background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .5rem">
+        If you miss a check-in, an encrypted alert is sent to your trustees via Nym.
+      </p>
+      <label style="display:block;font-size:.78rem;margin-bottom:.4rem">Check-in interval:
+        <select id="dms-interval" style="background:var(--surface);border:1px solid var(--border);
+                color:var(--text);border-radius:4px;padding:.2rem .4rem;font-size:.78rem">
+          <option value="3600000">1 hour</option>
+          <option value="21600000">6 hours</option>
+          <option value="43200000">12 hours</option>
+          <option value="86400000" selected>24 hours</option>
+          <option value="604800000">7 days</option>
+        </select>
+      </label>
+      <label style="display:block;font-size:.78rem;margin-bottom:.3rem">Trustee 1 Nym address:
+        <input type="text" id="dms-trustee-1" placeholder="…"
+               style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                      color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;margin-top:.2rem" />
+      </label>
+      <label style="display:block;font-size:.78rem;margin-bottom:.5rem">Trustee 2 Nym address (optional):
+        <input type="text" id="dms-trustee-2" placeholder="…"
+               style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                      color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;margin-top:.2rem" />
+      </label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem">
+        <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+                onclick="dmsCheckin()">Check in now</button>
+        <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+                onclick="dmsTestFire()">Test fire</button>
+      </div>
+      <div id="dms-status" style="font-size:.75rem;color:var(--dim)"></div>
+    </div>
+  </div>
+
+  <!-- Anonymous notification — owner mode only -->
+  <div id="anon-notify-panel" style="display:none;margin-top:.75rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="toggleAnonPanel()">☁ Anonymous notification</button>
+    <div id="anon-body" style="display:none;margin-top:.6rem;
+         background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .4rem">
+        Send a message via Nym — no WebRTC, no caller identity.
+      </p>
+      <input type="text" id="anon-recipient" placeholder="Recipient Nym address…"
+             style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                    color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;
+                    margin-bottom:.35rem" />
+      <textarea id="anon-message" rows="3" placeholder="Your message…"
+                style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                       color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;
+                       font-family:inherit;resize:vertical;margin-bottom:.4rem"></textarea>
+      <button class="btn btn-primary" style="font-size:.78rem;padding:.35rem .9rem"
+              onclick="sendAnonMessage()">Send anonymously</button>
+      <div id="anon-status" style="font-size:.75rem;color:var(--dim);margin-top:.3rem"></div>
+    </div>
+  </div>
+
+  <!-- Sanctuary Mode — owner only; hidden in duress mode -->
+  <div id="sanctuary-panel" style="display:none;margin-top:.75rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;
+            border-color:#7c3aed;color:#7c3aed"
+            onclick="enterSanctuaryPinStep()">⚫ Sanctuary Mode</button>
+  </div>
+</div>
+
+<!-- Sanctuary PIN entry step -->
+<div class="card" id="step-sanctuary-pin">
+  <span class="back-link" onclick="exitSanctuaryPinStep()">← Back to vault</span>
+
+  <div class="sanctuary-banner">
+    <div class="icon">⚫</div>
+    <h3>Sanctuary Mode</h3>
+    <p id="sanctuary-pin-banner-desc">Enter Sanctuary PIN to continue</p>
+  </div>
+
+  <div class="pin-row" id="sp-dots">
+    <div class="pin-dot" id="spd0"></div>
+    <div class="pin-dot" id="spd1"></div>
+    <div class="pin-dot" id="spd2"></div>
+    <div class="pin-dot" id="spd3"></div>
+  </div>
+
+  <div class="numpad">
+    <div class="numpad-key" onclick="sanctuaryPinKey('1')">1</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('2')">2</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('3')">3</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('4')">4</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('5')">5</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('6')">6</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('7')">7</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('8')">8</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('9')">9</div>
+    <div class="numpad-key" style="visibility:hidden"></div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('0')">0</div>
+    <div class="numpad-key del" onclick="sanctuaryPinKey('del')">⌫</div>
+  </div>
+
+  <p class="pin-hint" id="sanctuary-pin-hint">Enter your Sanctuary PIN</p>
+</div>
+
+<!-- Sanctuary workspace -->
+<div id="step-sanctuary">
+
+  <!-- Header -->
+  <div class="card" style="background:#1a1a2e;border-color:#2d2d4a;color:#e2e8f0;margin-bottom:.875rem">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:1rem;font-weight:700;letter-spacing:.02em">⚫ Sanctuary Mode</span>
+        <div style="font-size:.7rem;opacity:.55;margin-top:.15rem">Isolated · Encrypted · Anchored</div>
+      </div>
+      <button class="btn btn-sanctuary-outline"
+              style="width:auto;margin:0;font-size:.75rem;padding:.3rem .75rem"
+              onclick="exitSanctuaryMode()">Exit ↩</button>
+    </div>
+  </div>
+
+  <!-- Unvarnished Log -->
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">📓 Unvarnished Log</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Record sensitive facts without clinical or legal commitment.
+      Each entry is encrypted and DLT-anchored before storage.
+    </p>
+
+    <label class="s-label">Entry type
+      <select id="sanctuary-entry-type" class="s-input" style="margin-bottom:.5rem">
+        <option value="assertion">◉ Veiled Assertion — definitive fact</option>
+        <option value="hypothesis">◎ Hypothesis Node — epistemic uncertainty</option>
+      </select>
+    </label>
+
+    <label class="s-label">Content
+      <textarea id="sanctuary-entry-content" class="s-input" rows="4"
+                placeholder="Describe what happened, when, who was involved…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+
+    <button class="btn btn-sanctuary" onclick="logSanctuaryEntry()">
+      Log &amp; anchor entry
+    </button>
+    <div id="sanctuary-entry-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+
+    <div style="margin-top:1.25rem">
+      <p style="font-size:.78rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em;font-size:.7rem">Previous entries</p>
+      <div id="sanctuary-log-list"></div>
+    </div>
+  </div>
+
+  <!-- Tripwire Dashboard -->
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🚨 Tripwire Dashboard</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Log external events that conflict with your sanctuary record.
+      Use the Resolution Engine to decide how each collision is handled.
+    </p>
+
+    <label class="s-label">Collision type
+      <select id="tw-category" class="s-input" style="margin-bottom:.4rem">
+        <option value="prescription">Prescription conflict</option>
+        <option value="coercion">Coercive control pattern</option>
+        <option value="false_claim">False claim / fabrication</option>
+        <option value="legal">Legal or administrative</option>
+        <option value="surveillance">Surveillance / digital</option>
+        <option value="other">Other</option>
+      </select>
+    </label>
+    <label class="s-label">Describe the external query or event
+      <textarea id="tw-trigger" class="s-input" rows="3"
+                placeholder="What happened, who was involved, when…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+    <button class="btn btn-sanctuary" onclick="logTripwire()">Log collision</button>
+    <div id="tw-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+
+    <div style="margin-top:1.25rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em">Active collisions · Resolution Engine</p>
+      <div id="tw-feed"></div>
+    </div>
+  </div>
+
+  <!-- Synthesis Engine -->
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">⚗ Synthesis Engine</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Input an external claim or false assertion and run it against your immutable record.
+      The engine surfaces contradicting entries as an Incoherence Report.
+    </p>
+
+    <label class="s-label">External claim to audit
+      <textarea id="synth-claim" class="s-input" rows="4"
+                placeholder="Paste or type the claim, report, or assertion to audit…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+    <button class="btn btn-sanctuary" onclick="runContradictionAudit()">Run contradiction audit</button>
+    <div id="synth-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div id="synth-report"></div>
+
+    <div style="margin-top:1rem;border-top:1px solid #252545;padding-top:.875rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em">Sentinel ruleset</p>
+      <p style="font-size:.75rem;color:#8892a8;line-height:1.5;margin-bottom:.5rem">
+        Keywords that trigger Internal Sentinel Alerts when present in new entries.
+      </p>
+      <textarea id="sentinel-rules" class="s-input" rows="4"
+                placeholder="One pattern per line — e.g.: coercion, forced compliance, missed dose, threat…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+      <button class="btn btn-sanctuary-outline" onclick="saveSentinelRules()">Save ruleset</button>
+      <div id="sentinel-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    </div>
+  </div>
+
+  <!-- Evidentiary Export -->
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🔒 Evidentiary Export</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Select sanctuary entries to package as a cryptographically sealed
+      Verifiable Presentation. Includes DLT commitment hashes and a vault
+      Ed25519 signature — verifiable in any standard browser.
+    </p>
+
+    <div id="ev-entry-list">
+      <div style="color:#8892a8;font-size:.78rem">Loading entries…</div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+      <button class="btn btn-sanctuary" onclick="generateVP()">Generate Verifiable Presentation</button>
+      <button class="btn btn-sanctuary-outline" onclick="refreshEvidentiary()">Refresh list</button>
+    </div>
+    <div id="ev-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div id="ev-vp-output"></div>
+
+    <div style="margin-top:1rem;border-top:1px solid #252545;padding-top:.875rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.4rem;
+                text-transform:uppercase;letter-spacing:.05em">Bitcoin anchoring via OpenTimestamps</p>
+      <p style="font-size:.75rem;color:#8892a8;line-height:1.5">
+        Commitment hashes are published anonymously to Bitcoin via public calendar servers.
+        Each hash is one anonymous leaf in a Merkle tree — no on-chain identity links your entries.
+        Anchoring is feeless. Confirmation arrives within a few hours as the next Bitcoin block
+        is mined. A <code style="font-size:.7rem;color:#a78bfa">.ots</code> proof file can be
+        verified offline by any standard OpenTimestamps tool.
+      </p>
+      <button class="btn btn-sanctuary-outline" style="margin-top:.6rem"
+              onclick="exportCommitmentManifest()">Export commitment manifest</button>
+      <div id="dlt-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    </div>
+  </div>
+
+  <!-- Contingency Protocols -->
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🛡 Contingency Protocols</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      When your Duress PIN is entered at the main vault screen, these contacts receive
+      a silent anonymous alert via Nym. You provide the Duress PIN to a coercer —
+      they see the normal vault; the alert fires invisibly.
+    </p>
+
+    <label class="s-label">Duress contact 1 (Nym address)
+      <input type="text" id="duress-contact-1" class="s-input" placeholder="…" />
+    </label>
+    <label class="s-label" style="margin-top:.4rem">Duress contact 2 (optional)
+      <input type="text" id="duress-contact-2" class="s-input" placeholder="…" />
+    </label>
+    <label class="s-label" style="margin-top:.4rem">Enter Duress PIN to save contacts
+      <input type="password" id="duress-pin-update" class="s-input"
+             placeholder="••••" maxlength="4" />
+    </label>
+    <button class="btn btn-sanctuary-outline" style="margin-top:.75rem"
+            onclick="saveDuressContacts()">Save duress contacts</button>
+    <div id="duress-contacts-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
+<script>
+'use strict';
+
+const RELAYS  = ['https://gun.eco/gun', 'https://relay.peer.ooo/gun'];
+const GUN_NS  = 'wf-v1-signal';
+const ICE_CFG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+let gun, pc, dc, currentSid, scanner, serveTimer;
+let offerHandled  = false;
+let _relayTimer   = null;
+let sessionActive = false;
+let serveStart    = null;
+let activeProfile = null;
+let allowedSections = new Set();
+let profiles  = [];
+let writeCount = 0;
+let vaultDidKey   = null;  // { did, publicKey, privateKey } — Ed25519, generated once at startup
+let vaultNoiseKey = null;  // { priv, pub, pubKey } — X25519, generated once at startup
+let gunSessionNode  = null;
+let sessionTtlTimer = null;
+let connectorDid    = null;
+let preAuthorizedProfiles = new Set(); // profile IDs pre-approved by vault owner
+
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+// ── Nym configuration ─────────────────────────────────────────────────────────
+// Run docs/nym-test.html to validate the SDK, then set NYM_SDK_URL.
+// Nym requires SharedArrayBuffer → needs crossOriginIsolated (provided by sw.js).
+const NYM_SDK_URL  = null;  // TODO: set after validating with docs/nym-test.html
+const NYM_API_URL  = 'https://validator.nymtech.net/api';
+const NYM_FRAG_MAX = 28 * 1024; // Sphinx packet limit with Noise overhead
+const NYM_SURB_TARGET = 20;     // initial SURB pool size
+const NYM_SURB_ATTACH = 3;      // SURBs attached per outbound message
+const NYM_SURB_LOW    = 5;      // replenish threshold
+
+let nymClient  = null;
+let surbBudget = 0;
+
+// Reassembly buffer for fragmented Nym messages — entries expire after 30 s
+const _nymReassembly = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _nymReassembly) if (v.expires < now) _nymReassembly.delete(k);
+}, 10000);
+
+// ── FinalizationRegistry — GC confirmation (dev diagnostic) ───────────────────
+const _gcRegistry = new FinalizationRegistry(label =>
+  console.debug('[WellFair] GC confirmed:', label));
+
+// ── Nym mixnet — init, Gun nym/ adapter, SURB pool ───────────────────────────
+
+async function initNym() {
+  if (!NYM_SDK_URL) return;
+  if (!crossOriginIsolated) {
+    console.warn('[WellFair] Nym unavailable: crossOriginIsolated is false — ensure sw.js is active');
+    return;
+  }
+  try {
+    const sdk     = await import(NYM_SDK_URL);
+    const factory = sdk.createNymMixnetClient ?? sdk.default?.createNymMixnetClient;
+    if (!factory) throw new Error('createNymMixnetClient not found in SDK exports');
+    nymClient = await factory();
+    await nymClient.client.start({
+      clientId: 'wellfair-vault-' + (vaultDidKey ? vaultDidKey.did.slice(-12) : Date.now()),
+      nymApiUrl: NYM_API_URL,
+    });
+    surbBudget = NYM_SURB_TARGET;
+    nymClient.events.subscribeToTextMessageReceivedEvent(e => {
+      _nymReceive(e.args?.payload?.message ?? e.args?.payload);
+    });
+    console.log('[WellFair] Nym client ready');
+  } catch (e) {
+    console.warn('[WellFair] Nym init failed:', e.message);
+    nymClient = null;
+  }
+}
+
+// Gun nym/ namespace adapter — routes vault outbound messages via Nym instead of
+// Gun relay nodes. Replaces: gun.get('wf-v1-vault').get('nym/outbound').put(payload)
+// Fragments payloads > NYM_FRAG_MAX bytes (Sphinx packet limit).
+const nymAdapter = {
+  async send(recipient, payload) {
+    if (!nymClient) throw new Error('Nym client not initialised');
+    const bytes = new TextEncoder().encode(
+      typeof payload === 'string' ? payload : JSON.stringify(payload)
+    );
+    const msgId = crypto.randomUUID();
+    const total = Math.ceil(bytes.length / NYM_FRAG_MAX);
+    for (let i = 0; i < total; i++) {
+      const chunk    = bytes.slice(i * NYM_FRAG_MAX, (i + 1) * NYM_FRAG_MAX);
+      const fragment = JSON.stringify({
+        msg_id:       msgId,
+        fragment_idx: i,
+        total,
+        sender_did:   vaultDidKey ? vaultDidKey.did : 'unknown',
+        data:         btoa(String.fromCharCode(...chunk)),
+      });
+      const attach = Math.min(NYM_SURB_ATTACH, surbBudget);
+      surbBudget  -= attach;
+      await nymClient.client.sendMessage({
+        payload:    { message: fragment, mimeType: 'application/json' },
+        recipient,
+        replySurbs: attach,
+      });
+      if (surbBudget < NYM_SURB_LOW) _nymReplenish();
+    }
+  },
+};
+
+function _nymReplenish() {
+  // SURBs are consumed when we attach them to outbound messages.
+  // The remote replenishes our supply by replying via the SURBs we sent.
+  // Optimistically reset the budget; SDK send errors surface actual exhaustion.
+  surbBudget = NYM_SURB_TARGET;
+}
+
+function _nymReceive(raw) {
+  let msg;
+  try { msg = JSON.parse(raw); } catch (_) { return; }
+  if (msg.total === 1) {
+    console.debug('[WellFair] Nym message:', JSON.parse(atob(msg.data)));
+    return;
+  }
+  // Accumulate fragment
+  const entry = _nymReassembly.get(msg.msg_id) ?? {
+    fragments: new Array(msg.total).fill(null),
+    total:     msg.total,
+    expires:   Date.now() + 30000,
+  };
+  entry.fragments[msg.fragment_idx] = msg.data;
+  _nymReassembly.set(msg.msg_id, entry);
+  if (entry.fragments.every(f => f !== null)) {
+    _nymReassembly.delete(msg.msg_id);
+    const bytes   = entry.fragments.flatMap(f => [...atob(f)].map(c => c.charCodeAt(0)));
+    const payload = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes)));
+    console.debug('[WellFair] Nym reassembled message:', payload);
+  }
+}
+
+// ── Identity credentials — did:key generation ─────────────────────────────────
+
+const B58_ALPHA = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58btcEncode(bytes) {
+  let n = 0n;
+  for (const b of bytes) n = (n << 8n) | BigInt(b);
+  const digits = [];
+  while (n > 0n) { digits.push(B58_ALPHA[Number(n % 58n)]); n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; digits.push(B58_ALPHA[0]); }
+  return digits.reverse().join('');
+}
+
+async function generateDidKey() {
+  const kp = await crypto.subtle.generateKey(
+    { name: 'Ed25519' }, false, ['sign', 'verify']
+  );
+  const pubRaw  = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+  const prefixed = new Uint8Array(2 + pubRaw.length);
+  prefixed[0] = 0xed; prefixed[1] = 0x01;
+  prefixed.set(pubRaw, 2);
+  return { did: 'did:key:z' + base58btcEncode(prefixed), publicKey: kp.publicKey, privateKey: kp.privateKey };
+}
+
+// ── Noise_XX_25519_AESGCM_SHA256 ─────────────────────────────────────────────
+
+async function hmacSHA256(key, data) {
+  const k = await crypto.subtle.importKey('raw', key, { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, data));
+}
+async function noiseHKDF2(ck, ikm) {
+  const tmp  = await hmacSHA256(ck, ikm);
+  const out1 = await hmacSHA256(tmp, new Uint8Array([1]));
+  const out2 = await hmacSHA256(tmp, new Uint8Array([...out1, 2]));
+  return [out1, out2];
+}
+async function noiseDigest(a, b) {
+  const buf = new Uint8Array(a.length + b.length);
+  buf.set(a); buf.set(b, a.length);
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', buf));
+}
+async function noiseGenX25519() {
+  const kp  = await crypto.subtle.generateKey({ name:'X25519' }, true, ['deriveBits']);
+  const pub  = new Uint8Array(await crypto.subtle.exportKey('raw', kp.publicKey));
+  return { priv: kp.privateKey, pub, pubKey: kp.publicKey };
+}
+async function noiseImportPub(raw) {
+  return crypto.subtle.importKey('raw', raw, { name:'X25519' }, true, []);
+}
+async function noiseDH(priv, pubKey) {
+  return new Uint8Array(await crypto.subtle.deriveBits({ name:'X25519', public: pubKey }, priv, 256));
+}
+function noiseIV(n) {
+  const iv = new Uint8Array(12);
+  new DataView(iv.buffer).setUint32(8, n >>> 0, true);
+  return iv;
+}
+async function aesGCMEncrypt(k32, n, ad, pt) {
+  const key = await crypto.subtle.importKey('raw', k32, { name:'AES-GCM' }, false, ['encrypt']);
+  return new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv: noiseIV(n), additionalData: ad }, key, pt));
+}
+async function aesGCMDecrypt(k32, n, ad, ct) {
+  const key = await crypto.subtle.importKey('raw', k32, { name:'AES-GCM' }, false, ['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({ name:'AES-GCM', iv: noiseIV(n), additionalData: ad }, key, ct));
+}
+async function noiseStateInit() {
+  const proto = new TextEncoder().encode('Noise_XX_25519_AESGCM_SHA256');
+  const h = new Uint8Array(32);
+  if (proto.length <= 32) h.set(proto);
+  else h.set(new Uint8Array(await crypto.subtle.digest('SHA-256', proto)));
+  return { h: h.slice(), ck: h.slice(), k: null, n: 0 };
+}
+async function noiseMH(st, data) { st.h = await noiseDigest(st.h, data); }
+async function noiseMK(st, dh) {
+  const [ck, k] = await noiseHKDF2(st.ck, dh);
+  st.ck = ck; st.k = k; st.n = 0;
+}
+async function noiseEH(st, pt) {
+  if (!st.k) { await noiseMH(st, pt); return pt; }
+  const ct = await aesGCMEncrypt(st.k, st.n++, st.h, pt);
+  await noiseMH(st, ct); return ct;
+}
+async function noiseDH2(st, ct) {
+  if (!st.k) { await noiseMH(st, ct); return ct; }
+  const pt = await aesGCMDecrypt(st.k, st.n++, st.h, ct);
+  await noiseMH(st, ct); return pt;
+}
+async function noiseSplit(st) {
+  const [k1r, k2r] = await noiseHKDF2(st.ck, new Uint8Array(0));
+  const k1 = await crypto.subtle.importKey('raw', k1r, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
+  const k2 = await crypto.subtle.importKey('raw', k2r, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
+  return { k1, k2 };
+}
+
+let _noiseQ = [], _noiseR = [];
+function noiseEnqueue(m) { if (_noiseR.length) _noiseR.shift()(m); else _noiseQ.push(m); }
+function noiseAwait()    { if (_noiseQ.length) return Promise.resolve(_noiseQ.shift()); return new Promise(r => _noiseR.push(r)); }
+
+let _sessionSend = null, _sessionRecv = null, _sendN = 0, _recvN = 0, _handshakeDone = false;
+let _sendQueue = Promise.resolve();
+
+function noiseReset() {
+  _sessionSend = null; _sessionRecv = null;
+  _sendN = 0; _recvN = 0; _handshakeDone = false;
+  _noiseQ = []; _noiseR = [];
+  _sendQueue = Promise.resolve();
+}
+function dcRawSend(m) { dc.send(JSON.stringify(m)); }
+function secureSend(m) {
+  _sendQueue = _sendQueue.then(async () => {
+    if (!_handshakeDone) { dcRawSend(m); return; }
+    const n  = _sendN++;
+    const pt = new TextEncoder().encode(JSON.stringify(m));
+    const ct = new Uint8Array(await crypto.subtle.encrypt(
+      { name:'AES-GCM', iv: noiseIV(n), additionalData: new Uint8Array(0) }, _sessionSend, pt));
+    const buf = new ArrayBuffer(4 + ct.length);
+    new DataView(buf).setUint32(0, n, true);
+    new Uint8Array(buf, 4).set(ct);
+    dc.send(buf);
+  });
+}
+async function secureRecv(raw) {
+  if (raw instanceof ArrayBuffer) {
+    const n  = new DataView(raw).getUint32(0, true);
+    if (n !== _recvN++) throw new Error('nonce mismatch');
+    const ct = new Uint8Array(raw, 4);
+    const pt = new Uint8Array(await crypto.subtle.decrypt(
+      { name:'AES-GCM', iv: noiseIV(n), additionalData: new Uint8Array(0) }, _sessionRecv, ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+  return JSON.parse(raw);
+}
+function toB64(u8) { return btoa(String.fromCharCode(...u8)); }
+function fromB64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+// Noise_XX responder (vault / phone)
+async function runNoiseResponder(staticKp, msg1) {
+  const st    = await noiseStateInit();
+  const eiRaw = fromB64(msg1.e);
+  await noiseMH(st, eiRaw);
+  const eiPub = await noiseImportPub(eiRaw);
+
+  const er    = await noiseGenX25519();
+  await noiseMH(st, er.pub);
+  await noiseMK(st, await noiseDH(er.priv, eiPub));          // ee
+  const srEnc = await noiseEH(st, staticKp.pub);              // s (encrypt responder static)
+  await noiseMK(st, await noiseDH(staticKp.priv, eiPub));     // es
+  dcRawSend({ type:'noise', msg:2, e: toB64(er.pub), s: toB64(srEnc) });
+
+  const m3    = await noiseAwait();
+  const siRaw = await noiseDH2(st, fromB64(m3.s));            // s (decrypt initiator static)
+  const siPub = await noiseImportPub(siRaw);
+  await noiseMK(st, await noiseDH(er.priv, siPub));           // se
+
+  const { k1, k2 } = await noiseSplit(st);
+  return { sendKey: k2, recvKey: k1 };
+}
+
+// ── Vault data ────────────────────────────────────────────────────────────────
+// Replace individual section functions with real vault reads as data becomes
+// available. Each function returns a plain object the desktop renders.
+
+const VAULT = {
+  overview:          () => ({ metrics: {
+    heart_rate:  { value: 68,   unit: 'bpm',   status: 'normal' },
+    steps_today: { value: 4231, unit: 'steps', status: 'below_goal' },
+    sleep_last:  { value: 6.5,  unit: 'hrs',   status: 'borderline' },
+    weight:      { value: 72.4, unit: 'kg',    status: 'stable' }
+  }, alerts: [] }),
+
+  heart_rate:        () => ({
+    latest: 68, avg_7d: 71, min_7d: 55, max_7d: 112, unit: 'bpm', trend: 'stable',
+    readings: [{time:'06:00',value:62},{time:'09:00',value:78},{time:'12:00',value:71},
+               {time:'15:00',value:68},{time:'18:00',value:74},{time:'21:00',value:65}]
+  }),
+
+  blood_pressure:    () => ({
+    latest: '118/76', systolic_avg: 121, diastolic_avg: 78, unit: 'mmHg', trend: 'stable',
+    readings: [{date:'Mon',s:120,d:78},{date:'Tue',s:118,d:76},{date:'Wed',s:124,d:80},
+               {date:'Thu',s:119,d:77},{date:'Fri',s:122,d:79}]
+  }),
+
+  sleep:             () => ({
+    last_night_h: 6.5, avg_7d_h: 6.8, quality: 'moderate',
+    log: [{date:'Mon',hours:7.2,quality:'good'},{date:'Tue',hours:5.9,quality:'poor'},
+          {date:'Wed',hours:7.0,quality:'good'},{date:'Thu',hours:6.1,quality:'moderate'},
+          {date:'Fri',hours:8.1,quality:'good'},{date:'Sat',hours:6.5,quality:'moderate'},
+          {date:'Sun',hours:6.5,quality:'moderate'}]
+  }),
+
+  steps:             () => ({
+    today: 4231, avg_7d: 6840, goal: 8000,
+    log: [{date:'Mon',steps:7240},{date:'Tue',steps:5910},{date:'Wed',steps:8102},
+          {date:'Thu',steps:6140},{date:'Fri',steps:7900},{date:'Sat',steps:5200},
+          {date:'Sun',steps:4231}]
+  }),
+
+  weight:            () => ({
+    latest_kg: 72.4, trend: 'stable ↔',
+    log: [{date:'21 May',kg:72.8},{date:'23 May',kg:72.6},
+          {date:'25 May',kg:72.5},{date:'27 May',kg:72.4},{date:'29 May',kg:72.4}]
+  }),
+
+  medications:       () => ({
+    items: [
+      { name: 'Lisinopril',    dose: '10mg',  frequency: 'Once daily',  purpose: 'Blood pressure' },
+      { name: 'Metformin',     dose: '500mg', frequency: 'Twice daily', purpose: 'Blood glucose' },
+      { name: 'Vitamin D3',    dose: '1000IU',frequency: 'Once daily',  purpose: 'Supplement' }
+    ]
+  }),
+
+  allergies:         () => ({
+    items: [
+      { substance: 'Penicillin',  reaction: 'Anaphylaxis',     severity: 'severe' },
+      { substance: 'Latex',       reaction: 'Contact urticaria',severity: 'moderate' },
+      { substance: 'Ibuprofen',   reaction: 'GI bleeding',     severity: 'moderate' }
+    ]
+  }),
+
+  conditions:        () => ({
+    items: [
+      { name: 'Hypertension',          diagnosed: '2019', status: 'managed' },
+      { name: 'Type 2 Diabetes',       diagnosed: '2021', status: 'managed' },
+      { name: 'Mild asthma',           diagnosed: '2005', status: 'intermittent' }
+    ]
+  }),
+
+  blood_type:        () => ({
+    type: 'A+', rh_factor: 'positive', confirmed: '2018-03-12'
+  }),
+
+  dnr:               () => ({
+    dnr_in_place: false,
+    advance_directive: true,
+    directive_summary: 'No mechanical ventilation if brain-dead. Organ donation consented.',
+    document_location: 'On file with GP — Dr Sarah Chen, Southwark Health Centre',
+    last_reviewed: '2024-11-01'
+  }),
+
+  emergency_contacts: () => ({
+    contacts: [
+      { name: 'Alex Rivera',   relation: 'Partner',      phone: '+44 7700 900123', notify_first: true },
+      { name: 'Maria Torres',  relation: 'Sister',       phone: '+44 7700 900456' },
+      { name: 'Dr Sarah Chen', relation: 'GP',           phone: '+44 20 7946 0321' }
+    ]
+  }),
+
+  surgical_history:  () => ({
+    procedures: [
+      { procedure: 'Appendectomy',       date: '2003-07', hospital: 'Kings College Hospital' },
+      { procedure: 'Knee arthroscopy',   date: '2017-03', hospital: 'St Thomas Hospital' }
+    ],
+    implants: [],
+    blood_transfusions: false
+  }),
+
+  mental_health:     () => ({
+    current_diagnoses: [
+      { name: 'Generalised Anxiety Disorder', status: 'managed', since: '2020' }
+    ],
+    current_support: 'CBT — 6-weekly sessions',
+    crisis_plan_in_place: true,
+    crisis_contact: 'Mind Helpline 0300 123 3393'
+  }),
+
+  sexual_health:     () => ({
+    last_sti_screen:    '2025-02-14',
+    sti_screen_result:  'negative',
+    screen_provider:    'SH:24 (postal kit)',
+    conditions:         [],
+    note:               'All clear as of last screen. Next screen due approx. Aug 2025.'
+  }),
+
+  social_context:    () => ({
+    housing_status:     'Stable — private rented, 1-bed flat',
+    employment_status:  'Self-employed, variable income',
+    support_network:    'Partner, 1 sibling nearby, active GP',
+    current_stressors:  ['Financial pressure', 'Caring responsibilities'],
+    safeguarding_flags: []
+  })
+};
+
+// ── Section labels (display names for checkboxes and nav) ─────────────────────
+const SECTION_LABELS = {
+  overview:           'Overview & summary',
+  heart_rate:         'Heart rate',
+  blood_pressure:     'Blood pressure',
+  sleep:              'Sleep',
+  steps:              'Activity & steps',
+  weight:             'Weight',
+  medications:        'Current medications',
+  allergies:          'Allergies & reactions',
+  conditions:         'Medical conditions',
+  blood_type:         'Blood type',
+  dnr:                'Advance directives / DNR',
+  emergency_contacts: 'Emergency contacts',
+  surgical_history:   'Surgical history',
+  mental_health:      'Mental health records',
+  sexual_health:      'Sexual health & STI status',
+  social_context:     'Social & housing context'
+};
+
+// ── Step helpers ──────────────────────────────────────────────────────────────
+
+function showStep(id) {
+  ['step-scan','step-profile','step-pin','step-consent','step-serving',
+   'step-sanctuary-pin','step-sanctuary'].forEach(s =>
+    document.getElementById(s).classList.toggle('active', s === id));
+}
+function setScanStatus(msg, state) {
+  document.getElementById('scan-status').textContent = msg;
+  document.getElementById('scan-dot').className = 'dot ' + (state || 'pulse');
+}
+function setConsentStatus(msg, state) {
+  document.getElementById('consent-status').textContent = msg;
+  document.getElementById('consent-dot').className = 'dot ' + (state || 'pulse');
+}
+
+// ── Profile UI ────────────────────────────────────────────────────────────────
+
+async function loadProfiles() {
+  try {
+    const res = await fetch('/profiles/profiles.json');
+    const data = await res.json();
+    profiles = data.profiles;
+  } catch (_) {
+    // Inline fallback if fetch fails (e.g. file:// protocol)
+    profiles = [];
+  }
+}
+
+function renderProfileList() {
+  const list = document.getElementById('profile-list');
+  list.innerHTML = '';
+
+  const normals    = profiles.filter(p => !p.emergencyOnly);
+  const emergencies = profiles.filter(p => p.emergencyOnly);
+
+  normals.forEach(p => list.appendChild(makeProfileCard(p)));
+
+  if (emergencies.length) {
+    const divider = document.createElement('div');
+    divider.style.cssText = 'font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin:.875rem 0 .4rem;';
+    divider.textContent = 'Emergency access (pre-authorised)';
+    list.appendChild(divider);
+    emergencies.forEach(p => list.appendChild(makeProfileCard(p)));
+  }
+}
+
+function makeProfileCard(profile) {
+  const card = document.createElement('div');
+  card.className = 'profile-card' + (profile.emergencyOnly ? ' emergency-card' : '');
+
+  const credLabel = {
+    'none':                     '',
+    'personal_pin':             'PIN required',
+    'emergency_responder_vc':   'Emergency responder VC',
+    'clinical_professional_vc': 'Clinical VC',
+    'mental_health_practitioner_vc': 'MH practitioner VC',
+    'social_worker_vc':         'Social worker VC'
+  }[profile.credentialRequired] || profile.credentialRequired;
+
+  const badgeClass = profile.emergencyOnly ? 'emergency' : profile.credentialRequired === 'personal_pin' ? 'pin' : '';
+
+  card.innerHTML = `
+    <div class="profile-icon">${profile.icon}</div>
+    <div class="profile-info">
+      <div class="profile-name">${profile.label}</div>
+      <div class="profile-desc">${profile.description}</div>
+      ${credLabel ? `<span class="profile-badge ${badgeClass}">${credLabel}</span>` : ''}
+    </div>`;
+
+  card.addEventListener('click', () => selectProfile(profile));
+  return card;
+}
+
+function selectProfile(profile) {
+  activeProfile = profile;
+
+  // Owner mode: go to PIN step instead of consent
+  if (profile.isOwner) {
+    resetPin();
+    showStep('step-pin');
+    return;
+  }
+
+  // Pre-authorized emergency profile: skip consent, auto-approve immediately
+  if (profile.emergencyOnly && preAuthorizedProfiles.has(profile.id)) {
+    autoApproveEmergency(profile);
+    return;
+  }
+
+  document.getElementById('consent-sid').textContent = currentSid;
+
+  // Profile pill
+  const pill = document.getElementById('consent-profile-pill');
+  pill.innerHTML = `<div class="profile-pill" style="background:${profile.color}">
+    ${profile.icon} ${profile.label}
+  </div>`;
+
+  // Build section checklist from profile sections
+  const list = document.getElementById('section-checklist');
+  list.innerHTML = '';
+  const sections = profile.sections;
+
+  if (profile.sessionScoped) {
+    const hint = document.createElement('li');
+    hint.style.cssText = 'list-style:none;font-size:.76rem;color:var(--dim);margin-bottom:.4rem;padding:0';
+    hint.textContent = 'Nothing is shared by default — tick what applies to this matter:';
+    list.appendChild(hint);
+  }
+
+  sections.forEach(sid => {
+    const li = document.createElement('li');
+    const locked = profile.emergencyOnly;
+    const checked = locked || !profile.sessionScoped;
+    li.innerHTML = `
+      <input type="checkbox" id="chk-${sid}"
+             ${locked ? 'checked disabled' : (checked ? 'checked' : '')} />
+      <label for="chk-${sid}" style="cursor:pointer;margin:0">
+        ${SECTION_LABELS[sid] || sid}
+      </label>`;
+    list.appendChild(li);
+  });
+
+  showStep('step-consent');
+}
+
+// ── Owner PIN logic ───────────────────────────────────────────────────────────
+
+// In production this would compare against the stored vault PIN hash.
+// For the demo the PIN is '1234' — replace with real vault credential check.
+const VAULT_PIN = '1234';
+let pinEntry = '';
+
+function resetPin() {
+  pinEntry = '';
+  document.getElementById('pin-hint').textContent = 'Enter your 4-digit vault PIN';
+  document.getElementById('pin-hint').style.color = '';
+  updatePinDots('');
+}
+
+function updatePinDots(state) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinEntry.length && state !== 'error');
+    d.classList.toggle('error',  state === 'error');
+  }
+}
+
+async function pinKey(k) {
+  if (k === 'del') {
+    pinEntry = pinEntry.slice(0, -1);
+    updatePinDots('');
+    return;
+  }
+  if (pinEntry.length >= 4) return;
+  pinEntry += k;
+  updatePinDots('');
+
+  if (pinEntry.length === 4) {
+    const entered = pinEntry;
+    if (entered === VAULT_PIN) {
+      document.getElementById('pin-hint').textContent = '✓ Verified';
+      document.getElementById('pin-hint').style.color = 'var(--green)';
+      setTimeout(approveOwnerSession, 400);
+    } else {
+      // Async duress PIN check — shows normal vault if match, fires silent alert
+      document.getElementById('pin-hint').textContent = 'Checking…';
+      const isDuress = await _checkAndFireDuress(entered);
+      if (isDuress) {
+        document.getElementById('pin-hint').textContent = '✓ Verified';
+        document.getElementById('pin-hint').style.color = 'var(--green)';
+        setTimeout(approveOwnerSession, 400);
+      } else {
+        updatePinDots('error');
+        document.getElementById('pin-hint').textContent = 'Incorrect PIN — try again';
+        document.getElementById('pin-hint').style.color = 'var(--red)';
+        setTimeout(resetPin, 1200);
+      }
+    }
+  }
+}
+
+function approveOwnerSession() {
+  allowedSections = new Set(activeProfile.sections);
+  sessionActive   = true;
+  serveStart      = Date.now();
+  writeCount      = 0;
+  acquireWakeLock();
+
+  document.getElementById('serve-sid').textContent = currentSid.slice(0,16) + '…';
+  document.getElementById('owner-write-row').style.display = 'block';
+  document.getElementById('serve-mode-label').textContent  = 'Owner workspace active';
+  document.getElementById('emergency-preauth-panel').style.display = 'block';
+  document.getElementById('dms-panel').style.display               = 'block';
+  document.getElementById('anon-notify-panel').style.display       = 'block';
+  // Sanctuary panel suppressed in duress mode — decoy vault shows no signal of it
+  if (!duressModeActive) {
+    document.getElementById('sanctuary-panel').style.display = 'block';
+  }
+
+  const bar = document.getElementById('active-profile-bar');
+  bar.style.background = activeProfile.color;
+  bar.textContent = activeProfile.icon + '  ' + activeProfile.label;
+
+  showStep('step-serving');
+
+  serveTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - serveStart) / 1000);
+    document.getElementById('serve-timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  sessionTtlTimer = setTimeout(() => {
+    if (gunSessionNode) { gunSessionNode.put(null); gunSessionNode = null; }
+    endSession(true);
+  }, SESSION_TTL_MS);
+
+  if (dc && dc.readyState === 'open') {
+    secureSend({
+      type:       'session_info',
+      vault_did:  vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+      profile:    { id: activeProfile.id, label: activeProfile.label,
+                    color: activeProfile.color, icon: activeProfile.icon,
+                    isOwner: true, readWrite: true },
+      sections:   [...allowedSections]
+    });
+  }
+}
+
+// ── Emergency pre-auth panel (owner mode) ─────────────────────────────────────
+
+function showPreauthPanel() {
+  const panel = document.getElementById('emergency-preauth-panel');
+  if (!panel) return;
+  panel.style.display = 'block';
+  const list = document.getElementById('preauth-checklist');
+  list.innerHTML = '';
+  profiles.filter(p => p.emergencyOnly).forEach(p => {
+    const li = document.createElement('li');
+    li.style.cssText = 'display:flex;align-items:center;gap:.5rem;padding:.2rem 0';
+    li.innerHTML = `
+      <input type="checkbox" id="preauth-${p.id}"
+             ${preAuthorizedProfiles.has(p.id) ? 'checked' : ''}
+             onchange="togglePreauth('${p.id}', this.checked)" />
+      <label for="preauth-${p.id}" style="cursor:pointer;font-size:.82rem;margin:0">
+        ${p.icon} ${p.label}
+      </label>`;
+    list.appendChild(li);
+  });
+}
+
+function togglePreauthPanel() {
+  const body = document.getElementById('emergency-preauth-body');
+  if (body.style.display === 'none') {
+    showPreauthPanel();
+    body.style.display = 'block';
+  } else {
+    body.style.display = 'none';
+  }
+}
+
+function togglePreauth(profileId, enabled) {
+  if (enabled) preAuthorizedProfiles.add(profileId);
+  else preAuthorizedProfiles.delete(profileId);
+}
+
+function autoApproveEmergency(profile) {
+  allowedSections = new Set(profile.sections);
+  sessionActive   = true;
+  serveStart      = Date.now();
+  acquireWakeLock();
+
+  document.getElementById('serve-sid').textContent = currentSid.slice(0,16) + '…';
+  document.getElementById('owner-write-row').style.display = 'none';
+  document.getElementById('serve-mode-label').textContent  = 'Vault serving desktop requests';
+
+  const bar = document.getElementById('active-profile-bar');
+  bar.style.background = profile.color;
+  bar.textContent = profile.icon + '  ' + profile.label + ' [pre-authorized]';
+
+  showStep('step-serving');
+
+  serveTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - serveStart) / 1000);
+    document.getElementById('serve-timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  sessionTtlTimer = setTimeout(() => {
+    if (gunSessionNode) { gunSessionNode.put(null); gunSessionNode = null; }
+    endSession(true);
+  }, SESSION_TTL_MS);
+
+  if (dc && dc.readyState === 'open') {
+    secureSend({
+      type:     'session_info',
+      vault_did: vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+      profile:  { id: profile.id, label: profile.label,
+                  color: profile.color, icon: profile.icon },
+      sections: [...allowedSections]
+    });
+  }
+  logActivity('emergency_access [pre-authorized]', true);
+}
+
+// ── Dead Man's Switch ─────────────────────────────────────────────────────────
+
+let dmsTimer      = null;
+let dmsLastCheckin = null;
+
+function toggleDmsPanel() {
+  const b = document.getElementById('dms-body');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+function dmsCheckin() {
+  dmsLastCheckin = Date.now();
+  const interval = parseInt(document.getElementById('dms-interval').value, 10);
+  clearTimeout(dmsTimer);
+  dmsTimer = setTimeout(async () => {
+    try { await dmsFire(false); } catch (e) { console.error('[WellFair] DMS fire failed:', e); }
+  }, interval);
+  const st = document.getElementById('dms-status');
+  st.textContent = 'Checked in ' + new Date().toLocaleTimeString() +
+    ' — next due ' + new Date(Date.now() + interval).toLocaleString();
+  st.style.color = 'var(--green)';
+}
+
+async function dmsTestFire() {
+  const st = document.getElementById('dms-status');
+  st.textContent = 'Sending test alert…';
+  st.style.color = 'var(--dim)';
+  try {
+    await dmsFire(true);
+    st.textContent = 'Test alert sent ✓';
+    st.style.color = 'var(--green)';
+  } catch (e) {
+    st.textContent = 'Failed: ' + e.message;
+    st.style.color = 'var(--red)';
+  }
+}
+
+async function dmsFire(isTest = false) {
+  const addr1  = document.getElementById('dms-trustee-1').value.trim();
+  const addr2  = document.getElementById('dms-trustee-2').value.trim();
+  const addrs  = [addr1, addr2].filter(Boolean);
+  if (addrs.length === 0) throw new Error('No trustee Nym addresses configured');
+  const payload = {
+    type:         isTest ? 'dms_test' : 'dms_alert',
+    vault_did:    vaultDidKey ? vaultDidKey.did : 'unknown',
+    issued_at:    new Date().toISOString(),
+    last_checkin: dmsLastCheckin ? new Date(dmsLastCheckin).toISOString() : null,
+  };
+  for (const addr of addrs) await nymAdapter.send(addr, payload);
+}
+
+// ── Anonymous notification ────────────────────────────────────────────────────
+
+function toggleAnonPanel() {
+  const b = document.getElementById('anon-body');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+async function sendAnonMessage() {
+  const recipient = document.getElementById('anon-recipient').value.trim();
+  const message   = document.getElementById('anon-message').value.trim();
+  const st        = document.getElementById('anon-status');
+  if (!recipient || !message) {
+    st.textContent = 'Recipient address and message are required';
+    st.style.color = 'var(--yellow)';
+    return;
+  }
+  if (!nymClient) {
+    st.textContent = 'Nym unavailable — set NYM_SDK_URL in pair.html and reload';
+    st.style.color = 'var(--red)';
+    return;
+  }
+  st.textContent = 'Sending…';
+  st.style.color = 'var(--dim)';
+  try {
+    await nymAdapter.send(recipient, {
+      type:    'anon_message',
+      message,
+      sent_at: new Date().toISOString(),
+    });
+    st.textContent = 'Sent anonymously ✓';
+    st.style.color = 'var(--green)';
+    document.getElementById('anon-message').value = '';
+  } catch (e) {
+    st.textContent = 'Failed: ' + e.message;
+    st.style.color = 'var(--red)';
+  }
+}
+
+// ── Sanctuary Mode — M5 ──────────────────────────────────────────────────────
+//
+// Two-key KDF hierarchy: main vault key and sanctuary key are both derived via
+// PBKDF2-SHA256 but from separate PINs and separate fixed salts — cryptographically
+// independent. A third duress key is derived the same way from the duress PIN.
+//
+// IndexedDB store names are intentionally opaque so no string "sanctuary" appears
+// in non-sanctuary code paths.
+
+// Fixed public salts — security lives in the PIN, not the salt.
+const _MAIN_SALT = new Uint8Array([0x77,0x66,0x2d,0x6d,0x61,0x69,0x6e,0x73,
+                                    0x61,0x6c,0x74,0x2d,0x76,0x31,0x00,0x00]);
+const _SANC_SALT = new Uint8Array([0x77,0x66,0x2d,0x73,0x61,0x6e,0x63,0x2d,
+                                    0x73,0x61,0x6c,0x74,0x2d,0x76,0x31,0x00]);
+const _DURS_SALT = new Uint8Array([0x77,0x66,0x2d,0x64,0x75,0x72,0x73,0x2d,
+                                    0x73,0x61,0x6c,0x74,0x2d,0x76,0x31,0x00]);
+const _DB_NAME       = 'wf-vault';
+const _ST_LOG        = 'wf-s';    // sanctuary entry log (obfuscated store name)
+const _ST_CFG        = 'wf-sc';   // sanctuary config / canaries (obfuscated)
+const _S_CANARY_OK   = 'wf-sanctuary-ok';
+const _D_CANARY_OK   = 'wf-duress-ok';
+
+let sanctuaryKey    = null;   // AES-GCM key derived from sanctuary PIN
+let sanctuaryActive = false;
+let duressModeActive = false;
+
+// ── PBKDF2-SHA256 key derivation ──────────────────────────────────────────────
+// 310 000 iterations — OWASP 2023 minimum for SHA-256.
+// Main vault key (future use for full vault encryption) uses _MAIN_SALT;
+// sanctuary key uses _SANC_SALT; duress key uses _DURS_SALT.
+
+async function deriveVaultKey(pin, salt) {
+  const raw  = new TextEncoder().encode(pin);
+  const base = await crypto.subtle.importKey('raw', raw, 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, hash: 'SHA-256', iterations: 310_000 }, base, 256
+  );
+  return crypto.subtle.importKey('raw', bits, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+// ── DLT commitment anchor ──────────────────────────────────────────────────────
+// commitment = sha256( sha256(entry_bytes) ‖ nonce )
+// The nonce and commitment are stored locally. Publishing commitment to a public
+// chain proves prior knowledge of entry content without revealing it.
+
+async function computeCommitment(entryBytes) {
+  const nonce    = crypto.getRandomValues(new Uint8Array(16));
+  const inner    = new Uint8Array(await crypto.subtle.digest('SHA-256', entryBytes));
+  const combined = new Uint8Array(32 + 16);
+  combined.set(inner); combined.set(nonce, 32);
+  const outer = new Uint8Array(await crypto.subtle.digest('SHA-256', combined));
+  return { nonce: toB64(nonce), commitment: toB64(outer) };
+}
+
+// ── IndexedDB helpers ──────────────────────────────────────────────────────────
+
+function _openDB() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open(_DB_NAME, 2);
+    rq.onupgradeneeded = ev => {
+      const db = ev.target.result;
+      if (!db.objectStoreNames.contains(_ST_LOG)) db.createObjectStore(_ST_LOG, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_CFG)) db.createObjectStore(_ST_CFG, { keyPath: 'id' });
+    };
+    rq.onsuccess = ev => res(ev.target.result);
+    rq.onerror   = ev => rej(ev.target.error);
+  });
+}
+
+async function _dbPut(store, record) {
+  const db = await _openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(record);
+    tx.oncomplete = () => { db.close(); res(); };
+    tx.onerror    = ev => { db.close(); rej(ev.target.error); };
+  });
+}
+
+async function _dbGet(store, key) {
+  const db = await _openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const rq = tx.objectStore(store).get(key);
+    rq.onsuccess = ev => { db.close(); res(ev.target.result); };
+    rq.onerror   = ev => { db.close(); rej(ev.target.error); };
+  });
+}
+
+async function _dbGetAll(store) {
+  const db = await _openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const rq = tx.objectStore(store).getAll();
+    rq.onsuccess = ev => { db.close(); res(ev.target.result); };
+    rq.onerror   = ev => { db.close(); rej(ev.target.error); };
+  });
+}
+
+// ── AES-GCM encrypt / decrypt under a derived key ────────────────────────────
+
+async function _sEnc(key, plain) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const pt = new TextEncoder().encode(JSON.stringify(plain));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, pt));
+  return { iv: toB64(iv), ct: toB64(ct) };
+}
+
+async function _sDec(key, { iv, ct }) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(iv) }, key, fromB64(ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+// ── Sanctuary setup / canary verification ─────────────────────────────────────
+
+async function _sanctuaryExists() {
+  try { const c = await _dbGet(_ST_CFG, 'wf-cfg'); return !!(c && c.s_canary); } catch (_) { return false; }
+}
+
+async function _verifySancPin(pin) {
+  try {
+    const key = await deriveVaultKey(pin, _SANC_SALT);
+    const cfg = await _dbGet(_ST_CFG, 'wf-cfg');
+    if (!cfg || !cfg.s_canary) return null;
+    const plain = await _sDec(key, cfg.s_canary);
+    return plain === _S_CANARY_OK ? key : null;
+  } catch (_) { return null; }
+}
+
+async function _setupSanctuary(sPin, dPin) {
+  const sKey      = await deriveVaultKey(sPin, _SANC_SALT);
+  const dKey      = await deriveVaultKey(dPin, _DURS_SALT);
+  const s_canary  = await _sEnc(sKey, _S_CANARY_OK);
+  const d_canary  = await _sEnc(dKey, _D_CANARY_OK);
+  const d_contacts = await _sEnc(dKey, []);
+  const existing  = (await _dbGet(_ST_CFG, 'wf-cfg')) || {};
+  await _dbPut(_ST_CFG, { ...existing, id: 'wf-cfg', s_canary, d_canary, d_contacts });
+  return sKey;
+}
+
+// ── Duress mode ───────────────────────────────────────────────────────────────
+// Checks whether the entered PIN is the duress PIN. If so, sets duressModeActive,
+// fires a silent anonymous alert to configured contacts (via Nym if available),
+// and returns true. The caller then opens the normal owner workspace — the coercer
+// sees a fully functional vault with no trace of Sanctuary Mode.
+
+async function _checkAndFireDuress(pin) {
+  try {
+    const dKey = await deriveVaultKey(pin, _DURS_SALT);
+    const cfg  = await _dbGet(_ST_CFG, 'wf-cfg');
+    if (!cfg || !cfg.d_canary) return false;
+    const canary = await _sDec(dKey, cfg.d_canary).catch(() => null);
+    if (canary !== _D_CANARY_OK) return false;
+
+    duressModeActive = true;
+    console.warn('[WellFair] Duress mode — decoy vault active, firing silent alert');
+
+    // Fire alert to configured contacts via Nym (best-effort)
+    if (nymClient && cfg.d_contacts) {
+      try {
+        const contacts = await _sDec(dKey, cfg.d_contacts);
+        const payload  = {
+          type:      'duress_alert',
+          vault_did:  vaultDidKey ? vaultDidKey.did : 'unknown',
+          issued_at:  new Date().toISOString(),
+        };
+        for (const c of contacts) {
+          if (c.address) nymAdapter.send(c.address, payload).catch(() => {});
+        }
+      } catch (_) {}
+    }
+    return true;
+  } catch (_) { return false; }
+}
+
+// ── Sanctuary PIN UI state machine ────────────────────────────────────────────
+
+let _spEntry    = '';
+let _spSetup    = false;
+let _spState    = null;  // tracks multi-step setup: { step, sPin?, dPin? }
+let _spSancPin  = null;
+
+function enterSanctuaryPinStep() {
+  _spEntry = ''; _spSetup = false; _spState = null; _spSancPin = null;
+  _updateSpDots('');
+  document.getElementById('sanctuary-pin-hint').textContent        = 'Enter your Sanctuary PIN';
+  document.getElementById('sanctuary-pin-hint').style.color        = '';
+  document.getElementById('sanctuary-pin-banner-desc').textContent = 'Enter Sanctuary PIN to continue';
+  showStep('step-sanctuary-pin');
+}
+
+function exitSanctuaryPinStep() {
+  _spEntry = ''; _spSetup = false; _spState = null; _spSancPin = null;
+  showStep('step-serving');
+}
+
+function _updateSpDots(state) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('spd' + i);
+    if (!d) return;
+    d.classList.toggle('filled', i < _spEntry.length && state !== 'error');
+    d.classList.toggle('error',  state === 'error');
+  }
+}
+
+function _spHint(msg, color) {
+  const el = document.getElementById('sanctuary-pin-hint');
+  el.textContent = msg; el.style.color = color || '';
+}
+
+function _spBannerDesc(msg) {
+  document.getElementById('sanctuary-pin-banner-desc').textContent = msg;
+}
+
+async function sanctuaryPinKey(k) {
+  if (k === 'del') { _spEntry = _spEntry.slice(0, -1); _updateSpDots(''); return; }
+  if (_spEntry.length >= 4) return;
+  _spEntry += k;
+  _updateSpDots('');
+  if (_spEntry.length < 4) return;
+
+  const entered = _spEntry;
+  _spEntry = '';
+  _updateSpDots('');
+
+  if (_spSetup) { await _handleSetupStep(entered); return; }
+
+  // Verify existing sanctuary PIN
+  const exists = await _sanctuaryExists();
+  if (!exists) {
+    // First use — begin setup flow
+    _spSetup = true;
+    _spState = { step: 'confirm_sanc', sPin: entered };
+    _spBannerDesc('Confirm Sanctuary PIN');
+    _spHint('Re-enter to confirm');
+    return;
+  }
+
+  _spHint('Verifying…');
+  const key = await _verifySancPin(entered);
+  if (key) {
+    _spHint('✓ Access granted', 'var(--green)');
+    setTimeout(() => _enterSanctuaryMode(key), 400);
+  } else {
+    _updateSpDots('error');
+    _spHint('Incorrect PIN', 'var(--red)');
+    setTimeout(() => { _updateSpDots(''); _spHint('Enter your Sanctuary PIN'); }, 1200);
+  }
+}
+
+async function _handleSetupStep(entered) {
+  if (_spState.step === 'confirm_sanc') {
+    if (entered !== _spState.sPin) {
+      _updateSpDots('error');
+      _spHint('PINs do not match — start again', 'var(--red)');
+      _spSetup = false; _spState = null;
+      setTimeout(() => { _updateSpDots(''); _spHint('Enter your Sanctuary PIN'); _spBannerDesc('Enter Sanctuary PIN to continue'); }, 1400);
+      return;
+    }
+    _spSancPin = entered;
+    _spState   = { step: 'set_duress' };
+    _spBannerDesc('Set a Duress PIN');
+    _spHint('Choose a PIN to show if coerced');
+    return;
+  }
+
+  if (_spState.step === 'set_duress') {
+    _spState = { step: 'confirm_duress', dPin: entered };
+    _spBannerDesc('Confirm Duress PIN');
+    _spHint('Re-enter Duress PIN to confirm');
+    return;
+  }
+
+  if (_spState.step === 'confirm_duress') {
+    if (entered !== _spState.dPin) {
+      _updateSpDots('error');
+      _spHint('Duress PINs do not match', 'var(--red)');
+      _spState = { step: 'set_duress' };
+      setTimeout(() => { _updateSpDots(''); _spBannerDesc('Set a Duress PIN'); _spHint('Choose Duress PIN again'); }, 1400);
+      return;
+    }
+    _spHint('Setting up Sanctuary…');
+    try {
+      const key = await _setupSanctuary(_spSancPin, entered);
+      _spSetup = false; _spState = null; _spSancPin = null;
+      _spHint('✓ Sanctuary ready', 'var(--green)');
+      setTimeout(() => _enterSanctuaryMode(key), 400);
+    } catch (e) {
+      _spHint('Setup failed: ' + e.message, 'var(--red)');
+      _spSetup = false; _spState = null; _spSancPin = null;
+      setTimeout(() => _spHint('Enter your Sanctuary PIN'), 2000);
+    }
+  }
+}
+
+// ── Sanctuary workspace ───────────────────────────────────────────────────────
+
+async function _enterSanctuaryMode(key) {
+  sanctuaryKey    = key;
+  sanctuaryActive = true;
+  document.body.classList.add('sanctuary-active');
+  showStep('step-sanctuary');
+  await Promise.all([
+    refreshSanctuaryLog(),
+    refreshTripwireFeed(),
+    refreshEvidentiary(),
+    _loadSentinelRules(),
+  ]);
+  // Silently upgrade any pending OTS receipts; refreshEvidentiary() called if any confirm.
+  otsUpgradeAll().catch(() => {});
+}
+
+function exitSanctuaryMode() {
+  sanctuaryActive = false;
+  sanctuaryKey    = null;
+  document.body.classList.remove('sanctuary-active');
+  showStep('step-serving');
+}
+
+async function refreshSanctuaryLog() {
+  const container = document.getElementById('sanctuary-log-list');
+  if (!container || !sanctuaryKey) return;
+  container.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:.3rem 0">Loading…</div>';
+  try {
+    const all = await _dbGetAll(_ST_LOG);
+    const records = all.filter(r => !r.type || r.type === 'assertion' || r.type === 'hypothesis');
+    records.sort((a, b) => b.seq - a.seq);
+    if (records.length === 0) {
+      container.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:.3rem 0">No entries yet.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    for (const r of records) {
+      try {
+        const plain = await _sDec(sanctuaryKey, r.enc);
+        const el    = document.createElement('div');
+        el.className = 'sanctuary-entry';
+        const ts = plain.created_at ? new Date(plain.created_at).toLocaleString() : '';
+        el.innerHTML =
+          `<div class="se-type ${plain.type}">${plain.type === 'assertion' ? '◉ Assertion' : '◎ Hypothesis'}</div>` +
+          `<div class="se-content">${plain.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` +
+          `<div class="se-meta">${ts} · anchor: <span class="se-anchor">${r.commitment.slice(0,16)}…</span></div>`;
+        container.appendChild(el);
+      } catch (_) {}
+    }
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--red);font-size:.78rem">Load error: ${e.message}</div>`;
+  }
+}
+
+async function logSanctuaryEntry() {
+  if (!sanctuaryKey) return;
+  const type    = document.getElementById('sanctuary-entry-type').value;
+  const content = document.getElementById('sanctuary-entry-content').value.trim();
+  const status  = document.getElementById('sanctuary-entry-status');
+
+  if (!content) {
+    status.textContent = 'Content is required.'; status.style.color = 'var(--red)'; return;
+  }
+  status.textContent = 'Encrypting & anchoring…'; status.style.color = 'var(--dim)';
+
+  try {
+    const plain      = { type, content, created_at: new Date().toISOString() };
+    const entryBytes = new TextEncoder().encode(JSON.stringify(plain));
+    const { nonce, commitment } = await computeCommitment(entryBytes);
+    const enc = await _sEnc(sanctuaryKey, plain);
+    await _dbPut(_ST_LOG, { id: crypto.randomUUID(), seq: Date.now(), enc, nonce, commitment });
+
+    // Commitment is ready to publish to a public chain; local nonce retained for proof.
+    console.log('[WellFair] Sanctuary commitment (publish to DLT to anchor):', commitment);
+
+    document.getElementById('sanctuary-entry-content').value = '';
+    status.textContent = '✓ Logged · anchor: ' + commitment.slice(0, 20) + '…';
+    status.style.color = 'var(--green)';
+    await refreshSanctuaryLog();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function saveDuressContacts() {
+  const addr1   = document.getElementById('duress-contact-1').value.trim();
+  const addr2   = document.getElementById('duress-contact-2').value.trim();
+  const dPin    = document.getElementById('duress-pin-update').value.trim();
+  const status  = document.getElementById('duress-contacts-status');
+
+  if (!dPin) { status.textContent = 'Enter your Duress PIN to authorise.'; status.style.color = 'var(--red)'; return; }
+  status.textContent = 'Saving…'; status.style.color = 'var(--dim)';
+
+  try {
+    const dKey   = await deriveVaultKey(dPin, _DURS_SALT);
+    const cfg    = await _dbGet(_ST_CFG, 'wf-cfg');
+    if (!cfg || !cfg.d_canary) { status.textContent = 'Sanctuary not yet set up.'; status.style.color = 'var(--red)'; return; }
+    const check  = await _sDec(dKey, cfg.d_canary).catch(() => null);
+    if (check !== _D_CANARY_OK) { status.textContent = 'Incorrect Duress PIN.'; status.style.color = 'var(--red)'; return; }
+    const contacts   = [addr1, addr2].filter(Boolean).map(a => ({ address: a }));
+    const d_contacts = await _sEnc(dKey, contacts);
+    await _dbPut(_ST_CFG, { ...cfg, d_contacts });
+    document.getElementById('duress-pin-update').value = '';
+    status.textContent = '✓ Contacts saved (' + contacts.length + ')';
+    status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+// ── Wake Lock (keep screen alive during active sessions) ─────────────────────
+
+let _wakeLock = null;
+
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request('screen');
+    _wakeLock.addEventListener('release', () => { _wakeLock = null; });
+    document.addEventListener('visibilitychange', _reacquireWakeLock);
+  } catch (_) {}
+}
+
+async function _reacquireWakeLock() {
+  if (_wakeLock === null && document.visibilityState === 'visible') {
+    await acquireWakeLock();
+  }
+}
+
+function releaseWakeLock() {
+  document.removeEventListener('visibilitychange', _reacquireWakeLock);
+  if (_wakeLock) { try { _wakeLock.release(); } catch(_) {} _wakeLock = null; }
+}
+
+// ── Tripwire Dashboard ────────────────────────────────────────────────────────
+
+const _TW_CATS = {
+  prescription: 'Prescription conflict',
+  coercion:     'Coercive control',
+  false_claim:  'False claim / fabrication',
+  legal:        'Legal / administrative',
+  surveillance: 'Surveillance / digital',
+  other:        'Other',
+};
+
+async function logTripwire() {
+  if (!sanctuaryKey) return;
+  const category = document.getElementById('tw-category').value;
+  const trigger  = document.getElementById('tw-trigger').value.trim();
+  const status   = document.getElementById('tw-status');
+  if (!trigger) { status.textContent = 'Describe the event.'; status.style.color = 'var(--red)'; return; }
+  status.textContent = 'Encrypting & anchoring…'; status.style.color = 'var(--dim)';
+  try {
+    const plain      = { category, trigger, resolution: 'pending', created_at: new Date().toISOString() };
+    const entryBytes = new TextEncoder().encode(JSON.stringify(plain));
+    const { nonce, commitment } = await computeCommitment(entryBytes);
+    const enc = await _sEnc(sanctuaryKey, plain);
+    await _dbPut(_ST_LOG, { id: crypto.randomUUID(), seq: Date.now(), type: 'tripwire', enc, nonce, commitment });
+    document.getElementById('tw-trigger').value = '';
+    status.textContent = '✓ Logged · anchor: ' + commitment.slice(0, 16) + '…';
+    status.style.color = 'var(--green)';
+    await refreshTripwireFeed();
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function refreshTripwireFeed() {
+  if (!sanctuaryKey) return;
+  const container = document.getElementById('tw-feed');
+  try {
+    const all = await _dbGetAll(_ST_LOG);
+    const records = all.filter(r => r.type === 'tripwire');
+    records.sort((a, b) => b.seq - a.seq);
+    if (records.length === 0) {
+      container.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:.3rem 0">No collisions logged.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    for (const r of records) {
+      try {
+        const plain = await _sDec(sanctuaryKey, r.enc);
+        const el    = document.createElement('div');
+        el.className = 'tw-entry';
+        const ts  = plain.created_at ? new Date(plain.created_at).toLocaleString() : '';
+        const cat = _TW_CATS[plain.category] || plain.category;
+        const res = plain.resolution || 'pending';
+        el.innerHTML =
+          `<div class="tw-cat">${cat}</div>` +
+          `<div class="tw-content">${plain.trigger.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` +
+          `<div class="tw-meta">${ts} · <span style="font-family:monospace">${r.commitment.slice(0,16)}…</span></div>` +
+          `<div class="tw-resolve">` +
+            `<button class="${res==='pending'?'res-active':''}"  onclick="resolveTripwire('${r.id}','pending')">Keep hidden</button>` +
+            `<button class="${res==='revealed'?'res-active':''}" onclick="resolveTripwire('${r.id}','revealed')">Reveal temporarily</button>` +
+            `<button class="${res==='exported'?'res-active':''}" onclick="resolveTripwire('${r.id}','exported')">Export to doctor</button>` +
+          `</div>`;
+        container.appendChild(el);
+      } catch (_) {}
+    }
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--red);font-size:.78rem">Load error: ${e.message}</div>`;
+  }
+}
+
+async function resolveTripwire(id, resolution) {
+  if (!sanctuaryKey) return;
+  try {
+    const r = await _dbGet(_ST_LOG, id);
+    if (!r) return;
+    const plain = await _sDec(sanctuaryKey, r.enc);
+    plain.resolution = resolution;
+    const enc = await _sEnc(sanctuaryKey, plain);
+    await _dbPut(_ST_LOG, { ...r, enc });
+    await refreshTripwireFeed();
+  } catch (_) {}
+}
+
+// ── Synthesis Engine ──────────────────────────────────────────────────────────
+
+async function runContradictionAudit() {
+  if (!sanctuaryKey) return;
+  const claim  = document.getElementById('synth-claim').value.trim();
+  const status = document.getElementById('synth-status');
+  const report = document.getElementById('synth-report');
+  if (!claim) { status.textContent = 'Enter a claim to audit.'; status.style.color = 'var(--red)'; return; }
+  status.textContent = 'Scanning immutable record…'; status.style.color = 'var(--dim)';
+  report.innerHTML = '';
+
+  const claimWords = claim.toLowerCase().split(/\W+/).filter(w => w.length > 3);
+  try {
+    const all  = await _dbGetAll(_ST_LOG);
+    const hits = [];
+    for (const r of all) {
+      if (r.type === 'tripwire') continue;
+      try {
+        const plain = await _sDec(sanctuaryKey, r.enc);
+        if (!plain.content) continue;
+        const entryWords = plain.content.toLowerCase().split(/\W+/);
+        const overlap    = claimWords.filter(w => entryWords.some(e => e.includes(w) || w.includes(e)));
+        if (overlap.length > 0) hits.push({ plain, r, overlap });
+      } catch (_) {}
+    }
+
+    if (hits.length === 0) {
+      status.textContent = 'No direct contradictions found in sanctuary record.';
+      status.style.color = 'var(--dim)'; return;
+    }
+
+    status.textContent = `Incoherence Report — ${hits.length} contradicting entr${hits.length === 1 ? 'y' : 'ies'}`;
+    status.style.color = 'var(--yellow)';
+
+    for (const { plain, r, overlap } of hits) {
+      const el = document.createElement('div');
+      el.className = 'synth-hit';
+      const ts   = plain.created_at ? new Date(plain.created_at).toLocaleString() : '';
+      const type = plain.type === 'assertion' ? '◉' : '◎';
+      el.innerHTML =
+        `<div class="sh-content">${type} ${plain.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` +
+        `<div class="sh-meta">${ts} · overlap: ${overlap.join(', ')} · <span style="font-family:monospace">${r.commitment.slice(0,16)}…</span></div>`;
+      report.appendChild(el);
+    }
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function saveSentinelRules() {
+  if (!sanctuaryKey) return;
+  const rules  = document.getElementById('sentinel-rules').value.trim();
+  const status = document.getElementById('sentinel-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--dim)';
+  try {
+    const cfg = (await _dbGet(_ST_CFG, 'wf-cfg')) || {};
+    const enc = await _sEnc(sanctuaryKey, rules);
+    await _dbPut(_ST_CFG, { ...cfg, id: 'wf-cfg', sentinel_rules: enc });
+    status.textContent = '✓ Ruleset saved'; status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function _loadSentinelRules() {
+  if (!sanctuaryKey) return;
+  try {
+    const cfg = await _dbGet(_ST_CFG, 'wf-cfg');
+    if (cfg && cfg.sentinel_rules) {
+      document.getElementById('sentinel-rules').value =
+        await _sDec(sanctuaryKey, cfg.sentinel_rules);
+    }
+  } catch (_) {}
+}
+
+// ── Evidentiary Export ────────────────────────────────────────────────────────
+
+let _evEntries = [];
+
+async function refreshEvidentiary() {
+  if (!sanctuaryKey) return;
+  const container = document.getElementById('ev-entry-list');
+  _evEntries = [];
+  container.innerHTML = '';
+  try {
+    const all  = await _dbGetAll(_ST_LOG);
+    const rows = all.filter(r => !r.type || r.type === 'assertion' || r.type === 'hypothesis');
+    rows.sort((a, b) => b.seq - a.seq);
+    if (rows.length === 0) {
+      container.innerHTML = '<div style="color:var(--dim);font-size:.78rem">No sanctuary entries to export.</div>';
+      return;
+    }
+    for (const r of rows) {
+      try {
+        const plain = await _sDec(sanctuaryKey, r.enc);
+        _evEntries.push({ plain, r });
+        const row   = document.createElement('div');
+        row.className = 'ev-row';
+        const ts   = plain.created_at ? new Date(plain.created_at).toLocaleString() : '';
+        const type = plain.type === 'assertion' ? '◉ Assertion' : '◎ Hypothesis';
+        row.innerHTML =
+          `<input type="checkbox" id="ev-${r.id}" value="${r.id}" />` +
+          `<div><div class="ev-row-text">${plain.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` +
+          `<div class="ev-row-meta">${type} · ${ts} · <span style="font-family:monospace">${r.commitment.slice(0,12)}…</span></div>` +
+          _otsAnchorRow(r) +
+          `</div>`;
+        container.appendChild(row);
+      } catch (_) {}
+    }
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--red);font-size:.78rem">Error: ${e.message}</div>`;
+  }
+}
+
+async function generateVP() {
+  if (!sanctuaryKey || !vaultDidKey) return;
+  const status = document.getElementById('ev-status');
+  const output = document.getElementById('ev-vp-output');
+  status.textContent = 'Generating…'; status.style.color = 'var(--dim)';
+  output.innerHTML = '';
+
+  const selected = _evEntries.filter(({ r }) =>
+    document.getElementById('ev-' + r.id)?.checked
+  );
+  if (selected.length === 0) {
+    status.textContent = 'Select at least one entry.'; status.style.color = 'var(--red)'; return;
+  }
+
+  try {
+    const now  = new Date().toISOString();
+    const vpPayload = JSON.stringify({
+      '@context': ['https://www.w3.org/2018/credentials/v1'],
+      type:       ['VerifiablePresentation'],
+      id:         'urn:uuid:' + crypto.randomUUID(),
+      holder:     vaultDidKey.did,
+      issued:     now,
+      verifiableCredential: selected.map(({ plain, r }) => ({
+        '@context':  ['https://www.w3.org/2018/credentials/v1', 'https://wellfare.social/ns/vault#'],
+        type:        ['VerifiableCredential', 'SanctuaryEntry'],
+        id:          'urn:uuid:' + crypto.randomUUID(),
+        issuer:      vaultDidKey.did,
+        issuanceDate: plain.created_at,
+        credentialSubject: {
+          type:       plain.type,
+          content:    plain.content,
+          commitment: r.commitment,
+          nonce:      r.nonce,
+        },
+      })),
+    });
+
+    const sigRaw = new Uint8Array(await crypto.subtle.sign(
+      { name: 'Ed25519' }, vaultDidKey.privateKey,
+      new TextEncoder().encode(vpPayload)
+    ));
+
+    const vp = {
+      presentation: JSON.parse(vpPayload),
+      proof: {
+        type:               'Ed25519Signature2020',
+        created:            now,
+        verificationMethod: vaultDidKey.did + '#key-1',
+        proofPurpose:       'authentication',
+        proofValue:         toB64(sigRaw),
+      },
+    };
+
+    const vpJson = JSON.stringify(vp, null, 2);
+    output.innerHTML = `<div class="vp-json">${vpJson.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+    status.textContent = `✓ VP generated · ${selected.length} entr${selected.length===1?'y':'ies'} · signed by vault`;
+    status.style.color = 'var(--green)';
+
+    const blob = new Blob([vpJson], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'),
+      { href: url, download: 'wellfair-vp-' + now.slice(0,10) + '.json', style: 'display:none' });
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+async function exportCommitmentManifest() {
+  if (!sanctuaryKey) return;
+  const status = document.getElementById('dlt-status');
+  status.textContent = 'Exporting…'; status.style.color = 'var(--dim)';
+  try {
+    const all  = await _dbGetAll(_ST_LOG);
+    const manifest = {
+      version:      1,
+      exported_at:  new Date().toISOString(),
+      vault_did:    vaultDidKey ? vaultDidKey.did : null,
+      commitments:  all.filter(r => r.commitment).map(r => ({
+        id: r.id, type: r.type || 'entry', seq: r.seq, nonce: r.nonce, commitment: r.commitment,
+      })),
+      note: 'Publish each commitment hash to a public DLT to establish asymmetric provenance anchors.',
+    };
+    const json = JSON.stringify(manifest, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: 'wellfair-commitments-' + new Date().toISOString().slice(0,10) + '.json',
+      style: 'display:none',
+    });
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
+    status.textContent = `✓ Exported ${manifest.commitments.length} commitment${manifest.commitments.length===1?'':'s'}`;
+    status.style.color = 'var(--green)';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.style.color = 'var(--red)';
+  }
+}
+
+// ── OpenTimestamps — Bitcoin commitment anchoring ─────────────────────────────
+// Feeless, anonymous: each commitment is one leaf in a public Merkle tree.
+// No on-chain identity links entries to each other.
+
+const _OTS_CALENDARS = [
+  'https://alice.btc.calendar.opentimestamps.org',
+  'https://bob.btc.calendar.opentimestamps.org',
+  'https://finney.calendar.opentimestamps.org',
+];
+
+// OTS file magic: \x00OpenTimestamps\x00\x00Proof\x00 + 8-byte tag (31 bytes total)
+const _OTS_MAGIC = new Uint8Array([
+  0x00, 0x4f, 0x70, 0x65, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x73,
+  0x00, 0x00, 0x50, 0x72, 0x6f, 0x6f, 0x66, 0x00, 0xbf, 0x89, 0xe2, 0xe8, 0x84, 0xe8, 0x92, 0x94,
+]);
+
+function _otsAnchorRow(r) {
+  const s = r.ots_status;
+  const esc = id => id.replace(/'/g, "\\'");
+  if (s === 'confirmed') {
+    const d = r.ots_confirmed ? new Date(r.ots_confirmed).toLocaleDateString() : '';
+    return `<div class="ev-row-anchor">` +
+      `<span style="color:#4ade80">✓ Confirmed on Bitcoin${d ? ' · ' + d : ''}</span>` +
+      `<button class="btn-ots" onclick="otsDownload('${esc(r.id)}')">Download .ots proof</button>` +
+      `</div>`;
+  }
+  if (s === 'pending') {
+    const d = r.ots_submitted ? new Date(r.ots_submitted).toLocaleDateString() : '';
+    return `<div class="ev-row-anchor">` +
+      `<span>⏳ Pending Bitcoin block${d ? ' · submitted ' + d : ''}</span>` +
+      `<button class="btn-ots" onclick="otsDownload('${esc(r.id)}')">Download receipt</button>` +
+      `</div>`;
+  }
+  return `<div class="ev-row-anchor">` +
+    `<button class="btn-ots" id="ots-btn-${r.id}" onclick="otsAnchorEntry('${esc(r.id)}')">Anchor to Bitcoin</button>` +
+    `<span id="ots-msg-${r.id}"></span>` +
+    `</div>`;
+}
+
+async function otsAnchorEntry(id) {
+  const btn = document.getElementById('ots-btn-' + id);
+  const msg = document.getElementById('ots-msg-' + id);
+  if (btn) { btn.disabled = true; btn.textContent = 'Publishing…'; }
+  try {
+    const rec = await _dbGet(_ST_LOG, id);
+    if (!rec?.commitment) throw new Error('No commitment hash');
+    const hashBytes = fromB64(rec.commitment);
+    let receipt = null, calendar = null;
+    for (const cal of _OTS_CALENDARS) {
+      try {
+        const r = await fetch(cal + '/digest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/octet-stream', 'Accept': 'application/octet-stream' },
+          body: hashBytes,
+        });
+        if (!r.ok) continue;
+        receipt = new Uint8Array(await r.arrayBuffer());
+        calendar = cal;
+        break;
+      } catch (_) {}
+    }
+    if (!receipt) throw new Error('All calendar servers unreachable');
+    await _dbPut(_ST_LOG, {
+      ...rec,
+      ots_status:    'pending',
+      ots_receipt:   toB64(receipt),
+      ots_calendar:  calendar,
+      ots_submitted: new Date().toISOString(),
+    });
+    setTimeout(refreshEvidentiary, 300);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Anchor to Bitcoin'; }
+    if (msg) { msg.textContent = 'Error: ' + e.message; msg.style.color = 'var(--red)'; }
+  }
+}
+
+async function _otsUpgradeOne(rec) {
+  if (rec.ots_status !== 'pending' || !rec.ots_calendar || !rec.commitment) return false;
+  const hex = Array.from(fromB64(rec.commitment)).map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const r = await fetch(`${rec.ots_calendar}/timestamp/${hex}`, { headers: { Accept: 'application/octet-stream' } });
+    if (!r.ok) return false;
+    const upgraded = new Uint8Array(await r.arrayBuffer());
+    await _dbPut(_ST_LOG, { ...rec, ots_status: 'confirmed', ots_receipt: toB64(upgraded), ots_confirmed: new Date().toISOString() });
+    return true;
+  } catch (_) { return false; }
+}
+
+async function otsUpgradeAll() {
+  const all = await _dbGetAll(_ST_LOG);
+  const pending = all.filter(r => r.ots_status === 'pending');
+  if (!pending.length) return;
+  let upgraded = 0;
+  for (const r of pending) { if (await _otsUpgradeOne(r)) upgraded++; }
+  if (upgraded) refreshEvidentiary();
+}
+
+async function otsDownload(id) {
+  const rec = await _dbGet(_ST_LOG, id);
+  if (!rec?.ots_receipt || !rec.commitment) return;
+  const hash = fromB64(rec.commitment);
+  const body = fromB64(rec.ots_receipt);
+  // Full OTS file: magic(31) + version(1=0x01) + SHA256 op tag(1=0x08) + hash(32) + calendar body
+  const file = new Uint8Array(_OTS_MAGIC.length + 1 + 1 + 32 + body.length);
+  let o = 0;
+  file.set(_OTS_MAGIC, o); o += _OTS_MAGIC.length;
+  file[o++] = 0x01;  // version
+  file[o++] = 0x08;  // SHA256 hash op
+  file.set(hash, o); o += 32;
+  file.set(body, o);
+  const blob = new Blob([file], { type: 'application/octet-stream' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url, download: `wellfair-${id.slice(0, 8)}.ots`, style: 'display:none',
+  });
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
+}
+
+// ── QR scanner ────────────────────────────────────────────────────────────────
+
+function startScanner() {
+  if (!window.Html5Qrcode) { setScanStatus('QR library not loaded', 'err'); return; }
+  scanner = new Html5Qrcode('reader');
+  scanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 200, height: 200 } },
+    text => {
+      try {
+        const d = JSON.parse(text);
+        if (d.sid) { stopScanner(); connectToSession(d.sid, d.r || RELAYS[0]); }
+      } catch(_) { setScanStatus('Invalid QR — try again', 'err'); }
+    },
+    () => {}
+  ).catch(() => setScanStatus('Camera unavailable — use manual entry below', 'err'));
+}
+
+function stopScanner() {
+  if (scanner) { scanner.stop().catch(()=>{}); scanner = null; }
+}
+
+function connectManual() {
+  const sid = document.getElementById('manual-sid').value.trim();
+  if (sid.length < 16) { setScanStatus('Session ID too short', 'err'); return; }
+  stopScanner();
+  connectToSession(sid, RELAYS[0]);
+}
+
+// ── Connection ────────────────────────────────────────────────────────────────
+
+function connectToSession(sid, relay) {
+  currentSid = sid;
+  offerHandled = false;
+  renderProfileList();
+  showStep('step-profile');
+
+  clearTimeout(_relayTimer);
+  gun = Gun([relay, ...RELAYS.filter(r => r !== relay)]);
+  const node = gun.get(GUN_NS).get(sid);
+  gunSessionNode = node;
+
+  _relayTimer = setTimeout(() => {
+    if (!offerHandled) {
+      cancelSession();
+      setScanStatus('Relay unreachable — check connection, then re-scan', 'err');
+    }
+  }, 12000);
+
+  node.on(async (data) => {
+    if (offerHandled || !data || !data.offer) return;
+    clearTimeout(_relayTimer); _relayTimer = null;
+    offerHandled = true;
+    await handleOffer(data.offer, node);
+  });
+}
+
+async function handleOffer(offerJSON, node) {
+  pc = new RTCPeerConnection(ICE_CFG);
+
+  pc.ondatachannel = e => {
+    dc = e.channel;
+
+    dc.onmessage = async ev => {
+      if (!_handshakeDone) {
+        try { const m = JSON.parse(ev.data); if (m && m.type === 'noise') noiseEnqueue(m); } catch(_) {}
+        return;
+      }
+      let msg;
+      try { msg = await secureRecv(ev.data); } catch(_) { return; }
+      if (!sessionActive) return;
+      try { await handleDesktopMessage(msg); } catch(_) {}
+    };
+
+    dc.onopen = async () => {
+      const msg1 = await noiseAwait();
+      try {
+        const { sendKey, recvKey } = await runNoiseResponder(vaultNoiseKey, msg1);
+        _sessionSend = sendKey; _sessionRecv = recvKey; _handshakeDone = true;
+        if (gunSessionNode) {
+          try { gunSessionNode.get('answer').put({ sdp: null, t: null }); } catch(_) {}
+        }
+        setConsentStatus('Channel secure — tap Allow to begin', 'ok');
+        document.getElementById('approve-btn').disabled = false;
+      } catch (err) {
+        setConsentStatus('Handshake failed: ' + err.message, 'err');
+      }
+    };
+
+    dc.onclose = () => { if (sessionActive) endSession(true); };
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    if (pc && pc.iceConnectionState === 'failed')
+      setConsentStatus('Connection failed — ask desktop to start a new session', 'err');
+  };
+
+  try {
+    await pc.setRemoteDescription(JSON.parse(offerJSON));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await waitForICE(pc);
+    node.get('answer').put({ sdp: JSON.stringify(pc.localDescription), t: Date.now() });
+    setConsentStatus('Answer sent — waiting for channel…');
+  } catch (err) {
+    setConsentStatus('Setup error: ' + err.message, 'err');
+  }
+}
+
+function waitForICE(p) {
+  return new Promise(resolve => {
+    if (p.iceGatheringState === 'complete') { resolve(); return; }
+    p.addEventListener('icegatheringstatechange', function h() {
+      if (p.iceGatheringState === 'complete') {
+        p.removeEventListener('icegatheringstatechange', h); resolve();
+      }
+    });
+    setTimeout(resolve, 4000);
+  });
+}
+
+// ── Consent ───────────────────────────────────────────────────────────────────
+
+function approveSession() {
+  allowedSections = new Set();
+  document.querySelectorAll('#section-checklist input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) {
+      // checkbox id is "chk-{section_id}"
+      allowedSections.add(cb.id.replace('chk-', ''));
+    }
+  });
+
+  sessionActive = true;
+  serveStart = Date.now();
+  acquireWakeLock();
+
+  document.getElementById('serve-sid').textContent = currentSid.slice(0,16) + '…';
+
+  const bar = document.getElementById('active-profile-bar');
+  bar.style.background = activeProfile.color;
+  bar.textContent = activeProfile.icon + '  ' + activeProfile.label;
+
+  showStep('step-serving');
+
+  serveTimer = setInterval(() => {
+    const s = Math.floor((Date.now() - serveStart) / 1000);
+    document.getElementById('serve-timer').textContent =
+      String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
+
+  sessionTtlTimer = setTimeout(() => {
+    if (gunSessionNode) { gunSessionNode.put(null); gunSessionNode = null; }
+    endSession(true);
+  }, SESSION_TTL_MS);
+
+  if (dc && dc.readyState === 'open') {
+    secureSend({
+      type:     'session_info',
+      vault_did: vaultDidKey ? vaultDidKey.did : 'did:key:pending',
+      profile:  { id: activeProfile.id, label: activeProfile.label,
+                  color: activeProfile.color, icon: activeProfile.icon },
+      sections: [...allowedSections]
+    });
+  }
+}
+
+// ── Handle desktop requests ───────────────────────────────────────────────────
+
+async function handleDesktopMessage(msg) {
+  if (msg.type === 'hello') { if (msg.did) connectorDid = msg.did; return; }
+  if (msg.type === 'disconnect') { endSession(true); return; }
+
+  if (msg.type === 'request') {
+    const { id, section } = msg;
+    if (!allowedSections.has(section)) {
+      secureSend({ type: 'error', id, message: 'section not permitted by active profile' });
+      logActivity(section, false);
+      return;
+    }
+    const dataFn = VAULT[section];
+    if (!dataFn) {
+      secureSend({ type: 'error', id, message: 'section not found in vault' });
+      return;
+    }
+    const data    = dataFn();
+    const sigBytes = new TextEncoder().encode(section + ':' + JSON.stringify(data));
+    const sigRaw   = new Uint8Array(await crypto.subtle.sign({ name:'Ed25519' }, vaultDidKey.privateKey, sigBytes));
+    secureSend({ type: 'response', id, section, data, sig: toB64(sigRaw) });
+    logActivity(section, true);
+    return;
+  }
+
+  if (msg.type === 'write_section') {
+    if (!activeProfile || !activeProfile.readWrite) {
+      secureSend({ type: 'error', id: msg.id, message: 'write not permitted by active profile' });
+      return;
+    }
+    writeCount++;
+    document.getElementById('write-count').textContent = writeCount;
+    logActivity(msg.section + ' [saved]', true);
+    secureSend({ type: 'vault_write_ack', id: msg.id, section: msg.section });
+    return;
+  }
+
+  if (msg.type === 'store_document') {
+    if (!activeProfile || !activeProfile.readWrite) {
+      secureSend({ type: 'error', id: msg.id, message: 'write not permitted' });
+      return;
+    }
+    writeCount++;
+    document.getElementById('write-count').textContent = writeCount;
+    logActivity('document: ' + (msg.filename || 'unnamed'), true);
+    secureSend({ type: 'vault_write_ack', id: msg.id, filename: msg.filename });
+    return;
+  }
+}
+
+// ── Activity log ──────────────────────────────────────────────────────────────
+
+function logActivity(section, permitted) {
+  const log = document.getElementById('activity-log');
+  const now = new Date();
+  const isEmergency = activeProfile && activeProfile.emergencyOnly;
+  const ts = isEmergency
+    ? now.toISOString().replace('T', ' ').slice(0, 19)
+    : now.toTimeString().slice(0, 5);
+  const line = document.createElement('div');
+  line.className = 'log-line' + (isEmergency ? ' log-emergency' : '');
+  const label = SECTION_LABELS[section] || section;
+  const didHtml = (isEmergency && connectorDid)
+    ? `<div class="log-did">${connectorDid}</div>`
+    : '';
+  line.innerHTML = permitted
+    ? `<span class="ts">${ts}</span>Sent <span class="section">${label}</span>${didHtml}`
+    : `<span class="ts">${ts}</span><span style="color:var(--red)">Denied: ${label}</span>${didHtml}`;
+  log.prepend(line);
+}
+
+// ── Teardown ──────────────────────────────────────────────────────────────────
+
+function cancelSession() {
+  teardown();
+  resetToScan();
+}
+
+function endSession(remote) {
+  if (!remote && dc && dc.readyState === 'open')
+    secureSend({ type: 'disconnect' });
+  clearInterval(serveTimer);
+  sessionActive = false;
+  activeProfile = null;
+  releaseWakeLock();
+  teardown();
+  resetToScan();
+}
+
+function teardown() {
+  clearTimeout(sessionTtlTimer); sessionTtlTimer = null;
+  clearTimeout(_relayTimer); _relayTimer = null;
+  if (gunSessionNode) { try { gunSessionNode.put(null); } catch(_){} gunSessionNode = null; }
+  if (_sessionSend) { _gcRegistry.register(_sessionSend, 'sessionSendKey'); }
+  if (_sessionRecv) { _gcRegistry.register(_sessionRecv, 'sessionRecvKey'); }
+  if (dc) { try { dc.close(); } catch(_){} dc = null; }
+  if (pc) { try { pc.close(); } catch(_){} pc = null; }
+  noiseReset();
+  connectorDid = null;
+}
+
+function resetToScan() {
+  offerHandled = false; currentSid = null;
+  document.getElementById('manual-sid').value = '';
+  document.getElementById('activity-log').innerHTML =
+    '<div class="log-line"><span class="ts">--:--</span>Waiting for requests…</div>';
+  document.getElementById('emergency-preauth-panel').style.display = 'none';
+  document.getElementById('emergency-preauth-body').style.display  = 'none';
+  document.getElementById('dms-panel').style.display               = 'none';
+  document.getElementById('dms-body').style.display                = 'none';
+  document.getElementById('anon-notify-panel').style.display       = 'none';
+  document.getElementById('anon-body').style.display               = 'none';
+  document.getElementById('sanctuary-panel').style.display         = 'none';
+  duressModeActive = false;
+  document.body.classList.remove('sanctuary-active');
+  showStep('step-scan');
+  setScanStatus('Point camera at the QR on the desktop');
+  startScanner();
+}
+
+window.addEventListener('pagehide', () => {
+  endSession(false);
+  clearTimeout(dmsTimer); // cancel pending DMS fire — page is gone
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+(async () => {
+  // WebCrypto feature detection — Ed25519 (Firefox 111+) and X25519 (Firefox 130+) required
+  const _missing = [];
+  try { await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign', 'verify']); } catch (_) { _missing.push('Ed25519'); }
+  try { await crypto.subtle.generateKey({ name: 'X25519'  }, false, ['deriveBits']);       } catch (_) { _missing.push('X25519');  }
+  if (_missing.length) {
+    document.body.innerHTML =
+      `<div style="font-family:system-ui;max-width:36rem;margin:4rem auto;padding:1.5rem;` +
+      `background:#1a1a2e;color:#e2e8f0;border-radius:.75rem;border:1px solid #e53e3e">` +
+      `<h2 style="margin:0 0 .75rem;color:#fc8181">Browser not supported</h2>` +
+      `<p style="line-height:1.6;margin:0 0 .75rem">WellFair requires WebCrypto algorithms ` +
+      `not available in this browser: <strong style="color:#fc8181">${_missing.join(', ')}</strong>.</p>` +
+      `<p style="line-height:1.6;margin:0">Please use <strong>Chrome 111+</strong>, ` +
+      `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
+    return;
+  }
+
+  [vaultDidKey, vaultNoiseKey] = await Promise.all([generateDidKey(), noiseGenX25519()]);
+  await loadProfiles();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  initNym(); // async, non-blocking — DMS/anon features unavailable until Nym is ready
+  showStep('step-scan');
+  startScanner();
+})();
+</script>
+</body>
+</html>

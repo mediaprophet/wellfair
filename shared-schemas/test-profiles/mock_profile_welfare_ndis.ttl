@@ -1,0 +1,59 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix snomed: <http://snomed.info/id/> .
+@prefix app:    <https://wellfair.app/ontology/> .
+@prefix welfare: <https://wellfair.app/welfare/> .
+@prefix me:     <urn:wellfair:user:mock-welfare-ndis:> .
+
+# =============================================================================
+# Mock Profile: NDIS Welfare Eligibility Test Case
+# Non-clinical welfare ruleset test. 3D visualization is NOT the primary
+# output here — a structured eligibility report is.
+#
+# Expected evaluation result (against welfare eligibility rulesets):
+#   - SHOULD trigger: welfare:NDISEligibility (disability condition present,
+#     functional impact high, age eligible, Australian resident)
+#   - SHOULD trigger relevant support categories based on functional domains
+#   - Biomedical implications (EDS) SHOULD ALSO run if biomedical rulesets
+#     included — test that welfare and biomedical rulesets can run together
+# =============================================================================
+
+me:subject
+    a app:UserSubject ;
+    rdfs:label "Mock Subject – NDIS Eligibility (Jordan persona)" ;
+    app:subjectId "mock-welfare-ndis" .
+
+# Clinical conditions (also relevant to biomedical rulesets)
+me:subject app:userFact snomed:398114001 .   # Ehlers-Danlos syndrome
+me:subject app:userFact snomed:47505003 .    # Post-traumatic stress disorder
+
+# Welfare / eligibility facts
+me:subject welfare:australianResident true .
+me:subject welfare:age "28"^^xsd:integer .
+me:subject welfare:hasDisabilityDiagnosis true .
+me:subject welfare:disabilityPermanent true .
+me:subject welfare:functionalImpactLevel "substantial" .   # substantial | significant
+
+# Functional domain impacts (used by NDIS support category rules)
+me:subject welfare:mobilityImpaired true .
+me:subject welfare:communicationImpaired false .
+me:subject welfare:selfCareImpaired true .
+me:subject welfare:socialParticipationImpaired true .
+me:subject welfare:learningImpaired false .
+
+# Social determinants
+me:metric_housing_stability app:prologName "housing_stability" ; app:value "38"^^xsd:decimal ; app:subject me:subject .
+me:metric_weekly_income     app:prologName "weekly_income_aud" ; app:value "340"^^xsd:decimal ; app:subject me:subject .
+me:metric_social_isolation  app:prologName "social_isolation" ;  app:value "8"^^xsd:decimal ;  app:subject me:subject .
+
+# Health metrics
+me:metric_phq9         app:prologName "phq9_score" ;      app:value "14"^^xsd:decimal ;  app:subject me:subject .
+me:metric_pcl5         app:prologName "pcl5_score" ;      app:value "38"^^xsd:decimal ;  app:subject me:subject .
+me:metric_gad7         app:prologName "gad7_score" ;      app:value "12"^^xsd:decimal ;  app:subject me:subject .
+me:metric_sleep_eff    app:prologName "sleep_efficiency" ; app:value "58"^^xsd:decimal ; app:subject me:subject .
+me:metric_heart_rate   app:prologName "heart_rate" ;      app:value "96"^^xsd:decimal ;  app:subject me:subject .
+me:metric_hrv_rmssd    app:prologName "hrv_rmssd" ;       app:value "18"^^xsd:decimal ;  app:subject me:subject .
+me:metric_crp_hs       app:prologName "crp_hs" ;          app:value "6.2"^^xsd:decimal ; app:subject me:subject .
+me:metric_cortisol_am  app:prologName "cortisol_am" ;     app:value "612"^^xsd:decimal ; app:subject me:subject .
+me:metric_vitamin_d    app:prologName "vitamin_d" ;       app:value "28"^^xsd:decimal ;  app:subject me:subject .
