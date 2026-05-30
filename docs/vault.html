@@ -984,6 +984,8 @@
 <script src="js/vault-comms-call.js"></script>
 <!-- VC-10 OpenCV stub — must load after vault-comms-call.js -->
 <script src="js/vault-cv.js"></script>
+<!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
+<script src="js/vault-scheduler.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -1064,6 +1066,7 @@ async function pinKey(k) {
 function openOwnerWorkspace() {
   acquireWakeLock();
   startGate();
+  startScheduler();
   document.getElementById('med-interaction-panel').style.display = 'block';
   document.getElementById('med-reminder-panel').style.display    = 'block';
   document.getElementById('dms-panel').style.display             = 'block';
@@ -1081,6 +1084,7 @@ function openOwnerWorkspace() {
 function lockVault() {
   releaseWakeLock();
   stopGate();
+  stopScheduler();
   if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
   clearTimeout(dmsTimer);
   ['med-interaction-panel','med-reminder-panel','dms-panel',

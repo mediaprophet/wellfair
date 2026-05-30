@@ -15,10 +15,12 @@ const _ST_DIET_LOG = 'wf-dl';   // diet / substance log (Sprint 6)
 const _ST_CONTACTS   = 'wf-contacts';      // encrypted contact records
 const _ST_RELS       = 'wf-relationships'; // encrypted relationship edges
 const _ST_AGREEMENTS = 'wf-agreements';    // encrypted signed usage agreements
+// VC-12 — Background Job Scheduler (added in v5)
+const _ST_JOBS       = 'wf-jobs';          // background job queue
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 4);
+    const rq = indexedDB.open(_DB_NAME, 5);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -31,6 +33,8 @@ function _openDB() {
       if (!db.objectStoreNames.contains(_ST_CONTACTS))   db.createObjectStore(_ST_CONTACTS,   { keyPath: 'id' });
       if (!db.objectStoreNames.contains(_ST_RELS))       db.createObjectStore(_ST_RELS,       { keyPath: 'id' });
       if (!db.objectStoreNames.contains(_ST_AGREEMENTS)) db.createObjectStore(_ST_AGREEMENTS, { keyPath: 'id' });
+      // v5 — VC-12 Background Job Scheduler
+      if (!db.objectStoreNames.contains(_ST_JOBS))       db.createObjectStore(_ST_JOBS,       { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
