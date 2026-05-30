@@ -11,18 +11,26 @@ const _ST_MEDS     = 'wf-meds'; // medication records
 const _ST_MED_LOG  = 'wf-ml';   // adherence log
 const _ST_PHARMA   = 'wf-pc';   // pharmacological LOD cache (7-day TTL)
 const _ST_DIET_LOG = 'wf-dl';   // diet / substance log (Sprint 6)
+// VC-7 — Verified Directory (added in v4)
+const _ST_CONTACTS   = 'wf-contacts';      // encrypted contact records
+const _ST_RELS       = 'wf-relationships'; // encrypted relationship edges
+const _ST_AGREEMENTS = 'wf-agreements';    // encrypted signed usage agreements
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 3);
+    const rq = indexedDB.open(_DB_NAME, 4);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
-      if (!db.objectStoreNames.contains(_ST_LOG))      db.createObjectStore(_ST_LOG,      { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_CFG))      db.createObjectStore(_ST_CFG,      { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_MEDS))     db.createObjectStore(_ST_MEDS,     { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_MED_LOG))  db.createObjectStore(_ST_MED_LOG,  { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_PHARMA))   db.createObjectStore(_ST_PHARMA,   { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(_ST_DIET_LOG)) db.createObjectStore(_ST_DIET_LOG, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_CFG))        db.createObjectStore(_ST_CFG,        { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_MEDS))       db.createObjectStore(_ST_MEDS,       { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_MED_LOG))    db.createObjectStore(_ST_MED_LOG,    { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_PHARMA))     db.createObjectStore(_ST_PHARMA,     { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_DIET_LOG))   db.createObjectStore(_ST_DIET_LOG,   { keyPath: 'id' });
+      // v4 — VC-7 Verified Directory
+      if (!db.objectStoreNames.contains(_ST_CONTACTS))   db.createObjectStore(_ST_CONTACTS,   { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_RELS))       db.createObjectStore(_ST_RELS,       { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_AGREEMENTS)) db.createObjectStore(_ST_AGREEMENTS, { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
@@ -56,5 +64,15 @@ async function _dbGetAll(store) {
     const rq = tx.objectStore(store).getAll();
     rq.onsuccess = ev => { db.close(); res(ev.target.result); };
     rq.onerror   = ev => { db.close(); rej(ev.target.error); };
+  });
+}
+
+async function _dbDelete(store, key) {
+  const db = await _openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = () => { db.close(); res(); };
+    tx.onerror    = ev => { db.close(); rej(ev.target.error); };
   });
 }

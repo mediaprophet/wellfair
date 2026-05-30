@@ -360,3 +360,184 @@ wf:LegalAdvocateProfile
     wf:sessionScoped      true ;
     # No sh:property entries — all sections opt-in per session
     .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VC-7 — Verified Directory: Contact Graph Data Vocabulary & Shapes
+#
+# Classes and properties for the contact graph stored in IDB wf-contacts,
+# wf-relationships, and wf-agreements. All records about people use SHACL
+# shapes rather than OWL class membership (architecture rule 3).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Directory class vocabulary ────────────────────────────────────────────────
+
+wf:Contact
+    a rdfs:Class ;
+    rdfs:label   "Contact"@en ;
+    rdfs:comment "A person in the vault owner's Verified Directory. Stored encrypted in IDB wf-contacts."@en .
+
+wf:Relationship
+    a rdfs:Class ;
+    rdfs:label   "Relationship edge"@en ;
+    rdfs:comment "A directed relationship between the vault owner and a Contact, backed by a signed UsageAgreement. Stored encrypted in IDB wf-relationships."@en .
+
+wf:UsageAgreement
+    a rdfs:Class ;
+    rdfs:label   "Signed usage agreement"@en ;
+    rdfs:comment "An ODRL Agreement signed by both parties governing data sharing permissions. Stored encrypted in IDB wf-agreements."@en .
+
+
+# ── Contact properties ────────────────────────────────────────────────────────
+
+wf:contactDid
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Identity credential identifier (did:key or did:peer)"@en ;
+    rdfs:comment "The contact's identity credential — a did:key for ephemeral sessions or a did:peer for an established relationship channel."@en .
+
+wf:contactWebId
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "WebID or profile URL"@en .
+
+wf:contactNymAddress
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Nym mixnet address"@en ;
+    rdfs:comment "Contact's Nym mixnet address for anonymous routing via the nymAdapter."@en .
+
+wf:contactNotes
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Private notes"@en ;
+    rdfs:comment "Vault-owner private notes about this contact. Encrypted at rest."@en .
+
+
+# ── Relationship properties ───────────────────────────────────────────────────
+
+wf:relationshipType
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:label  "Relationship category"@en ;
+    rdfs:comment "One of: personal | professional | clinical | legal."@en .
+
+wf:peerDid
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "did:peer for this relationship channel"@en ;
+    rdfs:comment "Per-relationship did:peer generated during the Semantic Handshake (VC-8)."@en .
+
+wf:agreementRef
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "UsageAgreement reference"@en ;
+    rdfs:comment "Pointer to the wf:UsageAgreement record governing this relationship."@en .
+
+
+# ── UsageAgreement properties ─────────────────────────────────────────────────
+
+wf:agreementOdrl
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "ODRL Agreement JSON-LD"@en ;
+    rdfs:comment "Full ODRL Agreement serialised as a JSON-LD string."@en .
+
+wf:agreementSig
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Initiator Ed25519 signature"@en ;
+    rdfs:comment "Base64 Ed25519 signature over canonical agreement JSON, signed by the initiator."@en .
+
+wf:counterpartySig
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Counterparty Ed25519 signature"@en ;
+    rdfs:comment "Counterparty's Base64 Ed25519 signature over canonical agreement JSON."@en .
+
+
+# ── SHACL NodeShapes for directory records ────────────────────────────────────
+
+wf:ContactShape
+    a sh:NodeShape ;
+    sh:targetClass wf:Contact ;
+    rdfs:label     "Contact record shape"@en ;
+    rdfs:comment   "Validates a wf:Contact record — the plaintext form stored encrypted in IDB wf-contacts."@en ;
+    sh:property [
+        sh:path     wf:contactDid ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        rdfs:label  "Required: identity credential identifier"@en ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactWebId ;
+        sh:datatype xsd:anyURI ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactNymAddress ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactNotes ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] .
+
+
+wf:RelationshipShape
+    a sh:NodeShape ;
+    sh:targetClass wf:Relationship ;
+    rdfs:label     "Relationship edge shape"@en ;
+    rdfs:comment   "Validates a wf:Relationship record stored encrypted in IDB wf-relationships."@en ;
+    sh:property [
+        sh:path     wf:relationshipType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in       ( "personal" "professional" "clinical" "legal" ) ;
+    ] ;
+    sh:property [
+        sh:path     wf:peerDid ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementRef ;
+        sh:maxCount 1 ;
+    ] .
+
+
+wf:UsageAgreementShape
+    a sh:NodeShape ;
+    sh:targetClass wf:UsageAgreement ;
+    rdfs:label     "Usage agreement shape"@en ;
+    rdfs:comment   "Validates a wf:UsageAgreement record stored encrypted in IDB wf-agreements."@en ;
+    sh:property [
+        sh:path     wf:agreementOdrl ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementSig ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:counterpartySig ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] .
