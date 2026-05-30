@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "packages": [
+    {
+      "id": "oxigraph",
+      "name": "RDF Store (oxigraph)",
+      "description": "In-browser RDF triple store with full SPARQL 1.1 support. Compiled into the base wellfare-core WASM — always available, no download required.",
+      "bundled": true,
+      "provides": ["core:rdf", "core:sparql"],
+      "platform": ["all"],
+      "downloadSizeBytes": 0,
+      "version": "0.4.x"
+    },
+    {
+      "id": "prolog-wasm",
+      "name": "Prolog Reasoning Engine",
+      "description": "SWI-Prolog compiled to WebAssembly. Enables differential diagnosis evaluation, welfare eligibility rule checking, and clinical logic evaluation entirely within your browser.",
+      "bundled": false,
+      "provides": ["reasoning:prolog"],
+      "platform": ["all"],
+      "downloadSizeBytes": 8500000,
+      "version": "9.x",
+      "components": [
+        {
+          "id": "swipl-wasm-js",
+          "type": "cdn-js",
+          "url": "https://cdn.jsdelivr.net/npm/swipl-wasm@4.1.14/dist/swipl/swipl.js",
+          "opfsPath": "wellfair/wasm/prolog/swipl.js",
+          "sizeBytes": 500000
+        },
+        {
+          "id": "swipl-wasm-binary",
+          "type": "cdn-binary",
+          "url": "https://cdn.jsdelivr.net/npm/swipl-wasm@4.1.14/dist/swipl/swipl.wasm",
+          "opfsPath": "wellfair/wasm/prolog/swipl.wasm",
+          "sizeBytes": 8000000
+        }
+      ]
+    },
+    {
+      "id": "llm-mediapipe",
+      "name": "On-device LLM — MediaPipe / LiteRT",
+      "description": "Runs a language model fully on your device using Google's MediaPipe LiteRT framework. Enables paper extraction, document ingestion, and natural language explanations. Optimised for Android Chrome with GPU acceleration. Requires a one-time model download (~1.3 GB).",
+      "bundled": false,
+      "provides": ["llm:inference", "llm:extraction", "llm:explanation"],
+      "platform": ["android", "chromium"],
+      "profile": "mediapipe",
+      "downloadSizeBytes": 5200000,
+      "version": "0.10.x",
+      "components": [
+        {
+          "id": "mediapipe-genai-runtime",
+          "type": "cdn-js",
+          "url": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@0.10.14/genai_bundle.cjs",
+          "sizeBytes": 5200000
+        }
+      ],
+      "models": [
+        {
+          "id": "gemma-2b-it-gpu-int4",
+          "name": "Gemma 2B IT — GPU, int4 (recommended)",
+          "description": "Google Gemma 2B Instruction Tuned, 4-bit quantized for GPU acceleration. Best quality on Android with GPU. Requires accepting Gemma licence on Kaggle.",
+          "sizeBytes": 1344000000,
+          "opfsPath": "wellfair/models/gemma-2b-it-gpu-int4.bin",
+          "requiresAuth": true,
+          "sourceUrl": "https://www.kaggle.com/models/google/gemma/tfLite/gemma-2b-it-gpu-int4/1",
+          "directDownloadUrl": null,
+          "preferred": true,
+          "useGpu": true
+        },
+        {
+          "id": "gemma-2b-it-cpu-int4",
+          "name": "Gemma 2B IT — CPU, int4",
+          "description": "Google Gemma 2B Instruction Tuned, 4-bit quantized for CPU. Use if GPU acceleration is unavailable or causing issues.",
+          "sizeBytes": 1344000000,
+          "opfsPath": "wellfair/models/gemma-2b-it-cpu-int4.bin",
+          "requiresAuth": true,
+          "sourceUrl": "https://www.kaggle.com/models/google/gemma/tfLite/gemma-2b-it-cpu-int4/1",
+          "directDownloadUrl": null,
+          "preferred": false,
+          "useGpu": false
+        }
+      ]
+    },
+    {
+      "id": "llm-nvidia",
+      "name": "On-device LLM — NVIDIA / CUDA",
+      "description": "Future support for NVIDIA GPU-accelerated inference on desktop. Not yet implemented.",
+      "bundled": false,
+      "provides": ["llm:inference", "llm:extraction", "llm:explanation"],
+      "platform": ["desktop-nvidia"],
+      "profile": "nvidia",
+      "status": "future",
+      "downloadSizeBytes": 0,
+      "version": null,
+      "components": []
+    }
+  ]
+}

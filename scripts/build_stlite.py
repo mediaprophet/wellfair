@@ -73,7 +73,9 @@ def main():
         "ui/utils/__init__.py",
         "ui/utils/navigation.py",
         "ui/utils/components.py",
+        "ui/utils/package_bridge.py",
         "ui/tabs/document_ingestion.py",
+        "ui/tabs/packages_tab.py",
         "ui/tabs/personal_health.py",
         "ui/tabs/anatomy_3d.py",
     ]
@@ -150,7 +152,7 @@ def main():
             large_assets.append((rel, size / (1024*1024)))
 
     if large_assets:
-        print("\n⚠️  WARNING: The following large assets are included in the bundle:")
+        print("\nWARNING: The following large assets are included in the bundle:")
         for rel, mb in sorted(large_assets, key=lambda x: -x[1]):
             print(f"     {rel}  ({mb:.1f} MB)")
         print("   These will significantly increase the download size of the PWA.")
@@ -323,6 +325,10 @@ def main():
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable/build/stlite.js"></script>
     <!-- WellFair Device File System Bridge + UI (for installed PWA) -->
+    <!-- Package Manager: boots before stlite, exposes window.wellfairPackages -->
+    <script type="module" src="packages/index.js"></script>
+    <!-- Package download overlay UI -->
+    <script src="package-download-ui.js"></script>
     <script src="device-bridge.js"></script>
     <script src="device-ui.js"></script>
     <script>
