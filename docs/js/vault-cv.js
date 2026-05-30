@@ -30,6 +30,12 @@ let _agentFrame      = {};     // telemetry accumulator for current frame
 let _agentPrevHash   = null;   // hash chain tail
 let _agentSeq        = 0;      // monotonic frame sequence number
 
+// ── Audio pipeline state (WA-4) ────────────────────────────────────────────
+
+let _audioCtx         = null;  // AudioContext
+let _audioWorkletNode = null;  // AudioWorkletNode (prosody-processor)
+let _audioSourceNode  = null;  // MediaStreamAudioSourceNode
+
 // ── Public API ─────────────────────────────────────────────────────────────
 
 function initAgent(callSessionId, dataChannel) {
@@ -56,8 +62,14 @@ function setModuleConsent(module, granted) {
   _agentConsent[module] = granted;
   if (granted) {
     _spawnWorker(module);
+    if (module === CV_MODULE.PROSODY) {
+      // Start audio pipeline immediately if a call is already active
+      const stream = typeof callGetAudioStream === 'function' ? callGetAudioStream() : null;
+      if (stream) agentStartAudio(stream);
+    }
   } else {
     _terminateWorker(module);
+    if (module === CV_MODULE.PROSODY) _teardownAudio();
   }
   _updateConsentUI();
 }
@@ -79,6 +91,7 @@ function agentSendFrame(module, bitmap) {
 }
 
 async function stopAgent() {
+  _teardownAudio(); // stop audio pipeline before workers
   // Send stop signal before closing
   if (_agentDc && _agentDc.readyState === 'open') {
     try {
@@ -99,6 +112,48 @@ async function stopAgent() {
   console.debug('[AgentController] stopAgent — all workers terminated');
 }
 
+// Start the AudioContext + AudioWorklet pipeline for the PROSODY module.
+// No-op if already running or if the PROSODY worker is not active.
+// Called from setModuleConsent (during-call consent) and from vault-comms-call.js
+// _callStartFrameLoop (call-start with pre-consented PROSODY).
+async function agentStartAudio(mediaStream) {
+  if (!mediaStream || !agentHasModule(CV_MODULE.PROSODY)) return;
+  if (_audioCtx) return; // already running
+
+  const worker = _agentWorkers[CV_MODULE.PROSODY];
+  if (!worker) return;
+
+  try {
+    _audioCtx = new AudioContext();
+    await _audioCtx.audioWorklet.addModule('js/workers/audio-prosody.worklet.js');
+    _audioWorkletNode = new AudioWorkletNode(_audioCtx, 'prosody-processor');
+
+    // Relay audio chunks from worklet → features worker (zero-copy transfer)
+    _audioWorkletNode.port.onmessage = (ev) => {
+      if (!ev.data || !(ev.data.chunk instanceof Float32Array)) return;
+      const { chunk, sampleRate } = ev.data;
+      if (worker) worker.postMessage({ chunk, sampleRate }, [chunk.buffer]);
+    };
+
+    const audioTracks = mediaStream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      console.warn('[AgentController] no audio tracks in stream');
+      _teardownAudio();
+      return;
+    }
+    _audioSourceNode = _audioCtx.createMediaStreamSource(
+      new MediaStream([audioTracks[0]])
+    );
+    _audioSourceNode.connect(_audioWorkletNode);
+    // Not connected to destination — no local playback of own microphone
+
+    console.debug('[AgentController] audio pipeline started, sampleRate:', _audioCtx.sampleRate);
+  } catch (e) {
+    console.warn('[AgentController] audio pipeline setup failed:', e.message);
+    _teardownAudio();
+  }
+}
+
 // ── VaultCV compat shim — keeps the old stub API surface working ───────────
 
 const VaultCV = {
@@ -116,7 +171,7 @@ const VaultCV = {
 const _WORKER_FILE = {
   [CV_MODULE.EMOTION]:    'cv-emotion',
   [CV_MODULE.RPG]:        'cv-rpg',
-  [CV_MODULE.PROSODY]:    'audio-prosody',
+  [CV_MODULE.PROSODY]:    'audio-features',  // features Worker; worklet loaded by agentStartAudio
   [CV_MODULE.LINGUISTIC]: 'text-linguistic',
 };
 
@@ -141,12 +196,28 @@ function _spawnWorker(module) {
 }
 
 function _terminateWorker(module) {
+  if (module === CV_MODULE.PROSODY) _teardownAudio();
   const w = _agentWorkers[module];
   if (!w) return;
   try { w.terminate(); } catch (_) {}
   delete _agentWorkers[module];
   delete _agentFrame[module];
   console.debug('[AgentController] terminated worker:', module);
+}
+
+function _teardownAudio() {
+  if (_audioSourceNode) {
+    try { _audioSourceNode.disconnect(); } catch (_) {}
+    _audioSourceNode = null;
+  }
+  if (_audioWorkletNode) {
+    try { _audioWorkletNode.disconnect(); _audioWorkletNode.port.close(); } catch (_) {}
+    _audioWorkletNode = null;
+  }
+  if (_audioCtx) {
+    _audioCtx.close().catch(() => {});
+    _audioCtx = null;
+  }
 }
 
 function _onWorkerMessage(module, payload) {

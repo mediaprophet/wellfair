@@ -180,6 +180,11 @@ async function endCall() {
   _callNotifyUI({ event: 'call.ended' });
 }
 
+// Expose audio stream for vault-cv.js agentStartAudio (WA-4).
+function callGetAudioStream() {
+  return _callStream;
+}
+
 // Mute/unmute the local audio track.
 function muteAudio(muted) {
   if (!_callStream) return;
@@ -275,6 +280,11 @@ function _callStartFrameLoop() {
   if (localVid && _callStream) {
     localVid.srcObject = _callStream;
     localVid.play().catch(() => {});
+  }
+
+  // Start audio pipeline for prosody if consent was granted before the call began
+  if (typeof agentStartAudio === 'function' && _callStream) {
+    agentStartAudio(_callStream);
   }
 
   const tick = () => {
