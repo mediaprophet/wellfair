@@ -1117,6 +1117,8 @@
 <script src="js/vault-transcript.js"></script>
 <!-- VC-14 Language Transcoding — must load after vault-transcript.js -->
 <script src="js/vault-comms-transcode.js"></script>
+<!-- VC-15 Content Package — must load after vault-comms-transcode.js -->
+<script src="js/vault-package.js"></script>
 <!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
 <script src="js/vault-sanctuary-pins.js"></script>
 <script src="js/vault-sanctuary-log.js"></script>
@@ -1605,7 +1607,9 @@ async function _queueRender() {
           <button class="queue-run-btn" onclick="runJobNow('${j.id}').then(()=>_queueRender())">▶</button>` : ''}
         ${j.status === 'done' && (j.type === 'transcript.generate' || j.type === 'transcript.annotate') && j.result_ref ? `
           <button class="queue-run-btn" title="View transcript"
-                  onclick="_queueViewTranscript('${j.id}')">📄</button>` : ''}
+                  onclick="_queueViewTranscript('${j.id}')">📄</button>
+          <button class="queue-run-btn" title="Download session package"
+                  onclick="_queueDownloadPackage('${j.id}')">📦</button>` : ''}
       </div>`;
   }).join('');
 }
@@ -1630,6 +1634,20 @@ function _queueViewTranscript(jobId) {
       // Revoke after tab has had time to load
       if (win) setTimeout(() => URL.revokeObjectURL(url), 30_000);
     } catch (_) {}
+  });
+}
+
+function _queueDownloadPackage(jobId) {
+  getJobList().then(async jobs => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job || !job.result_ref) return;
+    try {
+      const result = JSON.parse(job.result_ref);
+      if (!result.sessionId || typeof downloadPackage !== 'function') return;
+      await downloadPackage(result.sessionId);
+    } catch (e) {
+      console.warn('[Queue] Package download error:', e.message);
+    }
   });
 }
 
