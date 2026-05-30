@@ -30,6 +30,7 @@ _ROOT = Path(__file__).resolve().parent.parent.parent
 _STATIC_PKG = _ROOT / "ui" / "static" / "pkg"
 _HRA_MODELS = _ROOT / "ui" / "static" / "models" / "hra"
 _AVATAR_MODELS = _ROOT / "ui" / "static" / "models"
+_PROFILES_DIR = _ROOT / "docs" / "profiles"
 
 
 # ── Result helpers ─────────────────────────────────────────────────────────────
@@ -286,6 +287,384 @@ def _test_swipl_wasm():
 """)
 
 
+def _test_vault_browser():
+    """Browser-side tests for the vault crypto stack and OTS anchoring."""
+    st.subheader("🔒 Vault Crypto & Anchoring (Browser-side)")
+
+    html = """<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: monospace; font-size: 13px; background: #0f172a; color: #e2e8f0; padding: 16px; margin: 0; }
+.pass { color: #4ade80; } .fail { color: #f87171; } .warn { color: #fbbf24; }
+.info { color: #60a5fa; } .section { color: #a78bfa; font-weight: bold; margin-top: 12px; }
+button { background: #1e293b; color: #a78bfa; border: 1px solid #334155; border-radius: 4px;
+  padding: 4px 12px; font-family: monospace; cursor: pointer; margin-top: 8px; font-size: 12px; }
+button:hover { border-color: #7c3aed; }
+</style>
+</head>
+<body>
+<div id="log"><span class="info">⏳ Running vault crypto tests…</span></div>
+<div id="ots-btn-wrap" style="margin-top:8px"></div>
+<script type="module">
+const log = document.getElementById('log');
+function line(cls, msg) { log.innerHTML += '<br><span class="' + cls + '">' + msg + '</span>'; }
+function section(t) { log.innerHTML += '<br><span class="section">── ' + t + ' ──</span>'; }
+const toB64 = u8 => btoa(String.fromCharCode(...u8));
+const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+// ── 1. WebCrypto Guard ────────────────────────────────────────────────────────
+section('WebCrypto Guard (pair.html startup check)');
+const missing = [];
+try { await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign', 'verify']); }
+catch (_) { missing.push('Ed25519'); }
+try { await crypto.subtle.generateKey({ name: 'X25519' }, false, ['deriveBits']); }
+catch (_) { missing.push('X25519'); }
+if (missing.length === 0) {
+  line('pass', '✅ WebCrypto guard: Ed25519 + X25519 both supported — vault will load');
+} else {
+  line('fail', '❌ WebCrypto guard: missing ' + missing.join(', ') + ' — vault would show unsupported-browser error');
+}
+
+// ── 2. Identity Credentials (Ed25519 did:key) ─────────────────────────────────
+section('Identity Credentials — Ed25519 did:key');
+let sigKey = null;
+try {
+  sigKey = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+  const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', sigKey.publicKey));
+  // did:key prefix: 0xed01 + pubkey, then multibase base58btc
+  line('pass', '✅ Ed25519 key pair generated — public key ' + pubRaw.length + ' bytes');
+
+  const payload = new TextEncoder().encode('{"type":"hello","did":"did:key:test"}');
+  const sig = new Uint8Array(await crypto.subtle.sign('Ed25519', sigKey.privateKey, payload));
+  line('pass', '✅ Ed25519 sign: ' + sig.length + '-byte signature produced');
+
+  const valid = await crypto.subtle.verify('Ed25519', sigKey.publicKey, sig, payload);
+  line(valid ? 'pass' : 'fail', (valid ? '✅' : '❌') + ' Ed25519 verify: signature ' + (valid ? 'valid' : 'INVALID'));
+
+  // Tampered payload must fail
+  const tampered = new TextEncoder().encode('{"type":"hello","did":"did:key:TAMPERED"}');
+  const bad = await crypto.subtle.verify('Ed25519', sigKey.publicKey, sig, tampered);
+  line(!bad ? 'pass' : 'fail', (!bad ? '✅' : '❌') + ' Ed25519 verify: tampered payload correctly rejected');
+} catch (e) { line('fail', '❌ Ed25519 error: ' + e); }
+
+// ── 3. Noise_XX key exchange (X25519) ─────────────────────────────────────────
+section('Noise_XX Key Exchange — X25519');
+try {
+  const aliceKP = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+  const bobKP   = await crypto.subtle.generateKey({ name: 'X25519' }, true, ['deriveBits']);
+  line('pass', '✅ X25519 static key pairs generated (both sides)');
+
+  const aliceShared = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'X25519', public: bobKP.publicKey }, aliceKP.privateKey, 256));
+  const bobShared = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'X25519', public: aliceKP.publicKey }, bobKP.privateKey, 256));
+
+  const match = toB64(aliceShared) === toB64(bobShared);
+  line(match ? 'pass' : 'fail', (match ? '✅' : '❌') + ' DH shared secret: Alice and Bob derive identical 32-byte secret');
+} catch (e) { line('fail', '❌ X25519 DH error: ' + e); }
+
+// ── 4. Symmetric encryption (AES-256-GCM) ────────────────────────────────────
+section('DataChannel Encryption — AES-256-GCM');
+try {
+  const aesKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plaintext = new TextEncoder().encode('{"type":"data","records":[{"id":1}]}');
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, plaintext));
+  line('pass', '✅ AES-256-GCM encrypt: ' + ct.length + ' bytes (plaintext + 16-byte tag)');
+
+  const recovered = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, aesKey, ct));
+  const roundtrip = new TextDecoder().decode(recovered) === new TextDecoder().decode(plaintext);
+  line(roundtrip ? 'pass' : 'fail', (roundtrip ? '✅' : '❌') + ' AES-256-GCM decrypt: plaintext recovered correctly');
+
+  // Wrong IV must fail
+  const badIV = crypto.getRandomValues(new Uint8Array(12));
+  try {
+    await crypto.subtle.decrypt({ name: 'AES-GCM', iv: badIV }, aesKey, ct);
+    line('fail', '❌ AES-GCM: decryption with wrong IV should have thrown');
+  } catch (_) {
+    line('pass', '✅ AES-GCM: wrong IV correctly rejected (authentication tag mismatch)');
+  }
+} catch (e) { line('fail', '❌ AES-256-GCM error: ' + e); }
+
+// ── 5. Sanctuary key derivation (PBKDF2-SHA256) ───────────────────────────────
+section('Sanctuary Key Derivation — PBKDF2-SHA256 (310,000 iterations)');
+try {
+  const pin = new TextEncoder().encode('8888');
+  const salt = new TextEncoder().encode('wf-sanctuary-salt-v1');
+  const baseKey = await crypto.subtle.importKey('raw', pin, { name: 'PBKDF2' }, false, ['deriveKey']);
+  const t0 = performance.now();
+  const sancKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 310_000 },
+    baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+  const ms = Math.round(performance.now() - t0);
+  line('pass', '✅ PBKDF2-SHA256 sanctuary key derived in ' + ms + 'ms (310k iterations)');
+  line(ms > 200 ? 'pass' : 'warn',
+    (ms > 200 ? '✅' : '⚠️') + ' Derivation time ' + ms + 'ms — ' +
+    (ms > 200 ? 'adequate work factor' : 'suspiciously fast; check iteration count'));
+
+  // Deterministic: same PIN + salt → same key behaviour (test by encrypting same plaintext)
+  const baseKey2 = await crypto.subtle.importKey('raw', pin, { name: 'PBKDF2' }, false, ['deriveKey']);
+  const sancKey2 = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 310_000 },
+    baseKey2, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+  const iv = new Uint8Array(12); // fixed IV for determinism test
+  const c1 = toB64(new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sancKey, pin)));
+  const c2 = toB64(new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, sancKey2, pin)));
+  line(c1 === c2 ? 'pass' : 'fail', (c1 === c2 ? '✅' : '❌') + ' PBKDF2 deterministic: same PIN+salt → same key');
+} catch (e) { line('fail', '❌ PBKDF2 error: ' + e); }
+
+// ── 6. Commitment computation (sha256(sha256(entry) ‖ nonce)) ─────────────────
+section('DLT Commitment — sha256(sha256(entry) ‖ nonce)');
+try {
+  const entry = new TextEncoder().encode('{"type":"assertion","content":"Test entry","created_at":"2026-05-30T10:00:00Z"}');
+  const inner = new Uint8Array(await crypto.subtle.digest('SHA-256', entry));
+  const nonce = crypto.getRandomValues(new Uint8Array(16));
+  const concat = new Uint8Array(inner.length + nonce.length);
+  concat.set(inner); concat.set(nonce, inner.length);
+  const commitment = new Uint8Array(await crypto.subtle.digest('SHA-256', concat));
+
+  line('pass', '✅ Commitment computed: ' + commitment.length + ' bytes');
+  line('info', 'ℹ️ Commitment (hex): ' + Array.from(commitment).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,32) + '…');
+
+  // Different entry → different commitment
+  const entry2 = new TextEncoder().encode('{"type":"assertion","content":"Different entry","created_at":"2026-05-30T10:00:00Z"}');
+  const inner2 = new Uint8Array(await crypto.subtle.digest('SHA-256', entry2));
+  const concat2 = new Uint8Array(inner2.length + nonce.length);
+  concat2.set(inner2); concat2.set(nonce, inner2.length);
+  const commitment2 = new Uint8Array(await crypto.subtle.digest('SHA-256', concat2));
+  const distinct = toB64(commitment) !== toB64(commitment2);
+  line(distinct ? 'pass' : 'fail', (distinct ? '✅' : '❌') + ' Different entries produce distinct commitments');
+
+  // Same entry + different nonce → different commitment (nonce prevents pre-image)
+  const nonce2 = crypto.getRandomValues(new Uint8Array(16));
+  const concat3 = new Uint8Array(inner.length + nonce2.length);
+  concat3.set(inner); concat3.set(nonce2, inner.length);
+  const commitment3 = new Uint8Array(await crypto.subtle.digest('SHA-256', concat3));
+  const nonceEffect = toB64(commitment) !== toB64(commitment3);
+  line(nonceEffect ? 'pass' : 'fail', (nonceEffect ? '✅' : '❌') + ' Different nonce → different commitment (nonce prevents pre-image lookup)');
+
+  // Store commitment bytes for OTS test below
+  window._testCommitment = commitment;
+} catch (e) { line('fail', '❌ Commitment computation error: ' + e); }
+
+// ── 7. OTS file format ────────────────────────────────────────────────────────
+section('OpenTimestamps — File Format Construction');
+try {
+  const OTS_MAGIC = new Uint8Array([
+    0x00, 0x4f, 0x70, 0x65, 0x6e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x73,
+    0x00, 0x00, 0x50, 0x72, 0x6f, 0x6f, 0x66, 0x00, 0xbf, 0x89, 0xe2, 0xe8, 0x84, 0xe8, 0x92, 0x94,
+  ]);
+  const commitment = window._testCommitment || crypto.getRandomValues(new Uint8Array(32));
+  const mockBody = new Uint8Array(16); // placeholder calendar response body
+  const file = new Uint8Array(OTS_MAGIC.length + 1 + 1 + 32 + mockBody.length);
+  let o = 0;
+  file.set(OTS_MAGIC, o); o += OTS_MAGIC.length;
+  file[o++] = 0x01; // version
+  file[o++] = 0x08; // SHA256 op tag
+  file.set(commitment, o); o += 32;
+  file.set(mockBody, o);
+
+  line('pass', '✅ OTS file constructed: ' + file.length + ' bytes');
+  line(file[0] === 0x00 ? 'pass' : 'fail',
+    (file[0] === 0x00 ? '✅' : '❌') + ' Magic byte 0: 0x00 (OTS null prefix)');
+  const magicStr = new TextDecoder().decode(file.slice(1, 15));
+  line(magicStr === 'OpenTimestamps' ? 'pass' : 'fail',
+    (magicStr === 'OpenTimestamps' ? '✅' : '❌') + ' Magic bytes 1–14: "' + magicStr + '"');
+  line(file[OTS_MAGIC.length] === 0x01 ? 'pass' : 'fail',
+    (file[OTS_MAGIC.length] === 0x01 ? '✅' : '❌') + ' Version byte: 0x01');
+  line(file[OTS_MAGIC.length + 1] === 0x08 ? 'pass' : 'fail',
+    (file[OTS_MAGIC.length + 1] === 0x08 ? '✅' : '❌') + ' Hash op tag: 0x08 (SHA-256)');
+  const embeddedHash = file.slice(OTS_MAGIC.length + 2, OTS_MAGIC.length + 2 + 32);
+  const hashMatch = toB64(embeddedHash) === toB64(commitment);
+  line(hashMatch ? 'pass' : 'fail', (hashMatch ? '✅' : '❌') + ' Commitment hash embedded correctly at offset ' + (OTS_MAGIC.length + 2));
+} catch (e) { line('fail', '❌ OTS file format error: ' + e); }
+
+// ── 8. IndexedDB — vault schema ───────────────────────────────────────────────
+section('IndexedDB — Vault Schema (wf-vault v2)');
+try {
+  // Open a TEST db (not the real vault db) to verify IDB is functional
+  await new Promise((resolve, reject) => {
+    const req = indexedDB.open('wf-vault-devtest', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('wf-s'))  db.createObjectStore('wf-s',  { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('wf-sc')) db.createObjectStore('wf-sc', { keyPath: 'id' });
+    };
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const stores = Array.from(db.objectStoreNames);
+      const hasLog = stores.includes('wf-s');
+      const hasCfg = stores.includes('wf-sc');
+      line(hasLog ? 'pass' : 'fail', (hasLog ? '✅' : '❌') + ' IDB store wf-s (sanctuary entry log) present');
+      line(hasCfg ? 'pass' : 'fail', (hasCfg ? '✅' : '❌') + ' IDB store wf-sc (sanctuary config) present');
+
+      // Write + read round trip in wf-s
+      const tx = db.transaction('wf-s', 'readwrite');
+      const store = tx.objectStore('wf-s');
+      const testRec = { id: 'dev-test-001', seq: Date.now(), nonce: 'abc', commitment: 'xyz', ots_status: 'not_published' };
+      store.put(testRec);
+      tx.oncomplete = () => {
+        const tx2 = db.transaction('wf-s', 'readonly');
+        const req2 = tx2.objectStore('wf-s').get('dev-test-001');
+        req2.onsuccess = () => {
+          const rec = req2.result;
+          const ok = rec && rec.ots_status === 'not_published' && rec.commitment === 'xyz';
+          line(ok ? 'pass' : 'fail', (ok ? '✅' : '❌') + ' IDB round trip: record written and read with ots_status field');
+          // Clean up test DB
+          const tx3 = db.transaction('wf-s', 'readwrite');
+          tx3.objectStore('wf-s').delete('dev-test-001');
+          db.close();
+          resolve();
+        };
+        req2.onerror = () => { line('fail', '❌ IDB read failed'); resolve(); };
+      };
+      tx.onerror = () => { line('fail', '❌ IDB write failed'); resolve(); };
+    };
+    req.onerror = () => { line('fail', '❌ IndexedDB open failed'); reject(); };
+  });
+} catch (e) { line('fail', '❌ IDB error: ' + e); }
+
+// ── 9. OTS calendar probe (opt-in) ────────────────────────────────────────────
+section('OpenTimestamps — Calendar Server (opt-in network probe)');
+line('info', 'ℹ️ Click to POST a test commitment to alice.btc.calendar.opentimestamps.org/digest');
+const wrap = document.getElementById('ots-btn-wrap');
+const btn = document.createElement('button');
+btn.textContent = '▶ Run OTS calendar probe';
+btn.onclick = async () => {
+  btn.disabled = true; btn.textContent = 'Probing…';
+  try {
+    const hash = crypto.getRandomValues(new Uint8Array(32));
+    const t0 = performance.now();
+    const resp = await fetch('https://alice.btc.calendar.opentimestamps.org/digest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/octet-stream', 'Accept': 'application/octet-stream' },
+      body: hash,
+    });
+    const ms = Math.round(performance.now() - t0);
+    if (resp.ok) {
+      const body = new Uint8Array(await resp.arrayBuffer());
+      line('pass', '✅ OTS calendar reachable: HTTP ' + resp.status + ', ' + body.length + '-byte receipt in ' + ms + 'ms');
+      line('info', 'ℹ️ Receipt (first 16 bytes hex): ' + Array.from(body.slice(0,16)).map(b=>b.toString(16).padStart(2,'0')).join(''));
+    } else {
+      line('warn', '⚠️ OTS calendar responded HTTP ' + resp.status + ' in ' + ms + 'ms');
+    }
+  } catch (e) {
+    line('fail', '❌ OTS calendar unreachable: ' + e.message + ' (check network / CORS)');
+  }
+  btn.textContent = 'Done';
+};
+wrap.appendChild(btn);
+
+line('info', '');
+line('pass', '✅ Vault test suite complete');
+</script>
+</body>
+</html>"""
+
+    st.components.v1.html(html, height=700, scrolling=True)
+
+
+def _test_access_profiles():
+    """Python-side tests for SHACL access profiles and ODRL EdgeConstraints."""
+    st.subheader("🗝️ Access Profiles & ODRL EdgeConstraints")
+
+    # ── profiles.json ──────────────────────────────────────────────────────────
+    st.markdown("**profiles.json**")
+    profiles_json = _PROFILES_DIR / "profiles.json"
+    if not profiles_json.exists():
+        _fail("profiles.json not found", str(profiles_json))
+        return
+
+    try:
+        profiles = json.loads(profiles_json.read_text(encoding="utf-8"))
+        if not isinstance(profiles, list):
+            _fail("profiles.json: expected a JSON array")
+        else:
+            _pass(f"profiles.json loaded: {len(profiles)} profiles")
+            required_fields = {"id", "label", "sections"}
+            for p in profiles:
+                missing = required_fields - set(p.keys())
+                if missing:
+                    _warn(f"Profile '{p.get('id','?')}' missing fields", str(missing))
+            if len(profiles) >= 9:
+                _pass(f"Profile count ≥ 9 (expected: 9 access profiles)")
+            else:
+                _warn(f"Only {len(profiles)} profiles found", "Expected 9")
+
+            ids = [p.get("id", "?") for p in profiles]
+            st.markdown("Profile IDs: " + ", ".join(f"`{i}`" for i in ids))
+    except Exception as e:
+        _fail("profiles.json parse error", str(e))
+        return
+
+    # ── access-profiles.ttl ────────────────────────────────────────────────────
+    st.markdown("**access-profiles.ttl (SHACL)**")
+    ttl_path = _PROFILES_DIR / "access-profiles.ttl"
+    if not ttl_path.exists():
+        _fail("access-profiles.ttl not found", str(ttl_path))
+        return
+
+    ttl_text = ttl_path.read_text(encoding="utf-8")
+    _pass(f"access-profiles.ttl present", f"{len(ttl_text):,} chars")
+
+    wf_ns = "https://wellfare.social/ns/vault#"
+    if wf_ns in ttl_text or "wf:" in ttl_text:
+        _pass("wf: namespace present (https://wellfare.social/ns/vault#)")
+    else:
+        _warn("wf: namespace not found in TTL")
+
+    for keyword in ["sh:NodeShape", "sh:PropertyShape", "sh:property", "odrl:", "wf:"]:
+        if keyword in ttl_text:
+            _pass(f"TTL contains `{keyword}`")
+        else:
+            _warn(f"TTL missing `{keyword}`")
+
+    # Try rdflib parse if available
+    st.markdown("**rdflib parse (SHACL shapes)**")
+    try:
+        import rdflib
+        g = rdflib.Graph()
+        g.parse(data=ttl_text, format="turtle")
+        triple_count = len(g)
+        _pass(f"rdflib parsed TTL: {triple_count} triples")
+
+        SH = rdflib.Namespace("http://www.w3.org/ns/shacl#")
+        node_shapes    = set(g.subjects(rdflib.RDF.type, SH.NodeShape))
+        prop_shapes    = set(g.subjects(rdflib.RDF.type, SH.PropertyShape))
+        _pass(f"SHACL NodeShapes: {len(node_shapes)}")
+        _pass(f"SHACL PropertyShapes: {len(prop_shapes)}")
+        if len(node_shapes) + len(prop_shapes) == 0:
+            _warn("No SHACL shapes found — TTL may not declare shape types explicitly")
+
+        ODRL = rdflib.Namespace("http://www.w3.org/ns/odrl/2/")
+        policies = set(g.subjects(rdflib.RDF.type, ODRL.Policy))
+        if policies:
+            _pass(f"ODRL policies: {len(policies)}")
+        else:
+            _info("No odrl:Policy triples found (EdgeConstraints may use custom types)")
+
+    except ImportError:
+        _info("rdflib not installed", "Run: pip install rdflib  (optional — text checks above still run)")
+    except Exception as e:
+        _fail("rdflib parse error", str(e))
+
+    # ── Cross-check: profile IDs vs TTL ────────────────────────────────────────
+    st.markdown("**Cross-check: JSON profile IDs vs TTL**")
+    try:
+        for p in profiles:
+            pid = p.get("id", "")
+            if pid and pid in ttl_text:
+                _pass(f"Profile `{pid}` referenced in TTL")
+            elif pid:
+                _warn(f"Profile `{pid}` not found in TTL")
+    except Exception as e:
+        _warn("Cross-check skipped", str(e))
+
+
 def _test_wasm_core_browser():
     """Embed an HTML component that loads wellfare_core WASM and runs JS-side tests."""
     st.subheader("⚙️ WASM Core (Browser-side)")
@@ -435,16 +814,17 @@ try {{
 
 def render_dev_tools(dark_mode: bool = False):
     st.title("🔧 Developer Tools & Test Suite")
-    st.caption("v0.0.4-dev — internal test runner for WASM core, semantic pipeline, and extensions")
+    st.caption("v0.0.5-dev — vault crypto + OTS anchoring, access profiles, WASM core, semantic pipeline, extensions")
 
     st.info(
-        "**SWI-Prolog WASM status:** Not yet integrated (Phase 5). "
-        "The EYE reasoner extension handles N3Logic server-side. "
-        "swipl-wasm evaluation probe is included below.",
-        icon="🦉"
+        "**Vault tests** (🔒 tab) run entirely in-browser via WebCrypto — no server required. "
+        "**SWI-Prolog WASM** is not yet integrated (Phase 5); the EYE reasoner extension handles N3Logic server-side.",
+        icon="🔒"
     )
 
     tabs = st.tabs([
+        "🔒 Vault",
+        "🗝️ Access Profiles",
         "⚙️ WASM Core",
         "🔗 RDF Pipeline",
         "🧬 HRA Client",
@@ -454,21 +834,27 @@ def render_dev_tools(dark_mode: bool = False):
     ])
 
     with tabs[0]:
-        _test_wasm_core_browser()
+        _test_vault_browser()
 
     with tabs[1]:
-        _test_rdf_transformer()
+        _test_access_profiles()
 
     with tabs[2]:
-        _test_hra_client()
+        _test_wasm_core_browser()
 
     with tabs[3]:
-        _test_extensions()
+        _test_rdf_transformer()
 
     with tabs[4]:
-        _test_swipl_wasm()
+        _test_hra_client()
 
     with tabs[5]:
+        _test_extensions()
+
+    with tabs[6]:
+        _test_swipl_wasm()
+
+    with tabs[7]:
         _test_static_assets()
 
     st.divider()
@@ -476,6 +862,19 @@ def render_dev_tools(dark_mode: bool = False):
 **What's tested:**
 | Suite | Method | Status |
 |---|---|---|
+| WebCrypto guard (Ed25519 + X25519) | Browser JS | ✅ Implemented |
+| Ed25519 sign + verify (identity credentials) | Browser JS | ✅ Implemented |
+| X25519 DH key exchange (Noise_XX) | Browser JS | ✅ Implemented |
+| AES-256-GCM encrypt / decrypt | Browser JS | ✅ Implemented |
+| PBKDF2-SHA256 sanctuary key derivation | Browser JS | ✅ Implemented |
+| Commitment computation sha256(sha256(e)‖nonce) | Browser JS | ✅ Implemented |
+| OTS file format construction + magic bytes | Browser JS | ✅ Implemented |
+| OTS calendar server probe | Browser JS (opt-in) | ✅ Implemented |
+| IndexedDB vault schema (wf-s + wf-sc) | Browser JS | ✅ Implemented |
+| Access profiles JSON structure | Python | ✅ Implemented |
+| SHACL TTL parse + shape count (rdflib) | Python | ✅ Implemented |
+| ODRL EdgeConstraint presence | Python | ✅ Implemented |
+| Profile ID cross-check (JSON vs TTL) | Python | ✅ Implemented |
 | WASM CSV parsing | Browser JS | ✅ Implemented |
 | WASM Turtle RDF | Browser JS | ✅ Implemented |
 | WASM SPARQL (oxigraph) | Browser JS | ✅ Implemented |
