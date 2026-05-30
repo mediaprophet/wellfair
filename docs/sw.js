@@ -99,8 +99,10 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin === location.origin) {
-    // Network-first for HTML documents to ensure updates; cache-first for static assets including wasm/pkg
-    if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    // Network-first for HTML + JS so edited files are picked up immediately.
+    // Cache-first for large/stable assets (WASM, models, CSS, images).
+    if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')
+        || url.pathname.endsWith('.js')) {
       event.respondWith(networkFirst(event.request));
     } else {
       event.respondWith(cacheFirst(event.request));
