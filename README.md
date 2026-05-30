@@ -168,7 +168,7 @@ See `instructions/COMMS_EPIC_PLAN.md` for the full implementation plan and sessi
 
 | Task | Notes |
 |---|---|
-| Medication Sprint 6 — diet log | `wf-dl` IDB store exists; UI and capture logic not yet built. Module: `docs/js/vault-meds-manager.js` or new `vault-diet.js` |
+| Medication Sprint 6 — diet log | `wf-dl` IDB store exists; UI and capture logic not yet built. Module: `docs/js/vault-meds-manager.js` or new `vault-diet.js`. Review [ouisharelabs/food-dashboard](https://github.com/ouisharelabs/food-dashboard) for food taxonomy / data model prior art before designing. |
 | Demo connector auto-connect | `connector/index.html` should detect an active vault Gun session and auto-connect without manual QR scan, for demo/dev use |
 
 #### Runtime / device only (no code tasks)

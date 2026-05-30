@@ -102,6 +102,8 @@ See `instructions/COMMS_EPIC_PLAN.md` for the v0.0.6 implementation plan (VC-7 t
 - **Medication Sprint 6 — diet log**: `wf-dl` IDB store exists but UI and capture logic not built.
   Lives in `docs/js/vault-meds-manager.js` or a new `vault-diet.js`. Lower priority than comms epic;
   pick up when a session has capacity.
+  **Review first:** https://github.com/ouisharelabs/food-dashboard — prior art for food taxonomy,
+  data models, and nutrient schema; may inform `wf-dl` record structure.
 - **Demo connector auto-connect**: `connector/index.html` should detect an active vault Gun session
   and offer one-click connect (no manual QR scan) for dev/demo use. Small task, ~50 lines.
 
