@@ -3,54 +3,305 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>wellfair — Documentation & Demo</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>WellFair — Personal Health Vault</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0f11;
+      --surface: #1a1a1e;
+      --border:  #2a2a30;
+      --text:    #e8e8ec;
+      --dim:     #888;
+      --accent:  #6c63ff;
+      --accent2: #a78bfa;
+      --green:   #4ade80;
+      --radius:  12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+    .hero h1 span { color: var(--accent2); }
+    .hero .tagline {
+      color: var(--dim);
+      font-size: 1rem;
+      max-width: 520px;
+      margin: 0 auto 2rem;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .2rem .75rem;
+      color: var(--accent2);
+      margin-bottom: 1.25rem;
+      letter-spacing: .04em;
+    }
+
+    /* ── Primary CTA ── */
+    .cta-row {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .65rem 1.4rem;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline  { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+    /* ── Endpoint grid ── */
+    .section-title {
+      text-align: center;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: .75rem;
+      max-width: 860px;
+      margin: 0 auto 3rem;
+      padding: 0 1.25rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color .15s, transform .15s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card-icon { font-size: 1.4rem; margin-bottom: .4rem; display: block; }
+    .card h3 { font-size: .9rem; font-weight: 700; margin-bottom: .2rem; }
+    .card p  { font-size: .78rem; color: var(--dim); line-height: 1.5; }
+    .card .card-url {
+      display: inline-block;
+      margin-top: .5rem;
+      font-size: .68rem;
+      font-family: monospace;
+      color: var(--accent2);
+      background: rgba(108,99,255,.1);
+      border-radius: 4px;
+      padding: .1rem .35rem;
+    }
+    .card-demo { border-style: dashed; }
+
+    /* ── Feature strips ── */
+    .features {
+      max-width: 860px;
+      margin: 0 auto 3rem;
+      padding: 0 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: .75rem;
+    }
+    .feature-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+    }
+    .feature-block h3 { font-size: .82rem; font-weight: 700; margin-bottom: .5rem; color: var(--accent2); }
+    .feature-block ul { padding-left: 1rem; }
+    .feature-block li { font-size: .77rem; color: var(--dim); margin-bottom: .25rem; line-height: 1.5; }
+    .feature-block li strong { color: var(--text); font-weight: 600; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--dim);
+      font-size: .78rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    footer a { color: var(--accent2); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
 </head>
-<body class="landing-body">
-  <main class="landing">
-    <section class="landing-hero">
-      <h1>wellfair — personal welfare informatics vault</h1>
-      <p class="lede">Own your wellbeing story across clinical, social, legal, and lived-context dimensions. wellfair harmonises Rust, Python, and semantic standards into a human-first vault that travels with you — across services, across crises, across victories.</p>
-      <a class="btn-primary" href="app.html">
-        Launch the in-browser experience
-      </a>
-    </section>
+<body>
 
-    <section class="landing-grid">
-      <article class="landing-card">
-        <h2>Layered human context</h2>
-        <ul>
-          <li>Maslow-informed lenses surface physiological, safety, belonging, esteem, and growth signals instantly.</li>
-          <li>Persona packs (housing, disability, mental health, elder advocacy) arrive pre-curated for demonstrations.</li>
-          <li>Delegation rules ensure the right advocate receives the right slice of context with explicit consent.</li>
-        </ul>
-      </article>
-      <article class="landing-card">
-        <h2>Powerful local analytics</h2>
-        <ul>
-          <li>Rust core compiled to WebAssembly processes Samsung Health exports entirely client-side — no cloud hop.</li>
-          <li>Pyodide drives advanced wellbeing analytics and storytelling dashboards directly in the browser.</li>
-          <li>Streamlit desktop experience unlocks sanctuary mode, case orchestration, and rich ontology authoring.</li>
-        </ul>
-      </article>
-      <article class="landing-card">
-        <h2>Build beyond the demo</h2>
-        <ul>
-          <li>Run locally: <code>pip install -r requirements.txt && streamlit run ui/app.py</code></li>
-          <li>Compile the Rust core: <code>wasm-pack build --target web --out-dir docs/pkg</code></li>
-          <li>Dive into the architecture: <a href="README.md">README</a> · <a href="instructions/broader_structure_grok.md">philosophy</a> · <a href="instructions/sanctuaryMode.md">Sanctuary mode</a></li>
-        </ul>
-      </article>
-    </section>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge">v0.0.6-dev · 31 May 2026</div>
+    <h1>Episteme:<span>WellFair</span></h1>
+    <p class="tagline">
+      A privacy-first personal health vault. Your data lives on your device,
+      encrypted under your control. Share it on your terms — with a doctor,
+      a lawyer, a carer — and stop sharing when you say so.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="vault.html">📱 Open Vault</a>
+      <a class="btn btn-outline"  href="vault.html?demo">⚡ Demo (no PIN)</a>
+      <a class="btn btn-outline"  href="https://github.com/mediaprophet/wellfair">GitHub →</a>
+    </div>
+  </section>
 
-    <section class="install-note">
-      <h2>Install as a trusted companion</h2>
-      <p>On supported browsers, tap “Add to Home Screen” to keep wellfair one gesture away. Every calculation, every RDF export, every analytics pulse stays on your device.</p>
-    </section>
+  <!-- Endpoints -->
+  <p class="section-title">Endpoints</p>
+  <div class="grid">
 
-    <footer class="landing-footer">
-      <p>wellfair is developed independently by Timothy Charles Holborn. Contribute ideas, personas, or policy requirements via issues and conversations in the repository.</p>
-    </footer>
-  </main>
+    <a class="card" href="vault.html">
+      <span class="card-icon">🔒</span>
+      <h3>Daily Vault</h3>
+      <p>Your phone-side health vault. PIN-protected, fully encrypted. Medications, diet, contacts, calls, sanctuary.</p>
+      <span class="card-url">vault.html</span>
+    </a>
+
+    <a class="card card-demo" href="vault.html?demo">
+      <span class="card-icon">⚡</span>
+      <h3>Demo Mode</h3>
+      <p>No PIN required. Loads sample data instantly — explore all panels without creating a real vault.</p>
+      <span class="card-url">vault.html?demo</span>
+    </a>
+
+    <a class="card" href="connector/">
+      <span class="card-icon">🖥️</span>
+      <h3>Desktop Connector</h3>
+      <p>Stateless desktop terminal. Pairs with the vault over an end-to-end encrypted WebRTC channel. Closes clean — nothing persists.</p>
+      <span class="card-url">connector/</span>
+    </a>
+
+    <a class="card" href="webconnect.html">
+      <span class="card-icon">📷</span>
+      <h3>Pairing Bridge</h3>
+      <p>Phone-side QR scan to initiate a session. Select an access profile, set consent, begin serving data.</p>
+      <span class="card-url">webconnect.html</span>
+    </a>
+
+    <a class="card" href="join.html">
+      <span class="card-icon">🔗</span>
+      <h3>Guest Call Link</h3>
+      <p>Join an encrypted call without installing anything. Works for any participant — no vault account required.</p>
+      <span class="card-url">join.html?id=&lt;session&gt;</span>
+    </a>
+
+    <a class="card" href="app.html">
+      <span class="card-icon">📊</span>
+      <h3>Semantic Health Core</h3>
+      <p>Legacy Stlite/Streamlit layer. Samsung Health CSV analysis, RDF/SPARQL, HuBMAP anatomy viewer, mental health assessments.</p>
+      <span class="card-url">app.html</span>
+    </a>
+
+    <a class="card" href="nym-test.html">
+      <span class="card-icon">🔬</span>
+      <h3>Nym Test Harness</h3>
+      <p>Validate the Nym Mixnet SDK against the Sandbox testnet before activating anonymous routing in the vault.</p>
+      <span class="card-url">nym-test.html</span>
+    </a>
+
+    <a class="card" href="pair.html">
+      <span class="card-icon">🗄️</span>
+      <h3>Legacy Vault</h3>
+      <p>Original monolithic vault page — fully functional fallback. All v0.0.4 features in a single file.</p>
+      <span class="card-url">pair.html</span>
+    </a>
+
+  </div>
+
+  <!-- Feature highlights -->
+  <p class="section-title">What's in the vault</p>
+  <div class="features">
+
+    <div class="feature-block">
+      <h3>🛡 Privacy &amp; Safety</h3>
+      <ul>
+        <li><strong>Sanctuary Mode</strong> — hidden, double-encrypted workspace</li>
+        <li><strong>Duress decoy</strong> — second PIN opens identical vault, fires silent alert</li>
+        <li><strong>Dead Man's Switch</strong> — anonymous Nym alert on missed check-in</li>
+        <li><strong>Evidentiary Export</strong> — signed VP + Bitcoin OpenTimestamps anchor</li>
+      </ul>
+    </div>
+
+    <div class="feature-block">
+      <h3>📞 Verified Communications</h3>
+      <ul>
+        <li><strong>Caller gating</strong> — institutions prove identity before they can ring</li>
+        <li><strong>Semantic Handshake</strong> — both parties sign what may be shared</li>
+        <li><strong>Encrypted calls</strong> — vault↔vault or guest link, no install needed</li>
+        <li><strong>Live data sharing</strong> — approve per section; every share gets a signed receipt</li>
+      </ul>
+    </div>
+
+    <div class="feature-block">
+      <h3>💊 Health Tracking</h3>
+      <ul>
+        <li><strong>Medications</strong> — schedule, take/skip log, drug interactions</li>
+        <li><strong>Diet log</strong> — macros, barcode scanner, Open Food Facts</li>
+        <li><strong>Biometrics</strong> — Samsung Health CSV import via WebAssembly</li>
+        <li><strong>RDF export</strong> — Turtle, SPARQL queries, SHACL validation</li>
+      </ul>
+    </div>
+
+    <div class="feature-block">
+      <h3>💳 Human-Centric Wallet</h3>
+      <ul>
+        <li><strong>Lightning wallet</strong> — confidential transaction infrastructure</li>
+        <li><strong>Nym Mixnet routing</strong> — messaging without IP correlation</li>
+        <li><strong>No server</strong> — all data stays on your device</li>
+        <li><strong>Anonymous notify</strong> — send alerts without revealing identity</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>
+      Developed independently by Timothy Charles Holborn ·
+      <a href="../README.md">README</a> ·
+      <a href="../techinfo.md">Technical reference</a> ·
+      <a href="https://github.com/mediaprophet/wellfair">GitHub</a> ·
+      <a href="../COPYRIGHT.md">CC BY-NC-ND 4.0</a>
+    </p>
+    <p style="margin-top:.5rem">
+      Requires Chrome 111+, Edge 111+, or Firefox 130+ (Ed25519 + X25519 WebCrypto)
+    </p>
+  </footer>
+
 </body>
 </html>
