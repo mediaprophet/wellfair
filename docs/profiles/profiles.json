@@ -150,5 +150,80 @@
         "social_context", "medications", "surgical_history"
       ]
     }
+  ],
+
+  "callProfiles": [
+    {
+      "id": "generic_call",
+      "label": "General call",
+      "description": "Standard video or audio call. No health data is offered to share by default.",
+      "icon": "📞",
+      "color": "#6c757d",
+      "sections": []
+    },
+    {
+      "id": "health_consultation",
+      "label": "Health consultation",
+      "description": "GP, nurse, or primary care provider. Overview, current medications, conditions, and vitals.",
+      "icon": "🩺",
+      "color": "#0d6efd",
+      "sections": [
+        "overview", "heart_rate", "blood_pressure", "weight",
+        "medications", "medication_adherence", "medication_interactions",
+        "allergies", "conditions"
+      ]
+    },
+    {
+      "id": "mental_health_call",
+      "label": "Mental health session",
+      "description": "Psychologist, counsellor, or mental health support worker. Mental health records and sleep patterns.",
+      "icon": "🧠",
+      "color": "#6f42c1",
+      "sections": ["overview", "mental_health", "sleep", "medications", "medication_adherence"]
+    },
+    {
+      "id": "social_work_call",
+      "label": "Social work check-in",
+      "description": "Social worker, case manager, or community support worker. Social context and emergency contacts.",
+      "icon": "🤝",
+      "color": "#198754",
+      "sections": ["overview", "social_context", "emergency_contacts"]
+    },
+    {
+      "id": "specialist_call",
+      "label": "Specialist consultation",
+      "description": "Hospital specialist. Full clinical picture including procedures and medication interactions.",
+      "icon": "🔬",
+      "color": "#6610f2",
+      "sections": [
+        "overview", "heart_rate", "blood_pressure",
+        "medications", "medication_history", "medication_interactions",
+        "allergies", "conditions", "surgical_history"
+      ]
+    },
+    {
+      "id": "carer_call",
+      "label": "Carer / family call",
+      "description": "Trusted carer or family member. Overview, medications, conditions, allergies, and emergency contacts.",
+      "icon": "🏠",
+      "color": "#fd7e14",
+      "sections": ["overview", "medications", "conditions", "allergies", "emergency_contacts"]
+    },
+    {
+      "id": "legal_call",
+      "label": "Legal consultation",
+      "description": "Legal representative or advocate. Nothing offered by default — you choose what to share.",
+      "icon": "⚖️",
+      "color": "#6c757d",
+      "sections": []
+    },
+    {
+      "id": "crisis_support_call",
+      "label": "Crisis support",
+      "description": "Crisis support worker (e.g. Beyond Blue, Lifeline, domestic violence service). Social context, emergency contacts, and mental health.",
+      "icon": "🆘",
+      "color": "#dc3545",
+      "sections": ["social_context", "emergency_contacts", "mental_health"]
+    }
   ]
 }

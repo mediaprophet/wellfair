@@ -1169,6 +1169,13 @@
                   placeholder="Anything you want to remember about this contact…"
                   style="resize:vertical"></textarea>
       </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Call profile</span>
+        <select id="dir-add-profile" class="dir-input"
+                style="font-size:.82rem;padding:.38rem .5rem"></select>
+        <span style="font-size:.7rem;color:var(--dim);margin-top:.2rem;display:block"
+              id="dir-add-profile-desc"></span>
+      </label>
       <button class="btn btn-primary" style="margin-top:.75rem;font-size:.82rem"
               onclick="_dirSaveNewContact()">Save contact</button>
       <div id="dir-add-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
@@ -1567,6 +1574,8 @@
 <script src="js/vault-mock.js?v=6"></script>
 <!-- VC-7 Verified Directory — must load after vault-crypto (needs _sEnc/_sDec) -->
 <script src="js/vault-directory.js?v=6"></script>
+<!-- Call profiles — must load after vault-directory.js -->
+<script src="js/vault-call-profiles.js?v=1"></script>
 <!-- VC-8 Semantic Handshake — must load after vault-directory.js -->
 <script src="js/vault-handshake.js?v=6"></script>
 <!-- VC-9 Caller Gating — must load after vault-directory.js + vault-nym.js -->
@@ -1742,6 +1751,14 @@ function _dirShowAddForm() {
     document.getElementById(id).value = '';
   });
   document.getElementById('dir-add-status').textContent = '';
+
+  // Populate call profile selector
+  const sel = document.getElementById('dir-add-profile');
+  if (sel && typeof callProfileSelectOptions === 'function') {
+    sel.innerHTML = callProfileSelectOptions('generic_call');
+    _dirUpdateProfileDesc('dir-add-profile-desc', 'generic_call');
+    sel.onchange = () => _dirUpdateProfileDesc('dir-add-profile-desc', sel.value);
+  }
 }
 
 function _dirShowDetail() {
@@ -1781,15 +1798,22 @@ function _dirRenderList(contacts) {
     listEl.innerHTML = '<p class="dir-empty">No contacts yet — tap + Add to create one.</p>';
     return;
   }
-  listEl.innerHTML = contacts.map(c => `
+  listEl.innerHTML = contacts.map(c => {
+    const cp = typeof getCallProfile === 'function'
+      ? getCallProfile(c.callProfileId || 'generic_call') : null;
+    const profilePip = cp && cp.id !== 'generic_call'
+      ? `<span title="${_dirEsc(cp.label)}"
+               style="font-size:.9rem;margin-left:.3rem;opacity:.8">${cp.icon}</span>`
+      : '';
+    return `
     <div class="dir-contact-card" onclick="_dirOpenDetail('${_dirEsc(c.id)}')">
       <div class="dir-contact-info">
-        <span class="dir-contact-name">${_dirEsc(c.name)}</span>
+        <span class="dir-contact-name">${_dirEsc(c.name)}${profilePip}</span>
         <span class="dir-contact-did">${_dirEsc(c.did || '—')}</span>
       </div>
       <span class="dir-rel-badge" id="dir-rel-${_dirEsc(c.id)}">contact</span>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   contacts.forEach(async c => {
     const rel   = await getRelationship(c.id).catch(() => null);
     const badge = document.getElementById(`dir-rel-${c.id}`);
@@ -1852,6 +1876,27 @@ async function _dirOpenDetail(id) {
       <span class="dir-detail-label">Channel identity credential (did:peer)</span>
       <div class="dir-detail-value dir-detail-mono">${_dirEsc(rel.peerDid)}</div>
     </div>` : ''}
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Call profile</span>
+      <div class="dir-detail-value" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+        ${(() => {
+          const cp = typeof getCallProfile === 'function'
+            ? getCallProfile(contact.callProfileId || 'generic_call') : null;
+          const badge = cp
+            ? `<span style="background:${cp.color}1a;border:1px solid ${cp.color}55;
+                color:${cp.color};border-radius:5px;padding:.12rem .45rem;font-size:.78rem;font-weight:600">
+                ${cp.icon} ${cp.label}</span>`
+            : '<span style="color:var(--dim)">General call</span>';
+          const opts = typeof callProfileSelectOptions === 'function'
+            ? callProfileSelectOptions(contact.callProfileId || 'generic_call') : '';
+          return `${badge}
+            <select onchange="_dirUpdateCallProfile('${_dirEsc(contact.id)}', this.value)"
+                    style="font-size:.75rem;padding:.15rem .3rem;border:1px solid var(--border);
+                           border-radius:5px;background:var(--surface);color:var(--text);
+                           max-width:160px">${opts}</select>`;
+        })()}
+      </div>
+    </div>
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;
                 border-top:1px solid var(--border);padding-top:.875rem">
       <button class="btn btn-outline"
@@ -1865,22 +1910,41 @@ async function _dirOpenDetail(id) {
 }
 
 async function _dirSaveNewContact() {
-  const name  = document.getElementById('dir-add-name').value.trim();
-  const did   = document.getElementById('dir-add-did').value.trim();
-  const webId = document.getElementById('dir-add-webid').value.trim();
-  const notes = document.getElementById('dir-add-notes').value.trim();
-  const st    = document.getElementById('dir-add-status');
+  const name      = document.getElementById('dir-add-name').value.trim();
+  const did       = document.getElementById('dir-add-did').value.trim();
+  const webId     = document.getElementById('dir-add-webid').value.trim();
+  const notes     = document.getElementById('dir-add-notes').value.trim();
+  const profileId = document.getElementById('dir-add-profile')?.value || 'generic_call';
+  const st        = document.getElementById('dir-add-status');
 
   if (!name) { st.style.color = 'var(--red)'; st.textContent = 'Name is required.'; return; }
 
   st.style.color = 'var(--dim)'; st.textContent = 'Saving…';
   try {
-    await addContact(name, did || '', webId || null, notes);
+    await addContact(name, did || '', webId || null, notes, profileId);
     st.style.color = 'var(--green)'; st.textContent = 'Contact saved.';
     _dirAllContacts = await getAllContacts();
     setTimeout(() => { _dirShowListView(); _dirRenderList(_dirAllContacts); }, 600);
   } catch (e) {
     st.style.color = 'var(--red)'; st.textContent = `Error: ${e.message}`;
+  }
+}
+
+// Helper: update description text below the call profile selector
+function _dirUpdateProfileDesc(descElId, profileId) {
+  const el = document.getElementById(descElId);
+  if (!el || typeof getCallProfile !== 'function') return;
+  el.textContent = getCallProfile(profileId).description;
+}
+
+// Update a contact's call profile and re-render the detail view
+async function _dirUpdateCallProfile(contactId, profileId) {
+  try {
+    await updateContact(contactId, { callProfileId: profileId });
+    _dirAllContacts = await getAllContacts();
+    await _dirOpenDetail(contactId);
+  } catch (e) {
+    console.warn('[Directory] call profile update failed:', e.message);
   }
 }
 
@@ -2394,24 +2458,91 @@ function _callShareSection(key) {
   }));
 }
 
-function _callOverlayPopulateInfo() {
+async function _callOverlayPopulateInfo() {
   const content = document.getElementById('call-info-content');
   if (!content) return;
   if (typeof SECTION_LABELS === 'undefined') {
     content.innerHTML = '<p style="color:rgba(255,255,255,.45);font-size:.78rem">Health data unavailable.</p>';
     return;
   }
-  const rows = Object.entries(SECTION_LABELS).map(([key, label]) =>
-    `<div class="call-info-row">
+
+  // Resolve call profile for active contact
+  let profile      = typeof getCallProfile === 'function' ? getCallProfile('generic_call') : null;
+  let contactName  = null;
+  const contactId  = typeof callGetActiveContactId === 'function' ? callGetActiveContactId() : null;
+  if (contactId && typeof getContact === 'function') {
+    try {
+      const contact = await getContact(contactId);
+      if (contact) {
+        contactName = contact.name;
+        if (contact.callProfileId && typeof getCallProfile === 'function') {
+          profile = getCallProfile(contact.callProfileId);
+        }
+      }
+    } catch (_) {}
+  }
+
+  const profileSections = new Set(profile?.sections ?? []);
+  const allSections     = Object.entries(SECTION_LABELS);
+  const inProfile       = allSections.filter(([k]) => profileSections.has(k));
+  const notInProfile    = allSections.filter(([k]) => !profileSections.has(k));
+
+  const makeRow = (key, label, highlighted) => {
+    const style = highlighted
+      ? 'border-left:2px solid ' + (profile?.color ?? '#0d6efd') + ';padding-left:.6rem'
+      : 'opacity:.65';
+    return `<div class="call-info-row" style="${style}">
       <span class="call-info-row-lbl">${label}</span>
       <button class="call-info-share-btn"
         onclick="_callShareSection('${key.replace(/['"]/g,'')}')">Share</button>
-    </div>`
-  ).join('');
+    </div>`;
+  };
+
+  // Header: profile badge + optional "share all profile sections" button
+  const headerColor = profile?.color ?? '#6c757d';
+  const profileBadge = profile
+    ? `<span style="background:${headerColor}33;border:1px solid ${headerColor}66;
+        color:${headerColor === '#6c757d' ? 'rgba(255,255,255,.7)' : headerColor};
+        border-radius:5px;padding:.18rem .55rem;font-size:.78rem;font-weight:600">
+        ${profile.icon} ${profile.label}</span>`
+    : '';
+  const contactLine = contactName
+    ? `<p style="font-size:.82rem;color:#fff;font-weight:600;margin-bottom:.3rem">${_esc(contactName)}</p>` : '';
+  const shareAllBtn = inProfile.length
+    ? `<button onclick="_callShareAllProfile()" class="call-info-share-btn"
+         style="font-size:.7rem;padding:.22rem .6rem;margin-top:.5rem;display:block">
+         Share ${inProfile.length} profile section${inProfile.length > 1 ? 's' : ''}</button>`
+    : '';
+
+  const noProfileNote = !inProfile.length
+    ? `<p style="font-size:.71rem;color:rgba(255,255,255,.4);margin:.5rem 0">
+        No health data configured for this contact.<br>
+        Change their call profile in Contacts to add sections.</p>`
+    : '';
+
+  const divider = notInProfile.length && inProfile.length
+    ? `<p style="font-size:.68rem;color:rgba(255,255,255,.35);margin:.6rem 0 .35rem;
+        text-transform:uppercase;letter-spacing:.04em">Other sections</p>`
+    : '';
+
   content.innerHTML =
-    `<p style="font-size:.71rem;color:rgba(255,255,255,.42);margin-bottom:.6rem">
-      Tap Share to send a section to the caller.
-    </p>${rows}`;
+    `<div style="margin-bottom:.65rem">${contactLine}${profileBadge}${shareAllBtn}</div>` +
+    noProfileNote +
+    inProfile.map(([k, l])    => makeRow(k, l, true)).join('') +
+    divider +
+    notInProfile.map(([k, l]) => makeRow(k, l, false)).join('');
+}
+
+function _callShareAllProfile() {
+  const contactId = typeof callGetActiveContactId === 'function' ? callGetActiveContactId() : null;
+  getContact(contactId).then(contact => {
+    if (!contact) return;
+    const sections = getCallProfileSections(contact.callProfileId || 'generic_call');
+    if (!sections.length) return;
+    document.dispatchEvent(new CustomEvent('wf:data-request', {
+      detail: { id: 'profile-share-' + Date.now(), sections, callSessionId: null }
+    }));
+  }).catch(() => {});
 }
 
 // Called from vault-cv.js to push live readings into the ticker

@@ -158,6 +158,11 @@ function _gateHideOverlays() {
 function gateAcceptCall() {
   if (!_activeCall) return;
   console.info('[Gate] Call accepted, caller:', _activeCall.msg.callerDid);
+  // Pass the resolved contact id to the call module so the overlay can load
+  // their call profile from the directory (inbound call equivalent of startCall).
+  if (typeof callSetActiveContact === 'function') {
+    callSetActiveContact(_activeCall.contact?.id ?? null);
+  }
   _gateHideOverlays();
   // VC-10 will call answerCall(_activeCall.msg.sessionId, _activeCall.msg.gunNode)
 }

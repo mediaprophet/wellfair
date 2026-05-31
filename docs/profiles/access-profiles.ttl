@@ -468,6 +468,13 @@ wf:counterpartySig
 
 # ── SHACL NodeShapes for directory records ────────────────────────────────────
 
+wf:callProfileId
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Call profile identifier"@en ;
+    rdfs:comment "ID of the wf:CallProfile shape that governs which vault sections are surfaced in the call overlay Info panel when a video call is active with this contact. Defaults to 'generic_call'."@en .
+
 wf:ContactShape
     a sh:NodeShape ;
     sh:targetClass wf:Contact ;
@@ -494,6 +501,12 @@ wf:ContactShape
         sh:path     wf:contactNotes ;
         sh:datatype xsd:string ;
         sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:callProfileId ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:defaultValue "generic_call" ;
     ] .
 
 
@@ -541,3 +554,151 @@ wf:UsageAgreementShape
         sh:datatype xsd:string ;
         sh:maxCount 1 ;
     ] .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VC-10 — Call Profiles: per-contact data-sharing presets for video calls
+#
+# A CallProfile is attached to a Contact record (wf:callProfileId) and governs
+# which vault sections are surfaced in the call overlay Info panel during an
+# active call with that contact. Unlike access profiles (which govern what a
+# connector session may read), call profiles are suggestions to the vault owner
+# about what they might want to share — the owner always remains in control.
+#
+# Safe default: wf:GenericCallProfile — no sections offered.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+wf:CallProfile
+    a rdfs:Class ;
+    rdfs:subClassOf sh:NodeShape ;
+    rdfs:label   "Call profile"@en ;
+    rdfs:comment "A data-sharing preset attached to a directory contact. Determines which vault sections are highlighted in the call overlay Info panel. Not a restriction — the vault owner may always share any section manually."@en .
+
+wf:callProfileType
+    a rdf:Property ;
+    rdfs:domain wf:CallProfile ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Call profile type identifier"@en .
+
+
+# ── Generic call (no health data) ────────────────────────────────────────────
+
+wf:GenericCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "generic_call" ;
+    rdfs:label   "General call"@en ;
+    rdfs:comment "Standard video or audio call. No health data sections are offered by default. Suitable for friends, work colleagues, or any contact who does not need health information."@en ;
+    wf:uiIcon    "📞" ;
+    wf:uiColor   "#6c757d" .
+
+
+# ── Health consultation ───────────────────────────────────────────────────────
+
+wf:HealthConsultationCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "health_consultation" ;
+    rdfs:label   "Health consultation"@en ;
+    rdfs:comment "GP, nurse, or primary care provider. Overview, current medications, conditions, vitals, and allergies are surfaced for sharing."@en ;
+    wf:uiIcon    "🩺" ;
+    wf:uiColor   "#0d6efd" ;
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] .
+
+
+# ── Mental health session ─────────────────────────────────────────────────────
+
+wf:MentalHealthCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "mental_health_call" ;
+    rdfs:label   "Mental health session"@en ;
+    rdfs:comment "Psychologist, counsellor, or mental health support worker. Mental health records, sleep patterns, and psychiatric medications surfaced."@en ;
+    wf:uiIcon    "🧠" ;
+    wf:uiColor   "#6f42c1" ;
+    sh:property [ sh:path wf:overview            ] ;
+    sh:property [ sh:path wf:mentalHealth        ] ;
+    sh:property [ sh:path wf:sleep               ] ;
+    sh:property [ sh:path wf:medications         ] ;
+    sh:property [ sh:path wf:medicationAdherence ] .
+
+
+# ── Social work check-in ──────────────────────────────────────────────────────
+
+wf:SocialWorkCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "social_work_call" ;
+    rdfs:label   "Social work check-in"@en ;
+    rdfs:comment "Social worker, case manager, or community support worker. Social and housing context and emergency contacts surfaced. No clinical data."@en ;
+    wf:uiIcon    "🤝" ;
+    wf:uiColor   "#198754" ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Specialist consultation ───────────────────────────────────────────────────
+
+wf:SpecialistCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "specialist_call" ;
+    rdfs:label   "Specialist consultation"@en ;
+    rdfs:comment "Hospital specialist (cardiologist, oncologist, etc.). Full clinical picture including medication interactions, conditions, and surgical history."@en ;
+    wf:uiIcon    "🔬" ;
+    wf:uiColor   "#6610f2" ;
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] .
+
+
+# ── Carer / family call ───────────────────────────────────────────────────────
+
+wf:CarerCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "carer_call" ;
+    rdfs:label   "Carer / family call"@en ;
+    rdfs:comment "Trusted carer or family member. Overview, medications, conditions, allergies, and emergency contacts surfaced."@en ;
+    wf:uiIcon    "🏠" ;
+    wf:uiColor   "#fd7e14" ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:medications       ] ;
+    sh:property [ sh:path wf:conditions        ] ;
+    sh:property [ sh:path wf:allergies         ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Legal consultation ────────────────────────────────────────────────────────
+
+wf:LegalCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "legal_call" ;
+    rdfs:label   "Legal consultation"@en ;
+    rdfs:comment "Legal representative or advocate. No sections surfaced by default — the vault owner selects exactly what evidence or context to share for this specific legal matter."@en ;
+    wf:uiIcon    "⚖️" ;
+    wf:uiColor   "#6c757d" .
+
+
+# ── Crisis support ────────────────────────────────────────────────────────────
+
+wf:CrisisSupportCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "crisis_support_call" ;
+    rdfs:label   "Crisis support"@en ;
+    rdfs:comment "Crisis support worker (e.g. Beyond Blue, Lifeline, domestic violence service). Social context, emergency contacts, and mental health sections surfaced. Designed for situations where the vault owner needs immediate practical or safety support."@en ;
+    wf:uiIcon    "🆘" ;
+    wf:uiColor   "#dc3545" ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:emergencyContacts ] ;
+    sh:property [ sh:path wf:mentalHealth      ] .

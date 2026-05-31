@@ -19,12 +19,13 @@ const CALL_ICE_CFG    = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 
 // ── Session state ─────────────────────────────────────────────────────────────
 
-let _callGun       = null;
-let _callPc        = null;
-let _callDc        = null; // in-call data-sharing DataChannel
-let _callStream    = null;
-let _callSessionId = null;
-let _callGunNode   = null;
+let _callGun             = null;
+let _callPc              = null;
+let _callDc              = null; // in-call data-sharing DataChannel
+let _callStream          = null;
+let _callSessionId       = null;
+let _callGunNode         = null;
+let _callActiveContactId = null; // directory contact id for the current call
 const _guestTokens = new Map(); // sessionId → token (hex)
 
 // WA-2 frame loop state
@@ -38,8 +39,9 @@ const _FRAME_MS  = 100; // ~10fps cap — matches MediaPipe throughput on mid-ra
 async function startCall(contactId) {
   await endCall(); // clean up any existing call
 
-  const sessionId = crypto.randomUUID();
-  _callSessionId  = sessionId;
+  const sessionId          = crypto.randomUUID();
+  _callSessionId           = sessionId;
+  _callActiveContactId     = contactId ?? null;
 
   _callGun     = _callGunInstance();
   _callGunNode = _callGun.get(CALL_GUN_NS).get('sessions').get(sessionId);
@@ -177,12 +179,24 @@ async function endCall() {
     _guestTokens.delete(_callSessionId);
     _callSessionId = null;
   }
+  _callActiveContactId = null;
   _callNotifyUI({ event: 'call.ended' });
 }
 
 // Expose audio stream for vault-cv.js agentStartAudio (WA-4).
 function callGetAudioStream() {
   return _callStream;
+}
+
+// Returns the directory contact id for the current call (null if unknown/guest).
+// Used by _callOverlayPopulateInfo() in vault.html to resolve the call profile.
+function callGetActiveContactId() {
+  return _callActiveContactId;
+}
+
+// Set the active contact id from the gate module (inbound calls).
+function callSetActiveContact(contactId) {
+  _callActiveContactId = contactId ?? null;
 }
 
 // Mute/unmute the local audio track.

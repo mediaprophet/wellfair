@@ -48,16 +48,17 @@ async function _decRecord(stored) {
 
 // Create a new contact and persist it encrypted.
 // Returns the plaintext record (including the generated id).
-async function addContact(name, did, webId = null, notes = '') {
+async function addContact(name, did, webId = null, notes = '', callProfileId = 'generic_call') {
   _requireKey();
   const record = {
-    id:         crypto.randomUUID(),
+    id:            crypto.randomUUID(),
     name,
     did,
-    webId:      webId  || null,
-    notes:      notes  || '',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    webId:         webId          || null,
+    notes:         notes          || '',
+    callProfileId: callProfileId  || 'generic_call',
+    created_at:    new Date().toISOString(),
+    updated_at:    new Date().toISOString(),
   };
   await _dbPut(_ST_CONTACTS, await _encRecord(record));
   return record;
