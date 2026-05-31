@@ -180,8 +180,28 @@ instructions/
 python -m http.server 3000 --directory docs
 ```
 - Phone/daily vault: `http://localhost:3000/vault.html`
+- Demo mode (no PIN): `http://localhost:3000/vault.html?demo`
 - Desktop pairing: `http://localhost:3000/webconnect.html` (phone) + `http://localhost:3000/connector/` (desktop)
 - Legacy: `http://localhost:3000/pair.html` (original monolithic page — still works)
+
+## Testing — MANDATORY
+
+**Always use the `mcp__Claude_in_Chrome__*` tools against a real Python dev server.**
+The Claude app preview environment does not support WebCrypto (Ed25519/X25519), IndexedDB
+writes, or Service Worker registration. Any test that touches encryption, the vault PIN,
+IDB persistence, or the Nym adapter MUST be run via the Chrome Claude extension.
+
+**Demo account PIN: `1234`**
+- `vault.html?demo` skips PIN entirely and loads mock data — use for UI-only checks.
+- `vault.html` with PIN `1234` is the full owner vault with real IDB persistence.
+- The phone (`vault.html`) is the authoritative datastore; the desktop connector
+  (`connector/index.html`) is stateless — it holds nothing after the tab closes.
+
+Typical test flow:
+1. Start dev server: `python -m http.server 3000 --directory docs`
+2. Open `http://localhost:3000/vault.html` in Chrome via `mcp__Claude_in_Chrome__navigate`
+3. Enter PIN `1234` to unlock owner workspace
+4. Verify feature, check console via `mcp__Claude_in_Chrome__read_console_messages`
 
 ## Related external repos
 
