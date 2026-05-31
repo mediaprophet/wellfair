@@ -32,6 +32,7 @@ function _txId() {
 async function walletInit() {
   _wlAvailable = false;
   _wlProvider  = null;
+  _walletRegisterNymJobHandler();
 
   if (typeof window.webln !== 'undefined') {
     try {
@@ -74,8 +75,8 @@ async function walletGetBalance() {
 
   // Fiat estimate: cached exchange rate lookup (Nym-routed when available)
   // Returns null if rate unavailable — UI shows "~? AUD" gracefully
-  const rate = await _walletGetBtcRate().catch(() => null);
-  const fiatEstimate = rate !== null ? ((sats / 1e8) * rate).toFixed(2) : null;
+  const rates = await _walletGetBtcRate().catch(() => null);
+  const fiatEstimate = rates?.btcAud != null ? ((sats / 1e8) * rates.btcAud).toFixed(2) : null;
 
   await _dbPut(_ST_WALLET, Object.assign(
     (await _dbGet(_ST_WALLET, 'wallet-lightning').catch(() => ({
@@ -161,31 +162,147 @@ async function walletGetTxLog(limit) {
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
-// BTC/AUD exchange rate — cached 5 min in memory; Nym-routed when active
-let _rateCache = null;
+// Exchange rate cache — BTC/AUD + BTC/NYM, shared 5-min memory cache
+let _rateCache   = null; // { btcAud: number|null, btcNym: number|null }
 let _rateCacheTs = 0;
 
+/**
+ * Fetch BTC/AUD and BTC/NYM rates from CoinGecko public API.
+ * Cached for 5 minutes in memory.
+ * NOTE: nymAdapter.send() is fire-and-forget (send-only model); this call falls through
+ * to plain HTTPS for MVP. Routing this via Nym is deferred until the full duplex model
+ * is implemented. Exchange rates are not sensitive — the call reveals no user data.
+ * Returns { btcAud, btcNym }.
+ */
 async function _walletGetBtcRate() {
   const now = Date.now();
   if (_rateCache !== null && now - _rateCacheTs < 5 * 60 * 1000) return _rateCache;
 
-  // CoinGecko public API — no API key required for this endpoint
-  const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=aud';
-
-  // Route via Nym if active; otherwise plain HTTPS (rate is not sensitive data)
-  let json;
+  // Check nymAdapter availability — not yet routable in send-only model (see note above)
   if (typeof nymAdapter !== 'undefined' && nymAdapter.isActive()) {
-    // nymAdapter.send() is fire-and-forget; rate lookup degrades gracefully without Nym
-    json = null; // Nym send-only model; fall through to plain fetch
+    // nymAdapter.send() is fire-and-forget; fall through to plain fetch for MVP
   }
 
+  const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,nym-network&vs_currencies=aud';
   const resp = await fetch(url);
   if (!resp.ok) throw new Error('Rate fetch failed');
-  json = await resp.json();
+  const json = await resp.json();
 
-  _rateCache   = json?.bitcoin?.aud ?? null;
+  _rateCache = {
+    btcAud: json?.bitcoin?.aud        ?? null,
+    btcNym: json?.['nym-network']?.aud
+              ? (json.bitcoin.aud / json['nym-network'].aud) : null,
+  };
   _rateCacheTs = now;
   return _rateCache;
+}
+
+// ── Nym bandwidth abstraction (HCW-2) ────────────────────────────────────────
+
+const NYM_BANDWIDTH_MINUTES_LOW = 10; // schedule refill when below this
+
+/**
+ * Ensure the Nym bandwidth credential has at least requiredMinutes remaining.
+ * If insufficient, schedules a background BTC→NYM swap job (IDLE condition).
+ * Never executes the swap inline — always defers to the job scheduler.
+ * Returns { sufficient: bool, minutesRemaining: number, swapExecuted: bool }.
+ * If nymAdapter is not active, returns { sufficient: false, minutesRemaining: 0 }.
+ */
+async function ensureNymBandwidth(requiredMinutes) {
+  if (typeof nymAdapter === 'undefined' || !nymAdapter.isActive()) {
+    return { sufficient: false, minutesRemaining: 0, swapExecuted: false };
+  }
+
+  const status = await getNymBandwidthStatus();
+  if (status.minutesRemaining >= requiredMinutes) {
+    return { sufficient: true, minutesRemaining: status.minutesRemaining, swapExecuted: false };
+  }
+
+  // Schedule a background swap — never block UI thread or run inline
+  if (typeof enqueueJob === 'function' && typeof JOB_TRIGGER !== 'undefined') {
+    await enqueueJob(
+      'wallet.nym-bandwidth-refill',
+      { requestedMinutes: Math.max(requiredMinutes, 60) }, // request at least 60 min
+      JOB_TRIGGER.IDLE,
+      3 // priority
+    ).catch(e => console.warn('[wallet] enqueueJob failed:', e.message));
+  }
+
+  return { sufficient: false, minutesRemaining: status.minutesRemaining, swapExecuted: false };
+}
+
+/**
+ * Returns current Nym bandwidth status for UI display.
+ * { minutesRemaining: number, isActive: bool, lastRefill: string|null }
+ * isActive mirrors nymAdapter.isActive().
+ * User-facing: never surfaces NYM token amounts — only "Privacy routing" / "Bandwidth credit".
+ */
+async function getNymBandwidthStatus() {
+  const isActive = typeof nymAdapter !== 'undefined' && nymAdapter.isActive();
+
+  let minutesRemaining = 0;
+  let lastRefill       = null;
+
+  try {
+    const rec = await _dbGet(_ST_WALLET, 'wallet-lightning').catch(() => null);
+    if (rec?.nymBandwidth) {
+      minutesRemaining = rec.nymBandwidth.minutesRemaining ?? 0;
+      lastRefill       = rec.nymBandwidth.lastRefill       ?? null;
+    }
+  } catch (_) {}
+
+  return { minutesRemaining, isActive, lastRefill };
+}
+
+/**
+ * Register the bandwidth refill job handler with vault-scheduler.js.
+ * Called once during wallet init. No-op if scheduler is not loaded.
+ * The handler fetches BTC/NYM rate, computes NYM tokens needed,
+ * calls nymAdapter.redeemBandwidth(), and updates the wf-wallet IDB record.
+ * Wallet addresses and swap amounts are never written to any log.
+ */
+let _nymHandlerRegistered = false;
+function _walletRegisterNymJobHandler() {
+  if (typeof registerJobHandler !== 'function') return;
+  if (_nymHandlerRegistered) return;
+  _nymHandlerRegistered = true;
+
+  registerJobHandler('wallet.nym-bandwidth-refill', {
+    estimateFn: () => 30_000, // ~30 s estimate
+    runFn: async (job) => {
+      const payload = JSON.parse(job.payload || '{}');
+      const requestedMinutes = payload.requestedMinutes ?? 60;
+
+      // Fetch rates (5-min cache shared with _walletGetBtcRate)
+      const rates = await _walletGetBtcRate();
+      if (!rates.btcNym) throw new Error('BTC/NYM rate unavailable');
+
+      // Determine BTC cost of requested bandwidth (1 NYM ≈ 1 min of routing — placeholder)
+      // Real redemption depends on Nym zk-credential API; this schedules the intent.
+      const nymTokensNeeded = requestedMinutes; // 1 token ≈ 1 minute (MVP placeholder)
+
+      // Redeem bandwidth credential via nymAdapter if active
+      if (typeof nymAdapter !== 'undefined' && nymAdapter.isActive()
+          && typeof nymAdapter.redeemBandwidth === 'function') {
+        await nymAdapter.redeemBandwidth(nymTokensNeeded);
+      }
+
+      // Update IDB record — additive field, no version bump needed
+      const existing = await _dbGet(_ST_WALLET, 'wallet-lightning').catch(() => ({
+        id: 'wallet-lightning', type: 'lightning', provider: 'webln',
+        nodeAlias: '', createdAt: new Date().toISOString(),
+      }));
+      await _dbPut(_ST_WALLET, Object.assign(existing, {
+        nymBandwidth: {
+          minutesRemaining: requestedMinutes,
+          lastRefill:       new Date().toISOString(),
+          credentialId:     crypto.randomUUID(), // opaque — not displayed
+        },
+      }));
+
+      return { minutesRefilled: requestedMinutes };
+    },
+  });
 }
 
 // Minimal QR code generator using the free qrserver CDN (no JS library needed)
@@ -242,6 +359,27 @@ async function _walletRenderSheet() {
   statusEl.innerHTML = '<span style="color:var(--success,#2a7)">⚡ Lightning wallet connected</span>';
   document.getElementById('wallet-send-btn').disabled    = false;
   document.getElementById('wallet-receive-btn').disabled = false;
+
+  // Privacy routing status row (HCW-2)
+  const nymRowEl = document.getElementById('wallet-nym-status');
+  if (nymRowEl) {
+    try {
+      const nymStatus = await getNymBandwidthStatus();
+      if (nymStatus.isActive) {
+        const bandwidthLabel = nymStatus.minutesRemaining > 0
+          ? ` · Bandwidth: ${nymStatus.minutesRemaining} min remaining`
+          : '';
+        nymRowEl.innerHTML =
+          `<span style="color:var(--success,#2a7)">&#x1F512; Privacy routing: active</span>` +
+          `<span style="color:var(--muted);font-size:.8rem">${bandwidthLabel}</span>`;
+      } else {
+        nymRowEl.innerHTML =
+          `<span style="color:var(--muted)">&#x26A0;&#xFE0F; Privacy routing: inactive</span>`;
+      }
+    } catch (_) {
+      nymRowEl.innerHTML = '';
+    }
+  }
 
   // Balance
   try {

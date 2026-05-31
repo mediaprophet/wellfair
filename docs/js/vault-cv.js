@@ -55,6 +55,7 @@ function initAgent(callSessionId, dataChannel) {
 }
 
 function setModuleConsent(module, granted) {
+  if (!_agentSessionId) return;
   if (!Object.values(CV_MODULE).includes(module)) {
     console.warn('[AgentController] unknown module:', module);
     return;
