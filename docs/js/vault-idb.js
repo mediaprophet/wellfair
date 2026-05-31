@@ -24,10 +24,12 @@ const _ST_TELEMETRY  = 'wf-telemetry';     // session telemetry samples
 // HCW-1 — Human-Centric Wallet (added in v8)
 const _ST_WALLET     = 'wf-wallet';        // wallet provider metadata
 const _ST_TXLOG      = 'wf-txlog';         // local transaction log (never transmitted)
+// WASM bridge — biometric sensor data from Samsung Health CSV imports (added in v9)
+const _ST_BIOMETRICS = 'wf-biometrics';    // weight, sleep, heart-rate, steps records
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 8);
+    const rq = indexedDB.open(_DB_NAME, 9);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -49,6 +51,12 @@ function _openDB() {
       // v8 — HCW-1 Human-Centric Wallet
       if (!db.objectStoreNames.contains(_ST_WALLET))     db.createObjectStore(_ST_WALLET,     { keyPath: 'id' });
       if (!db.objectStoreNames.contains(_ST_TXLOG))      db.createObjectStore(_ST_TXLOG,      { keyPath: 'id' });
+      // v9 — WASM bridge biometrics
+      if (!db.objectStoreNames.contains(_ST_BIOMETRICS)) {
+        const bs = db.createObjectStore(_ST_BIOMETRICS, { keyPath: 'id' });
+        bs.createIndex('by_type', 'type', { unique: false });
+        bs.createIndex('by_date', 'date', { unique: false });
+      }
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);

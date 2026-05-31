@@ -101,6 +101,28 @@ impl WasmHealthStore {
 }
 
 // ==========================================
+// VAULT DATA → TURTLE  (wf: namespace)
+// ==========================================
+
+/// Serialize vault medication records (JSON array from wf-meds IDB store) → Turtle.
+#[wasm_bindgen]
+pub fn vault_meds_to_turtle(json: &str) -> Result<String, JsValue> {
+    crate::rdf::vault_meds_to_turtle(json).map_err(|e| JsValue::from_str(&e))
+}
+
+/// Serialize vault diet log entries (JSON array from wf-dl IDB store) → Turtle.
+#[wasm_bindgen]
+pub fn vault_diet_to_turtle(json: &str) -> Result<String, JsValue> {
+    crate::rdf::vault_diet_to_turtle(json).map_err(|e| JsValue::from_str(&e))
+}
+
+/// Serialize vault biometric records (JSON array from wf-biometrics IDB store) → Turtle.
+#[wasm_bindgen]
+pub fn vault_biometrics_to_turtle(json: &str) -> Result<String, JsValue> {
+    crate::rdf::vault_biometrics_to_turtle(json).map_err(|e| JsValue::from_str(&e))
+}
+
+// ==========================================
 // SHACL-VIA-SPARQL VALIDATION
 // ==========================================
 

@@ -798,6 +798,8 @@
               onclick="openDietLog()">🍽 Diet</button>
       <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
               onclick="openWallet()">💳 Wallet</button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openBiometrics()">📊 Biometrics</button>
     </div>
   </div>
 
@@ -831,6 +833,62 @@
     <ul id="wallet-txlist"></ul>
     <div class="wallet-onramp">
       Buy Bitcoin via exchange — <em>coming soon (HCW-3)</em>
+    </div>
+  </div>
+</div>
+
+<!-- Biometrics sheet — Samsung Health CSV import + RDF export -->
+<div id="biometrics-sheet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;display:none;align-items:flex-end;justify-content:center"
+     onclick="if(event.target===this)closeBiometrics()">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;padding:1rem 1rem 2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <h3 style="margin:0;font-size:1rem;font-weight:700">📊 Biometrics</h3>
+      <button onclick="closeBiometrics()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--dim)">✕</button>
+    </div>
+
+    <!-- WASM status indicator -->
+    <div id="wasm-status" style="font-size:.75rem;color:var(--dim);margin-bottom:.75rem">Checking WASM engine…</div>
+
+    <!-- Import section -->
+    <div style="background:var(--bg);border-radius:10px;padding:.75rem;margin-bottom:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem">Import Samsung Health export</p>
+      <select id="bio-csv-type" style="width:100%;padding:.4rem;border-radius:6px;border:1px solid var(--dim);background:var(--surface);color:var(--text);font-size:.82rem;margin-bottom:.5rem">
+        <option value="weight">Weight</option>
+        <option value="sleep">Sleep</option>
+        <option value="heart_rate">Heart rate</option>
+        <option value="steps">Steps</option>
+      </select>
+      <label style="display:block;font-size:.78rem;color:var(--dim);margin-bottom:.35rem">Select CSV file from Samsung Health export zip</label>
+      <input type="file" id="bio-csv-file" accept=".csv" style="font-size:.78rem;width:100%">
+      <button onclick="_bioImportCSV()" class="btn" style="margin-top:.6rem;width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.45rem;font-weight:600;font-size:.85rem">
+        Import
+      </button>
+      <div id="bio-import-status" style="font-size:.75rem;margin-top:.4rem;min-height:1.1rem"></div>
+    </div>
+
+    <!-- Stored records summary -->
+    <div id="bio-records-summary" style="background:var(--bg);border-radius:10px;padding:.75rem;margin-bottom:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .4rem">Stored records</p>
+      <div id="bio-counts" style="font-size:.78rem;color:var(--dim)">Loading…</div>
+    </div>
+
+    <!-- Export / SPARQL -->
+    <div style="background:var(--bg);border-radius:10px;padding:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem">Export &amp; query</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button onclick="_bioExportTurtle()" class="btn btn-outline" style="font-size:.78rem;flex:1">
+          ↓ Export as Turtle RDF
+        </button>
+        <button onclick="_bioValidate()" class="btn btn-outline" style="font-size:.78rem;flex:1">
+          ✓ Validate (SHACL)
+        </button>
+      </div>
+      <textarea id="bio-sparql" placeholder="SPARQL query (SELECT/ASK/CONSTRUCT)…"
+        style="width:100%;margin-top:.5rem;height:5rem;font-size:.72rem;font-family:monospace;background:var(--surface);color:var(--text);border:1px solid var(--dim);border-radius:6px;padding:.4rem;box-sizing:border-box;resize:vertical"></textarea>
+      <button onclick="_bioRunSPARQL()" class="btn" style="margin-top:.4rem;width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.4rem;font-weight:600;font-size:.82rem">
+        Run query
+      </button>
+      <pre id="bio-sparql-result" style="font-size:.68rem;background:var(--bg);border-radius:6px;padding:.4rem;margin-top:.4rem;overflow:auto;max-height:10rem;white-space:pre-wrap;display:none"></pre>
     </div>
   </div>
 </div>
@@ -1615,6 +1673,8 @@
 <!-- Medication Sprint 6 — diet log + DL-1 barcode scanning -->
 <script src="js/vault-diet.js?v=7"></script>
 <script src="js/vault-diet-barcode.js?v=7"></script>
+<!-- WASM bridge — wellfare-core (lazy-loads pkg/wellfare_core.js if built) -->
+<script src="js/vault-wasm.js?v=1"></script>
 <!-- HCW-1 — Human-Centric Wallet -->
 <script src="js/vault-wallet.js?v=2"></script>
 <script>
@@ -2592,6 +2652,109 @@ function callOverlayUpdateTicker(text) {
     el.dataset.source = 'live';
     el.classList.remove('fading');
   }, 200);
+}
+
+// ── Biometrics UI (WASM bridge) ───────────────────────────────────────────────
+
+function openBiometrics() {
+    const sheet = document.getElementById('biometrics-sheet');
+    sheet.style.display = 'flex';
+    _bioRefresh();
+}
+
+function closeBiometrics() {
+    document.getElementById('biometrics-sheet').style.display = 'none';
+}
+
+async function _bioRefresh() {
+    // WASM status
+    const statusEl = document.getElementById('wasm-status');
+    if (window.vaultWasm) {
+        await window.vaultWasm.load();
+        statusEl.textContent = window.vaultWasm.isAvailable()
+            ? '⚡ WASM engine ready (wellfare-core)'
+            : '⚠ WASM pkg not built — import disabled. Run: cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg';
+        statusEl.style.color = window.vaultWasm.isAvailable() ? 'var(--accent)' : '#f87171';
+    } else {
+        statusEl.textContent = '⚠ vault-wasm.js not loaded';
+        statusEl.style.color = '#f87171';
+    }
+
+    // Record counts by type
+    const countsEl = document.getElementById('bio-counts');
+    try {
+        const all = await _dbGetAll(_ST_BIOMETRICS);
+        if (!all.length) { countsEl.textContent = 'No records yet — import a CSV to get started.'; return; }
+        const by = {};
+        all.forEach(r => { by[r.type] = (by[r.type] || 0) + 1; });
+        countsEl.innerHTML = Object.entries(by)
+            .map(([t, n]) => `<span style="margin-right:.75rem">${t}: <strong>${n}</strong></span>`)
+            .join('');
+    } catch { countsEl.textContent = 'Could not read IDB.'; }
+}
+
+async function _bioImportCSV() {
+    const statusEl = document.getElementById('bio-import-status');
+    const file = document.getElementById('bio-csv-file').files[0];
+    const type = document.getElementById('bio-csv-type').value;
+    if (!file) { statusEl.textContent = 'Select a CSV file first.'; return; }
+    if (!window.vaultWasm?.isAvailable()) {
+        statusEl.textContent = 'WASM engine not available — build pkg first.';
+        return;
+    }
+    statusEl.textContent = 'Parsing…';
+    try {
+        const csv = await file.text();
+        const n = await window.vaultWasm.importCSVToVault(type, csv);
+        statusEl.textContent = n > 0 ? `✓ Imported ${n} records.` : 'No records found in file.';
+        _bioRefresh();
+    } catch (e) {
+        statusEl.textContent = `Error: ${e.message}`;
+    }
+}
+
+async function _bioExportTurtle() {
+    if (!window.vaultWasm?.isAvailable()) { alert('WASM engine not available.'); return; }
+    const turtle = await window.vaultWasm.exportVaultToTurtle();
+    if (!turtle) { alert('No data to export.'); return; }
+    const blob = new Blob([turtle], { type: 'text/turtle' });
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `wellfair-vault-${new Date().toISOString().slice(0,10)}.ttl`,
+    });
+    a.click();
+}
+
+async function _bioValidate() {
+    if (!window.vaultWasm?.isAvailable()) { alert('WASM engine not available.'); return; }
+    const turtle = await window.vaultWasm.exportVaultToTurtle();
+    if (!turtle) { alert('No data to validate.'); return; }
+    const report = await window.vaultWasm.validateHealthTurtle(turtle);
+    if (!report) { alert('Validation returned no result.'); return; }
+    const msg = report.valid
+        ? `✓ Valid — ${report.checked} shapes checked, no violations.`
+        : `✗ ${report.violations?.length || 0} violation(s) found:\n` +
+          (report.violations || []).map(v => `• ${v.shape}: ${v.message}`).join('\n');
+    alert(msg);
+}
+
+async function _bioRunSPARQL() {
+    const sparql = document.getElementById('bio-sparql').value.trim();
+    const resultEl = document.getElementById('bio-sparql-result');
+    if (!sparql) return;
+    if (!window.vaultWasm?.isAvailable()) {
+        resultEl.style.display = 'block';
+        resultEl.textContent = 'WASM engine not available.';
+        return;
+    }
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'Running…';
+    try {
+        const result = await window.vaultWasm.sparqlOverVault(sparql);
+        resultEl.textContent = JSON.stringify(result, null, 2);
+    } catch (e) {
+        resultEl.textContent = `Error: ${e.message}`;
+    }
 }
 
 // ── Diet Log UI ───────────────────────────────────────────────────────────────
