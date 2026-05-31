@@ -48,7 +48,7 @@ Everything below runs in your browser. No accounts. No servers. No data leaves y
 - Call transcript export — HTML+RDFa, cryptographic event chain, participant revision signing
 
 **Human-Centric Wallet**
-- Lightning wallet integration (HCW-1) — anonymous payment infrastructure; transaction-to-location linkage is prevented by design
+- Lightning wallet integration (HCW-1) — confidential transaction infrastructure; transaction-to-location linkage is prevented by design
 - Nym Mixnet routing — anonymous messaging that cannot be correlated to your IP address
 
 **Semantic health core** *(legacy layer — local research use)*
