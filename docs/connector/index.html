@@ -185,6 +185,58 @@
     .bar-chart { display:flex; align-items:flex-end; gap:3px; height:60px; margin:0.75rem 0; }
     .bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; opacity:0.7; min-height:3px; }
 
+    /* ── Calls panel ── */
+    .calls-idle { text-align:center; padding:2.5rem 1rem; color:var(--dim); }
+    .calls-idle .c-icon { font-size:2.4rem; margin-bottom:.5rem; }
+    .calls-idle p { font-size:.85rem; margin-bottom:.75rem; }
+    .call-active {
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:1rem 1.1rem; margin-bottom:1rem;
+    }
+    .call-active .ca-header {
+      display:flex; align-items:center; gap:.6rem; margin-bottom:.65rem;
+    }
+    .call-active .ca-dot { width:9px; height:9px; border-radius:50%; background:var(--green); animation:pulse 1.2s infinite; }
+    .call-active .ca-name { font-weight:600; font-size:.95rem; flex:1; }
+    .call-active .ca-timer { font-family:monospace; font-size:.78rem; color:var(--dim); }
+    .call-link-row { display:flex; gap:.5rem; align-items:center; margin-bottom:.75rem; }
+    .call-link-row input {
+      flex:1; background:var(--bg); border:1px solid var(--border); border-radius:5px;
+      padding:.35rem .6rem; color:var(--dim); font-size:.72rem; font-family:monospace;
+    }
+    .call-controls-row { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .call-controls-row .btn { flex:1; min-width:80px; padding:.42rem .5rem; font-size:.78rem; }
+    .call-notif {
+      position:fixed; bottom:1rem; right:1rem; z-index:3000;
+      background:var(--surface); border:1px solid var(--accent);
+      border-radius:10px; padding:1rem; min-width:220px; box-shadow:0 4px 16px rgba(0,0,0,.4);
+      display:none;
+    }
+    .call-notif-title { font-size:.88rem; font-weight:700; margin-bottom:.25rem; }
+    .call-notif-sub   { font-size:.75rem; color:var(--dim); margin-bottom:.65rem; word-break:break-all; }
+    .call-notif-btns  { display:flex; gap:.45rem; }
+    .call-notif-btns .btn { flex:1; padding:.38rem .5rem; font-size:.78rem; }
+
+    /* ── Live Indicators panel (WA-6) ── */
+    .indicator-row {
+      display: flex; align-items: center; gap: .5rem;
+      font-size: .83rem; padding: .22rem 0;
+    }
+    .indicator-inactive { opacity: .4; }
+    .indicator-icon  { width: 1.4rem; text-align: center; flex-shrink: 0; }
+    .indicator-label { min-width: 5.5rem; color: var(--dim); flex-shrink: 0; }
+    .indicator-value { font-family: monospace; color: var(--text); flex: 1; }
+    .indicator-qual  { font-size: .73rem; color: var(--dim); }
+    .indicator-modules {
+      font-size: .73rem; color: var(--dim);
+      margin-top: .5rem; padding-top: .4rem; border-top: 1px solid var(--border);
+    }
+    .indicator-privacy {
+      font-size: .72rem; color: var(--dim);
+      margin-top: .55rem; line-height: 1.45; font-style: italic;
+    }
+    .indicator-placeholder { font-size: .82rem; color: var(--dim); padding: .5rem 0; }
+
     /* Notice */
     .ephem-notice {
       margin-top: 1.5rem;
@@ -295,11 +347,29 @@
     </div>
     <div id="session-label"></div>
     <button class="btn btn-ghost" id="retry-btn" onclick="startSession()">New session</button>
+    <!-- Demo / dev: auto-connect link (shown once QR is ready) -->
+    <div id="demo-link-wrap" style="display:none;margin-top:.75rem;text-align:center">
+      <div style="font-size:.72rem;color:var(--dim);margin-bottom:.35rem">
+        Dev / demo — same machine as vault?
+      </div>
+      <button class="btn btn-ghost" style="font-size:.78rem;padding:.3rem .8rem"
+              onclick="_demoConnect()">📱 Open vault connect page</button>
+      <button class="btn btn-ghost" style="font-size:.78rem;padding:.3rem .8rem;margin-left:.4rem"
+              onclick="_demoCopyLink()" id="demo-copy-btn">📋 Copy link</button>
+    </div>
   </div>
 </div>
 
 <!-- ── App shell (shown after connection) ── -->
 <div id="screen-app">
+
+  <!-- Demo mode banner -->
+  <div id="demo-banner" style="display:none;background:rgba(88,166,255,.08);
+       border-bottom:1px solid rgba(88,166,255,.2);padding:.3rem 1.25rem;
+       font-size:.75rem;color:#58a6ff;text-align:center">
+    ⚡ Demo mode — sample data, no vault connected &nbsp;·&nbsp;
+    <a href="connector/" style="color:#58a6ff">Exit demo</a>
+  </div>
 
   <div class="owner-strip" id="owner-strip">
     🔐 Owner workspace — all data read/write. Changes are saved to your vault on your phone.
@@ -352,6 +422,12 @@
         <span class="icon">⚠️</span> Allergies
       </button>
 
+      <!-- Calls — always visible after connection -->
+      <div class="sidebar-label" style="margin-top:.75rem">Comms</div>
+      <button class="nav-item" data-section="calls">
+        <span class="icon">📞</span> Calls
+      </button>
+
       <!-- Owner-only sections — hidden until owner mode -->
       <div class="nav-divider owner-nav" style="display:none">Workspace</div>
       <button class="nav-item owner-nav" data-section="documents" style="display:none">
@@ -379,6 +455,16 @@
 
 </div>
 
+<!-- Incoming call notification (toast, fixed bottom-right) -->
+<div id="conn-call-notif" class="call-notif">
+  <div class="call-notif-title">📞 Incoming call</div>
+  <div class="call-notif-sub" id="conn-notif-caller">—</div>
+  <div class="call-notif-btns">
+    <button class="btn btn-primary" onclick="_connAcceptCall()">Accept</button>
+    <button class="btn btn-ghost"   onclick="_connDismissNotif()">Dismiss</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js" crossorigin="anonymous"></script>
 <script>
@@ -401,6 +487,121 @@ let sessionDidKey  = null;  // ephemeral did:key for this connector session — 
 let sessionNoiseKey = null; // ephemeral X25519 keypair for Noise_XX — memory only
 let vaultPublicKey  = null; // vault's Ed25519 CryptoKey — cached from session_info for sig verification
 let _hiddenTimer    = null; // visibilitychange grace period before auto-disconnect
+
+// ── Demo mode ─────────────────────────────────────────────────────────────────
+const DEMO_MODE = new URLSearchParams(location.search).has('demo');
+
+const DEMO_VAULT = {
+  overview: {
+    metrics: {
+      heart_rate:  { value: 68,   unit: 'bpm',   status: 'normal' },
+      steps_today: { value: 4231, unit: 'steps', status: 'below_goal' },
+      sleep_last:  { value: 6.5,  unit: 'hrs',   status: 'borderline' },
+      blood_pressure: { value: '118/76', unit: 'mmHg', status: 'normal' }
+    },
+    alerts: []
+  },
+  heart_rate: {
+    latest: 68, avg_7d: 71, min_7d: 58, max_7d: 89, unit: 'bpm',
+    readings: [
+      {time:'08:00',value:72},{time:'10:00',value:75},{time:'12:00',value:80},
+      {time:'14:00',value:77},{time:'15:00',value:68},{time:'18:00',value:74},{time:'21:00',value:65}
+    ]
+  },
+  blood_pressure: {
+    latest: '118/76', systolic_avg: 121, diastolic_avg: 78, unit: 'mmHg', trend: 'stable',
+    readings: [{date:'Mon',s:120,d:78},{date:'Tue',s:118,d:76},{date:'Wed',s:124,d:80},
+               {date:'Thu',s:119,d:77},{date:'Fri',s:122,d:79}]
+  },
+  sleep: {
+    last_night_h: 6.5, avg_7d_h: 6.8, quality: 'moderate',
+    log: [{date:'Mon',hours:7.2,quality:'good'},{date:'Tue',hours:5.9,quality:'poor'},
+          {date:'Wed',hours:7.5,quality:'good'},{date:'Thu',hours:6.8,quality:'moderate'},
+          {date:'Fri',hours:8.1,quality:'good'},{date:'Sat',hours:6.5,quality:'moderate'},
+          {date:'Sun',hours:6.5,quality:'moderate'}]
+  },
+  steps: {
+    today: 4231, avg_7d: 6840, goal: 8000,
+    log: [{date:'Mon',steps:7240},{date:'Tue',steps:5910},{date:'Wed',steps:8102},
+          {date:'Thu',steps:6140},{date:'Fri',steps:7900},{date:'Sat',steps:5200},
+          {date:'Sun',steps:4231}]
+  },
+  weight: {
+    latest_kg: 72.4, trend: 'stable ↔',
+    log: [{date:'21 May',kg:72.8},{date:'23 May',kg:72.6},
+          {date:'25 May',kg:72.5},{date:'27 May',kg:72.4},{date:'29 May',kg:72.4}]
+  },
+  medications: {
+    items: [
+      { id:'med-001', name:'Lisinopril', dose:'10', unit:'mg', route:'oral',
+        frequency:'once_daily', scheduleTimes:['08:00'], indication:'Blood pressure',
+        prescriber:'Dr Sarah Chen', startDate:'2019-01-15', status:'active',
+        atcCode:'C09AA03', linkedDataUri:'http://www.wikidata.org/entity/Q422068' },
+      { id:'med-002', name:'Metformin', dose:'500', unit:'mg', route:'oral',
+        frequency:'twice_daily', scheduleTimes:['08:00','20:00'], indication:'Blood glucose',
+        prescriber:'Dr Sarah Chen', startDate:'2021-06-03', status:'active',
+        atcCode:'A10BA02', linkedDataUri:'http://www.wikidata.org/entity/Q190814' },
+      { id:'med-003', name:'Vitamin D3', dose:'1000', unit:'IU', route:'oral',
+        frequency:'once_daily', scheduleTimes:['08:00'], indication:'Supplement',
+        prescriber:null, startDate:'2023-01-01', status:'active',
+        atcCode:'A11CC05', linkedDataUri:'http://www.wikidata.org/entity/Q185833' }
+    ]
+  },
+  conditions: {
+    items: [
+      { name:'Hypertension',    diagnosed:'2019', status:'managed' },
+      { name:'Type 2 Diabetes', diagnosed:'2021', status:'managed' },
+      { name:'Mild asthma',     diagnosed:'2005', status:'intermittent' }
+    ]
+  },
+  allergies: {
+    items: [
+      { substance:'Penicillin', reaction:'Anaphylaxis',      severity:'severe'   },
+      { substance:'Latex',      reaction:'Contact urticaria', severity:'moderate' },
+      { substance:'Ibuprofen',  reaction:'GI bleeding',       severity:'moderate' }
+    ]
+  },
+  blood_type:  { type:'A+', rh_factor:'positive', confirmed:'2018-03-12' },
+  dnr: {
+    dnr_in_place: false, advance_directive: true,
+    directive_summary: 'No mechanical ventilation if brain-dead. Organ donation consented.',
+    document_location: 'On file with GP — Dr Sarah Chen, Southwark Health Centre',
+    last_reviewed: '2024-11-01'
+  },
+  emergency_contacts: {
+    contacts: [
+      { name:'Alex Rivera',   relation:'Partner', phone:'+44 7700 900123', notify_first:true },
+      { name:'Maria Torres',  relation:'Sister',  phone:'+44 7700 900456' },
+      { name:'Dr Sarah Chen', relation:'GP',      phone:'+44 20 7946 0321' }
+    ]
+  },
+  surgical_history: {
+    procedures: [
+      { procedure:'Appendectomy',     date:'2003-07', hospital:'Kings College Hospital' },
+      { procedure:'Knee arthroscopy', date:'2017-03', hospital:'St Thomas Hospital' }
+    ],
+    implants: [], blood_transfusions: false
+  },
+  mental_health: {
+    current_diagnoses: [{ name:'Generalised Anxiety Disorder', status:'managed', since:'2020' }],
+    current_support: 'CBT — 6-weekly sessions',
+    crisis_plan_in_place: true, crisis_contact: 'Mind Helpline 0300 123 3393'
+  },
+  sexual_health: {
+    last_sti_screen: '2025-02-14', sti_screen_result: 'negative',
+    screen_provider: 'SH:24 (postal kit)', conditions: [],
+    note: 'All clear as of last screen.'
+  },
+  social_context: {
+    housing_status: 'Stable — private rented, 1-bed flat',
+    employment_status: 'Self-employed, variable income',
+    support_network: 'Partner, 1 sibling nearby, active GP',
+    current_stressors: ['Financial pressure', 'Caring responsibilities'],
+    safeguarding_flags: []
+  },
+  notes: { entries: [] },
+  documents: { items: [] }
+};
 
 // ── FinalizationRegistry — GC confirmation (dev diagnostic) ───────────────────
 const _gcRegistry = new FinalizationRegistry(label =>
@@ -602,12 +803,41 @@ function showQR(payload) {
     color:{dark:'#000',light:'#fff'} }, err => {
     if (!err) canvas.style.display = 'block';
   });
+  // Store for demo auto-connect (same-origin tabs / localhost dev)
+  try {
+    localStorage.setItem('wf-demo-session', JSON.stringify({
+      sid: sessionId, relay: RELAYS[0], ts: Date.now()
+    }));
+  } catch (_) {}
+  document.getElementById('demo-link-wrap').style.display = 'block';
 }
 
 function hideQR() {
   document.getElementById('qr-canvas').style.display = 'none';
   document.getElementById('qr-placeholder').style.display = 'block';
   document.getElementById('qr-placeholder').textContent = '…';
+  document.getElementById('demo-link-wrap').style.display = 'none';
+  try { localStorage.removeItem('wf-demo-session'); } catch (_) {}
+}
+
+// Demo/dev helpers — open or copy the vault connect link
+function _demoConnectUrl() {
+  return location.origin + '/webconnect.html?sid=' +
+    encodeURIComponent(sessionId) + '&relay=' + encodeURIComponent(RELAYS[0]);
+}
+
+function _demoConnect() {
+  window.open(_demoConnectUrl(), '_blank');
+}
+
+function _demoCopyLink() {
+  navigator.clipboard.writeText(_demoConnectUrl()).then(() => {
+    const btn = document.getElementById('demo-copy-btn');
+    btn.textContent = '✅ Copied';
+    setTimeout(() => { btn.textContent = '📋 Copy link'; }, 2000);
+  }).catch(() => {
+    prompt('Copy this connect link:', _demoConnectUrl());
+  });
 }
 
 // ── App shell UI ─────────────────────────────────────────────────────────────
@@ -733,11 +963,30 @@ function renderSection(section, data) {
       </table>`;
 
   } else if (section === 'medications' && data.items) {
+    const _fLbl = { once_daily:'Once daily', twice_daily:'Twice daily',
+      three_daily:'3× daily', four_daily:'4× daily', weekly:'Weekly', as_needed:'PRN' };
+    const active = data.items.filter(m => m.status !== 'ceased');
+    const ceased = data.items.filter(m => m.status === 'ceased');
     body = `<table class="data-table">
-      <tr><th>Medication</th><th>Dose</th><th>Frequency</th><th>Purpose</th></tr>
-      ${data.items.map(m=>`<tr><td>${m.name}</td><td class="val">${m.dose}</td>
-        <td>${m.frequency}</td><td style="color:var(--dim)">${m.purpose}</td></tr>`).join('')}
-    </table>`;
+      <tr><th>Medication</th><th>Dose</th><th>Schedule</th><th>Indication</th><th>Since</th></tr>
+      ${active.map(m => {
+        const dose  = m.dose ? `${m.dose}${m.unit || ''}` : (m.dose || '—');
+        const sched = m.scheduleTimes?.length ? m.scheduleTimes.join(' & ')
+                      : (_fLbl[m.frequency] || m.frequency || '—');
+        const lod   = m.linkedDataUri
+          ? ` <a href="${m.linkedDataUri}" target="_blank" rel="noopener"
+               style="font-size:.7rem;color:var(--accent)" title="Pharmacological data">↗</a>` : '';
+        return `<tr>
+          <td>${m.name}${lod}</td>
+          <td class="val">${dose}</td>
+          <td>${sched}</td>
+          <td style="color:var(--dim)">${m.indication || m.purpose || '—'}</td>
+          <td style="color:var(--dim)">${m.startDate || '—'}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+    ${ceased.length ? `<p style="font-size:.78rem;color:var(--dim);margin-top:.6rem">
+      Ceased: ${ceased.map(m => m.name).join(', ')}</p>` : ''}`;
 
   } else if (section === 'conditions' && data.items) {
     body = `<table class="data-table">
@@ -791,6 +1040,13 @@ function renderSection(section, data) {
 // ── Messaging ────────────────────────────────────────────────────────────────
 
 function requestSection(section) {
+  if (section === 'calls') { renderCallsPanel(); return; }
+  if (DEMO_MODE) {
+    const data = DEMO_VAULT[section];
+    if (data) renderSection(section, data);
+    else renderContent(`<p style="padding:2rem;color:var(--dim)">Section not available in demo mode.</p>`);
+    return;
+  }
   if (!dc || dc.readyState !== 'open') return;
   showLoading();
   const id = 'r' + (++reqCounter);
@@ -808,6 +1064,14 @@ function requestSection(section) {
 }
 
 async function handleMessage(msg) {
+  if (msg.type === 'agent.telemetry') { _connHandleTelemetry(msg); return; }
+  if (['call_started','call_answered','call_ended','call_incoming'].includes(msg.type)) {
+    _connHandleCallMsg(msg); return;
+  }
+  if (msg.type === 'data_response' || msg.type === 'data_receipt') {
+    _connHandleDataResponse(msg); return;
+  }
+  if (msg.type === 'job_offload') { _connHandleJobOffload(msg); return; }
   if (msg.type === 'session_info') {
     if (msg.vault_did) {
       document.getElementById('vault-did').textContent = msg.vault_did;
@@ -858,6 +1122,7 @@ function waitForICE(p) {
 }
 
 function teardown() {
+  try { localStorage.removeItem('wf-demo-session'); } catch (_) {}
   clearTimeout(expireTimer);
   clearTimeout(_hiddenTimer); _hiddenTimer = null;
   clearInterval(timerInterval);
@@ -876,6 +1141,7 @@ function teardown() {
 }
 
 function disconnect() {
+  if (DEMO_MODE) { location.href = 'connector/'; return; }
   if (dc && dc.readyState === 'open') secureSend({ type: 'disconnect' });
   teardown();
   // Return to pair screen
@@ -1165,6 +1431,358 @@ function saveNotes() {
   });
 }
 
+// ── Calls panel ──────────────────────────────────────────────────────────────
+
+let _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+let _connCallSecs  = 0;
+let _connCallTimer = null;
+let _connTelemetry = null; // latest agent.telemetry payload; cleared on call end
+
+function renderCallsPanel() {
+  if (_connCallState.active) {
+    _connRenderActiveCall();
+  } else {
+    renderContent(`
+      <div class="content-header">
+        <h2>Calls</h2>
+        <p>Start a call with a verified contact via your vault</p>
+      </div>
+      <div class="calls-idle">
+        <div class="c-icon">📞</div>
+        <p>No active call. Ask your vault phone to initiate a call, or use the button below
+           to request a call to a contact on your phone.</p>
+        <button class="btn btn-primary" style="width:auto;display:inline-block;padding:.55rem 1.4rem"
+                onclick="_connRequestCallFromVault()">
+          Start call from vault
+        </button>
+      </div>
+    `);
+  }
+}
+
+function _connRenderActiveCall() {
+  const mins = String(Math.floor(_connCallSecs / 60)).padStart(2, '0');
+  const secs = String(_connCallSecs % 60).padStart(2, '0');
+  const sections = ['wf:overview','wf:medications','wf:conditions','wf:allergies'];
+  const sectionLabels = {
+    'wf:overview':'Overview','wf:medications':'Medications',
+    'wf:conditions':'Conditions','wf:allergies':'Allergies'
+  };
+  renderContent(`
+    <div class="content-header"><h2>Active Call</h2><p>Call in progress via vault</p></div>
+    <div class="call-active">
+      <div class="ca-header">
+        <div class="ca-dot"></div>
+        <div class="ca-name">${_connCallState.callerDid
+          ? _connCallState.callerDid.slice(0, 24) + '…' : 'Connected'}</div>
+        <div class="ca-timer" id="conn-call-timer">${mins}:${secs}</div>
+      </div>
+      ${_connCallState.callLink ? `
+        <div class="call-link-row">
+          <input readonly value="${_connCallState.callLink}" id="conn-call-link-inp" />
+          <button class="btn btn-ghost" style="width:auto;padding:.35rem .7rem;font-size:.75rem"
+                  onclick="navigator.clipboard.writeText('${_connCallState.callLink}')
+                           .then(()=>this.textContent='Copied!')">Copy link</button>
+        </div>` : ''}
+      <div class="call-controls-row">
+        <button class="btn btn-ghost"   onclick="_connSendCallCtrl('mute_audio')">🎙 Mute</button>
+        <button class="btn btn-ghost"   onclick="_connSendCallCtrl('mute_video')">📷 Video</button>
+        <button class="btn btn-primary" style="background:var(--red);color:#fff"
+                onclick="_connEndCall()">End call</button>
+      </div>
+    </div>
+
+    <!-- VC-11 data request -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                padding:.85rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">📤 Request health data</div>
+      <div id="conn-share-picks">
+        ${sections.map(s => `
+          <label style="display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem;font-size:.82rem;cursor:pointer">
+            <input type="checkbox" value="${s}" checked /> ${sectionLabels[s]}
+          </label>`).join('')}
+      </div>
+      <button class="btn btn-ghost" style="width:auto;margin-top:.5rem;padding:.38rem .9rem;font-size:.78rem"
+              onclick="_connRequestData()">Request from vault</button>
+      <div id="conn-share-status" style="font-size:.74rem;color:var(--dim);margin-top:.35rem"></div>
+    </div>
+
+    <!-- VC-11 received data -->
+    <div id="conn-received-data"></div>
+
+    <!-- WA-6 Live Indicators -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                padding:.85rem 1rem;margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">📊 Live Indicators</div>
+      <div id="conn-telemetry-panel">
+        ${_connTelemetry
+          ? _connBuildTelemetryHtml(_connTelemetry)
+          : '<div class="indicator-placeholder">Waiting for patient telemetry…</div>'}
+      </div>
+      <p class="indicator-privacy">These indicators are generated on the patient's device.
+         No raw video, audio, or transcript data is sent to this screen.</p>
+    </div>
+
+    <p class="ephem-notice">
+      Video stream is handled by your vault phone. This panel shows call controls and data sharing.
+    </p>
+  `);
+}
+
+function _connRequestData() {
+  const picks = [...document.querySelectorAll('#conn-share-picks input:checked')]
+    .map(el => el.value);
+  const st = document.getElementById('conn-share-status');
+  if (!picks.length) { st.textContent = 'Select at least one section.'; return; }
+  if (!dc || dc.readyState !== 'open') { st.textContent = 'Not connected to vault.'; return; }
+  const id = 'dr-' + Date.now();
+  secureSend({ type: 'data_request', id, sections: picks,
+               callSessionId: _connCallState.sessionId });
+  st.textContent = 'Request sent — waiting for vault approval…';
+  st.style.color = 'var(--dim)';
+}
+
+function _connHandleDataResponse(msg) {
+  const container = document.getElementById('conn-received-data');
+  if (!container) return;
+  if (msg.type === 'data_receipt') {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background:var(--surface);border:1px solid var(--green);' +
+      'border-radius:8px;padding:.65rem .85rem;margin-bottom:.5rem;font-size:.78rem';
+    notice.innerHTML = `<strong style="color:var(--green)">✓ VP receipt received</strong>` +
+      `<div style="color:var(--dim);margin-top:.2rem;font-family:monospace;font-size:.68rem;word-break:break-all">` +
+      (msg.receiptJsonLd || '').slice(0, 160) + '…</div>';
+    container.prepend(notice);
+    const st = document.getElementById('conn-share-status');
+    if (st) { st.textContent = '✓ Receipt stored'; st.style.color = 'var(--green)'; }
+    return;
+  }
+  // data_response: show section
+  const card = document.createElement('div');
+  card.style.cssText = 'background:var(--surface);border:1px solid var(--border);' +
+    'border-radius:8px;padding:.65rem .85rem;margin-bottom:.5rem';
+  const sectionLabel = msg.section || '—';
+  let preview = '';
+  try { const d = JSON.parse(msg.data); preview = JSON.stringify(d, null, 2).slice(0, 300); }
+  catch (_) { preview = String(msg.data || '').slice(0, 200); }
+  card.innerHTML = `<div style="font-size:.78rem;font-weight:600;margin-bottom:.3rem">${sectionLabel}</div>` +
+    `<pre style="font-size:.68rem;color:var(--dim);white-space:pre-wrap;word-break:break-all">${preview}</pre>`;
+  container.prepend(card);
+}
+
+function _connRequestCallFromVault() {
+  if (!dc || dc.readyState !== 'open') {
+    renderContent('<p style="padding:2rem;color:var(--red)">Not connected to vault.</p>');
+    return;
+  }
+  secureSend({ type: 'initiate_call', contactId: null });
+  renderContent('<div class="loading"><div class="spinner"></div> Requesting call from vault…</div>');
+}
+
+function _connSendCallCtrl(action) {
+  if (!dc || dc.readyState !== 'open') return;
+  secureSend({ type: 'call_control', action, sessionId: _connCallState.sessionId });
+}
+
+function _connEndCall() {
+  if (_connCallState.active) {
+    secureSend({ type: 'call_control', action: 'end', sessionId: _connCallState.sessionId });
+  }
+  _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+  clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+  _connTelemetry = null;
+  renderCallsPanel();
+}
+
+function _connAcceptCall() {
+  _connDismissNotif();
+  secureSend({ type: 'call_control', action: 'accept', sessionId: _connCallState.sessionId });
+}
+
+function _connDismissNotif() {
+  document.getElementById('conn-call-notif').style.display = 'none';
+}
+
+function _connHandleCallMsg(msg) {
+  if (msg.type === 'call_started' || msg.type === 'call_answered') {
+    _connCallState = {
+      active:    true,
+      sessionId: msg.sessionId || _connCallState.sessionId,
+      callLink:  msg.callLink  || _connCallState.callLink,
+      callerDid: msg.callerDid || _connCallState.callerDid,
+    };
+    _connCallSecs = 0;
+    clearInterval(_connCallTimer);
+    _connCallTimer = setInterval(() => {
+      _connCallSecs++;
+      const el = document.getElementById('conn-call-timer');
+      if (el) {
+        const m = String(Math.floor(_connCallSecs / 60)).padStart(2, '0');
+        const s = String(_connCallSecs % 60).padStart(2, '0');
+        el.textContent = m + ':' + s;
+      }
+    }, 1000);
+    // Switch to Calls panel if not already there
+    const callBtn = document.querySelector('[data-section="calls"]');
+    if (callBtn) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      callBtn.classList.add('active');
+    }
+    renderCallsPanel();
+    return;
+  }
+  if (msg.type === 'call_ended') {
+    _connCallState = { active: false, sessionId: null, callLink: null, callerDid: null };
+    clearInterval(_connCallTimer); _connCallTimer = null; _connCallSecs = 0;
+    _connTelemetry = null;
+    renderCallsPanel();
+    return;
+  }
+  if (msg.type === 'call_incoming') {
+    _connCallState.sessionId = msg.sessionId;
+    _connCallState.callerDid = msg.callerDid;
+    document.getElementById('conn-notif-caller').textContent =
+      msg.callerDid ? msg.callerDid.slice(0, 36) + '…' : 'Unknown caller';
+    document.getElementById('conn-call-notif').style.display = 'block';
+  }
+}
+
+// ── VC-12 Desktop job offload ─────────────────────────────────────────────────
+
+async function _connHandleJobOffload(msg) {
+  const { job_id, job_type, payload } = msg;
+  let parsedPayload;
+  try { parsedPayload = JSON.parse(payload); } catch (_) { parsedPayload = payload; }
+
+  // Send progress heartbeat immediately
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 0, eta_ms: null });
+
+  try {
+    let result = null;
+
+    // Built-in handler stubs — expand as job types are registered
+    if (job_type === 'transcript.generate' || job_type === 'transcript.annotate') {
+      result = await _connRunTranscriptJob(job_type, parsedPayload, job_id);
+    } else {
+      // Unknown type — complete with empty result so vault doesn't hang
+      result = { skipped: true, reason: 'No desktop handler for ' + job_type };
+    }
+
+    if (dc && dc.readyState === 'open')
+      secureSend({ type: 'job_result', job_id, result });
+  } catch (e) {
+    if (dc && dc.readyState === 'open')
+      secureSend({ type: 'job_error', job_id, error: e.message });
+  }
+}
+
+async function _connRunTranscriptJob(type, payload, job_id) {
+  const sessionId = payload.sessionId || 'unknown';
+  const events    = Array.isArray(payload.events) ? payload.events : [];
+
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 20, eta_ms: 800 });
+
+  // Build HTML+RDFa from events included in the offload payload
+  const html = _connBuildTranscriptHtml(sessionId, events, type === 'transcript.annotate');
+
+  if (dc && dc.readyState === 'open')
+    secureSend({ type: 'job_progress', job_id, pct: 100, eta_ms: 0 });
+
+  return { sessionId, html };
+}
+
+function _connBuildTranscriptHtml(sessionId, events, annotate) {
+  const esc = s => s == null ? '' : String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const chainEvents = events.filter(e => e.seq >= 0).sort((a, b) => a.seq - b.seq);
+  const segs = chainEvents.map(ev => `
+    <div style="border-left:3px solid #4a90d9;padding:.4rem .75rem;margin:.4rem 0;background:#f8faff">
+      <strong>${esc(ev.type)}</strong>
+      <time style="color:#888;font-size:.78rem"> ${esc(ev.ts)}</time>
+      <div style="font-size:.7rem;color:#888;font-family:monospace">${esc(ev.actorDid || '')}</div>
+      ${ev.payload?.original ? `<p>${esc(ev.payload.original)}</p>` : ''}
+      ${ev.payload?.text ? `<p>${esc(ev.payload.text)}</p>` : ''}
+    </div>`).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en" prefix="wf: https://wellfare.social/ns/vault# dcterms: http://purl.org/dc/terms/">
+<head><meta charset="UTF-8"><title>WellFair Transcript — ${esc(sessionId.slice(0,8))}</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}</style>
+</head>
+<body vocab="https://wellfare.social/ns/vault#" typeof="wf:CommunicationTranscript"
+      resource="urn:uuid:${esc(sessionId)}">
+  <h2>WellFair Communication Transcript</h2>
+  <p>Session: <code>${esc(sessionId)}</code></p>
+  <p style="font-size:.75rem;color:#aaa">Generated on desktop connector · ${new Date().toISOString()}</p>
+  ${segs || '<p><em>No events in this session.</em></p>'}
+</body></html>`;
+}
+
+// ── WA-6 Live telemetry panel ────────────────────────────────────────────────
+
+function _connHandleTelemetry(msg) {
+  _connTelemetry = msg.payload || msg;
+  _connUpdateTelemetryPanel();
+}
+
+function _connUpdateTelemetryPanel() {
+  const panel = document.getElementById('conn-telemetry-panel');
+  if (!panel || !_connTelemetry) return;
+  panel.innerHTML = _connBuildTelemetryHtml(_connTelemetry);
+}
+
+function _connBuildTelemetryHtml(p) {
+  const { modules = [], vision = {}, biometrics = {}, audio = {}, linguistic = {} } = p;
+
+  const bpm     = biometrics.bpm != null ? Math.round(biometrics.bpm) + ' BPM' : '—';
+  const sigQ    = biometrics.signalQuality ? '(' + biometrics.signalQuality + ' signal)' : '';
+  const emotion = vision.emotion || '—';
+  const conf    = vision.confidence != null ? '(conf: ' + Math.round(vision.confidence * 100) + '%)' : '';
+  const rmsLbl  = audio.rms != null
+    ? (audio.rms < 0.01 ? 'low' : audio.rms < 0.05 ? 'medium' : 'high') : '—';
+  const pitchHz = audio.pitchHz != null ? Math.round(audio.pitchHz) + ' Hz' : '—';
+  const sent    = linguistic.sentimentScore != null ? linguistic.sentimentScore.toFixed(1) : '—';
+  const pron    = linguistic.pronounRatio1P != null
+    ? Math.round(linguistic.pronounRatio1P * 100) + '%' : '—';
+
+  const bpmActive  = modules.includes('vision.rpg');
+  const emActive   = modules.includes('vision.emotion');
+  const audActive  = modules.includes('audio.prosody');
+  const lingActive = modules.includes('text.linguistic');
+
+  const _NAMES = { 'vision.emotion': 'emotion', 'vision.rpg': 'pulse',
+                   'audio.prosody': 'prosody',  'text.linguistic': 'language' };
+  const activeStr = modules.map(m => _NAMES[m] || m).join(' · ') || 'none';
+
+  return `
+    <div class="indicator-row${bpmActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">💓</span>
+      <span class="indicator-label">Heart rate</span>
+      <span class="indicator-value">${bpm}</span>
+      ${sigQ ? `<span class="indicator-qual">${sigQ}</span>` : ''}
+    </div>
+    <div class="indicator-row${emActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">😐</span>
+      <span class="indicator-label">Expression</span>
+      <span class="indicator-value">${emotion}</span>
+      ${conf ? `<span class="indicator-qual">${conf}</span>` : ''}
+    </div>
+    <div class="indicator-row${audActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">🎙</span>
+      <span class="indicator-label">Vocal</span>
+      <span class="indicator-value">energy: ${rmsLbl} · pitch: ${pitchHz}</span>
+    </div>
+    <div class="indicator-row${lingActive ? '' : ' indicator-inactive'}">
+      <span class="indicator-icon">📝</span>
+      <span class="indicator-label">Language</span>
+      <span class="indicator-value">sentiment: ${sent} · pronoun: ${pron}</span>
+    </div>
+    <div class="indicator-modules">Modules active: <span style="color:var(--accent)">${activeStr}</span></div>`;
+}
+
 // ── Section renderers — add owner-mode extra sections ─────────────────────────
 
 SECTION_META.medications   = { title: 'Medications',    sub: 'Current prescriptions' };
@@ -1227,6 +1845,20 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
       `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
     return;
   }
+  // ── Demo mode: ?demo skips WebRTC, shows all sections from local mock data ──
+  if (DEMO_MODE) {
+    document.getElementById('demo-banner').style.display  = 'block';
+    document.getElementById('owner-strip').classList.add('visible');
+    document.querySelectorAll('.owner-nav').forEach(el => {
+      el.style.display = el.tagName === 'BUTTON' ? 'flex' : 'block';
+    });
+    document.getElementById('conn-label').textContent   = 'Demo mode';
+    document.getElementById('vault-did').textContent    = 'sample data — no vault';
+    isOwnerMode = true;
+    showAppShell();
+    return;
+  }
+
   startSession();
 })();
 </script>

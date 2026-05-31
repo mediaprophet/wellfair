@@ -76,6 +76,7 @@ from ui.tabs.social_work import render_social_work
 from ui.tabs.profile_intake import render_profile_intake
 from ui.tabs.study_vault import render_study_vault
 from ui.tabs.dev_tools import render_dev_tools
+from ui.tabs.packages_tab import render_packages
 
 
 st.set_page_config(
@@ -329,6 +330,7 @@ def main():
         "document_ingestion": lambda: render_document_ingestion(dark_mode),
         "sanctuary_mode": lambda: render_sanctuary_mode(dark_mode),
         "dev_tools":       lambda: render_dev_tools(dark_mode),
+        "packages":        lambda: render_packages(dark_mode),
     }
 
     if show_settings:

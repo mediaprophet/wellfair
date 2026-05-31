@@ -26,7 +26,7 @@ DataChannel. Nothing is stored on the desktop — closing the tab destroys every
 6. ODRL EdgeConstraints from `docs/profiles/access-profiles.ttl` govern receiver permissions
 7. "Identity credentials" is the canonical term for what specs call DIDs + VCs
 
-## Current state (as of 2026-05-30)
+## Current state (as of 2026-05-30) — branch release/v0.0.6
 
 ### Completed
 - **Milestone 1 (partial)** — WebRTC QR pairing, Gun signalling, DataChannel, 9 access profiles
@@ -93,22 +93,83 @@ Remaining (runtime/device — no code tasks): real-device testing (see
 `instructions/BROWSER_COMPAT.md`), SURB stress test, Nym Sandbox validation + `NYM_SDK_URL`
 activation in `pair.html`.
 
-See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the full checklist.
+See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the v0.0.5 checklist.
+See `instructions/COMMS_EPIC_PLAN.md` for the v0.0.6 implementation plan (VC-7 through VC-15).
+
+### Carry-over from v0.0.5 (not yet done)
+
+**Needs code:**
+- **Medication Sprint 6 — diet log**: `wf-dl` IDB store exists but UI and capture logic not built.
+  Lives in `docs/js/vault-meds-manager.js` or a new `vault-diet.js`. Lower priority than comms epic;
+  pick up when a session has capacity.
+  **Review first:** https://github.com/ouisharelabs/food-dashboard — prior art for food taxonomy,
+  data models, and nutrient schema; may inform `wf-dl` record structure.
+- **Demo connector auto-connect**: `connector/index.html` should detect an active vault Gun session
+  and offer one-click connect (no manual QR scan) for dev/demo use. Small task, ~50 lines.
+
+**Runtime / device only (no code):**
+- **Nym Sandbox validation**: run `docs/nym-test.html` against Nym Sandbox testnet; set
+  `NYM_SDK_URL` constant in `docs/js/vault-nym.js`. Sandbox API: `https://sandbox-nym-api1.nymtech.net/api`.
+- **Real-device testing**: iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md`.
+- **SURB stress test**: airplane-mode toggle while Nym client active; verify fragment expiry + replenish.
+
+### Milestone 7+ — Verifiable Communications Ecosystem *(v0.0.6-dev, in progress)*
+
+New epic. See `instructions/COMMS_EPIC_PLAN.md` for full spec and session-by-session plan.
+Short summary of what will be built:
+- **VC-7** Verified Directory (contact graph, SHACL, encrypted IDB)
+- **VC-8** Semantic Handshake (ODRL agreement, did:peer, Ed25519 signed)
+- **VC-9** Inbound Caller Gating (Nym+Gun dual transport, VC verification before ring)
+- **VC-10** Hypermedia Voice/Video (Topology A vault↔vault; Topology B guest link via join.html)
+- **VC-11** Web Connector (live data sharing during calls, signed VP receipts)
+- **VC-12** Background Job Scheduler (condition-triggered queue: idle/charging/desktop/manual)
+- **VC-13** Event Log & Transcript (HTML+RDFa, Merkle event chain, participant revision signing)
+- **VC-14** Language Transcoding (3-tier progressive STT+translation, provenance RDFa)
+- **VC-15** Content Package (JSON-LD manifest, ODRL-permissioned zip, OTS anchor)
 
 ## Key files
 
 ```
 docs/
+  vault.html             Daily-use vault (PIN → meds, sanctuary, DMS, anon notify)
+                         v0.0.6: + Directory, Calls, Queue panels
+  webconnect.html        WebRTC pairing bridge (QR scan → profile → consent → serving)
   connector/index.html   Desktop connector (Noise initiator, Ed25519 verify)
-  pair.html              Phone vault (Noise responder, Ed25519 sign, Nym DMS + anon notify)
-  nym-test.html          Nym SDK validation harness — run before activating Nym in pair.html
+                         v0.0.6: + Calls nav section
+  join.html              NEW v0.0.6 — lightweight call join page (guest or vault user)
+  pair.html              LEGACY — original monolithic page, kept as working fallback
+  nym-test.html          Nym SDK validation harness — run before activating NYM_SDK_URL
+  js/
+    vault-idb.js               IDB helpers + store constants (v4+ in v0.0.6)
+    vault-crypto.js            Key derivation, AES-GCM, commitments, toB64/fromB64
+    vault-did.js               did:key (Ed25519) generation
+    vault-nym.js               Nym adapter, DMS, anonymous notification
+    vault-mock.js              VAULT mock data + SECTION_LABELS
+    vault-directory.js         NEW VC-7 — contact graph, FOAF-inspired, encrypted IDB
+    vault-handshake.js         NEW VC-8 — Semantic Handshake, ODRL agreement signing
+    vault-comms-gate.js        NEW VC-9 — inbound caller gating, Nym+Gun dual transport
+    vault-comms-call.js        NEW VC-10 — call session, WebRTC media, link gen, guest cred
+    vault-cv.js                NEW VC-10 — OpenCV placeholder (emotional recognition, pulse)
+    vault-scheduler.js         NEW VC-12 — background job queue engine
+    vault-transcript.js        NEW VC-13 — event log → HTML+RDFa transcript
+    vault-comms-transcode.js   NEW VC-14 — language transcoding, 3-tier progressive
+    vault-package.js           NEW VC-15 — content package + JSON-LD manifest
+    vault-sanctuary-pins.js    PIN state machine, canary/setup, duress check, wake lock
+    vault-sanctuary-log.js     Unvarnished Log, Tripwire Dashboard, Synthesis Engine
+    vault-sanctuary-evidence.js  Evidentiary Export, VP generation, OpenTimestamps
+    vault-meds-reminders.js    MedNotifier, today schedule, take/skip, reminder panel
+    vault-meds-lod.js          SUBSTANCE_INTERACTIONS, RxNorm/Wikidata, interaction engine
+    vault-meds-manager.js      Add/cease medication sheet
+    noise-xx.js                Noise_XX_25519_AESGCM_SHA256 (webconnect only)
+    profiles.js                Profile loading, rendering, emergency pre-auth (webconnect only)
   profiles/
-    access-profiles.ttl  SHACL access profile shapes (canonical)
+    access-profiles.ttl  SHACL access profile shapes (canonical); v0.0.6 adds Contact/Relationship shapes
     profiles.json        JS-loadable profile registry
   sw.js                  Service Worker — injects COOP/COEP for Nym SharedArrayBuffer
 
 instructions/
-  VAULT_CONNECTOR_NEXT_STEPS.md   Detailed milestone checklist + architecture notes
+  COMMS_EPIC_PLAN.md              v0.0.6 implementation plan — VC-7 to VC-15, session breakdown
+  VAULT_CONNECTOR_NEXT_STEPS.md   v0.0.5 milestone checklist + architecture notes
   sanctuaryMode.md                Sanctuary Mode full specification (Milestone 5)
   BROWSER_COMPAT.md               Storage/Gun write audit results + real-device test matrix
 ```
@@ -118,7 +179,29 @@ instructions/
 ```
 python -m http.server 3000 --directory docs
 ```
-Then open `http://localhost:3000/connector/` (desktop) and `http://localhost:3000/pair.html` (phone/tab).
+- Phone/daily vault: `http://localhost:3000/vault.html`
+- Demo mode (no PIN): `http://localhost:3000/vault.html?demo`
+- Desktop pairing: `http://localhost:3000/webconnect.html` (phone) + `http://localhost:3000/connector/` (desktop)
+- Legacy: `http://localhost:3000/pair.html` (original monolithic page — still works)
+
+## Testing — MANDATORY
+
+**Always use the `mcp__Claude_in_Chrome__*` tools against a real Python dev server.**
+The Claude app preview environment does not support WebCrypto (Ed25519/X25519), IndexedDB
+writes, or Service Worker registration. Any test that touches encryption, the vault PIN,
+IDB persistence, or the Nym adapter MUST be run via the Chrome Claude extension.
+
+**Demo account PIN: `1234`**
+- `vault.html?demo` skips PIN entirely and loads mock data — use for UI-only checks.
+- `vault.html` with PIN `1234` is the full owner vault with real IDB persistence.
+- The phone (`vault.html`) is the authoritative datastore; the desktop connector
+  (`connector/index.html`) is stateless — it holds nothing after the tab closes.
+
+Typical test flow:
+1. Start dev server: `python -m http.server 3000 --directory docs`
+2. Open `http://localhost:3000/vault.html` in Chrome via `mcp__Claude_in_Chrome__navigate`
+3. Enter PIN `1234` to unlock owner workspace
+4. Verify feature, check console via `mcp__Claude_in_Chrome__read_console_messages`
 
 ## Related external repos
 

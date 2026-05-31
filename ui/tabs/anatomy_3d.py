@@ -706,54 +706,63 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // SKELETAL
             const sysSkel = createLayer('skeletal');
             const skull = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), matBone);
+            skull.name = "proc_skull";
             skull.position.y = 3.2;
             skull.userData = {{ name: "Cranium", desc: "Osteo structure.", metric: "Density Normal" }};
             sysSkel.add(skull);
             for(let i=0; i<15; i++) {{
                 const vert = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.2, 8), matBone);
                 vert.position.set(0, 2.0 - (i * 0.22), -0.3);
+                if(i === 7) vert.name = "proc_vertebral_column"; // representative mid-spine mesh for resolver
                 sysSkel.add(vert);
             }}
             for(let i=0; i<10; i++) {{
                 const rib = new THREE.Mesh(new THREE.TorusGeometry(0.7 + (Math.sin(i/10*Math.PI)*0.3), 0.04, 8, 32, Math.PI), matBone);
                 rib.position.set(0, 1.8 - (i * 0.2), -0.3);
                 rib.rotation.x = -Math.PI / 2 + 0.1;
+                if(i === 4) rib.name = "proc_rib_cage"; // representative mid-thorax mesh for resolver
                 sysSkel.add(rib);
             }}
 
             // MUSCULAR
             const sysMuscular = createLayer('muscular');
             // Optional: attach a dummy mesh if desired, but just defining the layer prevents the crash
-            
+
             // CARDIOVASCULAR
             const sysCardio = createLayer('cardio');
             const heart = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 2), matHeart);
+            heart.name = "proc_heart";
             heart.position.set(-0.25, 1.3, 0.3);
             heart.userData = {{ name: "Myocardium", desc: "Central pump.", metric: bioData.heartRate + " BPM" }};
             sysCardio.add(heart);
             const aorta = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 16, Math.PI), matHeart);
+            aorta.name = "proc_aorta";
             aorta.position.set(-0.1, 1.6, 0.3);
             sysCardio.add(aorta);
 
             // DIGESTIVE
             const sysDigestive = createLayer('digestive');
             const stomach = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), matDigestive);
+            stomach.name = "proc_stomach";
             stomach.scale.set(1.5, 1, 1);
             stomach.position.set(-0.3, 0.2, 0.3);
             stomach.userData = {{ name: "Stomach", desc: "Gastric process.", metric: "Active" }};
             sysDigestive.add(stomach);
             const intestines = new THREE.Mesh(new THREE.TorusKnotGeometry(0.4, 0.1, 100, 16, 3, 4), matDigestive);
+            intestines.name = "proc_small_intestine";
             intestines.position.set(0, -0.6, 0.2);
             sysDigestive.add(intestines);
 
             // ENDOCRINE
             const sysEndo = createLayer('endocrine');
             const pancreas = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), matEndocrine);
+            pancreas.name = "proc_pancreas";
             pancreas.rotation.z = Math.PI / 2;
             pancreas.position.set(0, 0.0, 0.2);
             pancreas.userData = {{ name: "Pancreas", desc: "Insulin Regulation.", metric: "Nominal" }};
             sysEndo.add(pancreas);
             const adrenalL = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08, 0), matEndocrine);
+            adrenalL.name = "proc_adrenal_l";
             adrenalL.position.set(-0.35, -0.1, -0.15);
             adrenalL.userData = {{ name: "Adrenals", desc: "Cortisol production.", metric: bioData.stress>70?"Cortisol Spike!":"Normal" }};
             sysEndo.add(adrenalL);
@@ -761,20 +770,24 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // NERVOUS
             const sysNervous = createLayer('nervous');
             const brain = new THREE.Mesh(new THREE.IcosahedronGeometry(0.65, 3), matBrain);
+            brain.name = "proc_brain";
             brain.position.set(0, 3.2, 0);
             brain.userData = {{ name: "Cerebral Cortex", desc: "Central Nervous System.", metric: bioData.sleepEfficiency + "% Sleep Recovery" }};
             sysNervous.add(brain);
             const spineCord = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4, 8), matBrain);
+            spineCord.name = "proc_spinal_cord";
             spineCord.position.set(0, 1.0, -0.3);
             sysNervous.add(spineCord);
 
             // RESPIRATORY
             const sysResp = createLayer('respiratory');
             const lungL = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), matLungs);
+            lungL.name = "proc_lung_l";
             lungL.scale.set(1, 2.0, 1);
             lungL.position.set(-0.5, 1.4, 0);
             lungL.userData = {{ name: "Left Lung", desc: "Gas exchange.", metric: "SpO2 99%" }};
             const lungR = lungL.clone();
+            lungR.name = "proc_lung_r";
             lungR.position.set(0.5, 1.4, 0);
             sysResp.add(lungL);
             sysResp.add(lungR);
@@ -782,6 +795,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // IMMUNE / LYMPH
             const sysImmune = createLayer('immune');
             const lymph = new THREE.Mesh(new THREE.TorusKnotGeometry(1.0, 0.03, 100, 8, 4, 7), matLymph);
+            lymph.name = "proc_lymph_network";
             lymph.position.y = 1.0;
             lymph.userData = {{ name: "Lymphatic Nodes", desc: "Immune defense.", metric: "Active" }};
             sysImmune.add(lymph);
@@ -789,6 +803,7 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // URINARY
             const sysUro = createLayer('urinary');
             const kidL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), matUro);
+            kidL.name = "proc_kidney_l";
             kidL.scale.set(1, 1.5, 1);
             kidL.position.set(-0.4, -0.2, -0.2);
             kidL.userData = {{ name: "Kidney", desc: "Filtration.", metric: "GFR Normal" }};
@@ -798,15 +813,27 @@ def render_anatomy_3d(dark_mode: bool, normalized_data: dict) -> None:
             // SENSORY
             const sysSensory = createLayer('sensory');
             const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshStandardMaterial({{color:0xffffff, emissive:0xffffff, emissiveIntensity:2}}));
+            eyeL.name = "proc_eye_l";
             eyeL.position.set(-0.3, 3.3, 0.6);
             sysSensory.add(eyeL);
             const eyeR = eyeL.clone();
+            eyeR.name = "proc_eye_r";
             eyeR.position.set(0.3, 3.3, 0.6);
             sysSensory.add(eyeR);
+            // Retina – invisible inner sphere; named for semantic resolver (diabetic retinopathy target)
+            const retinaL = new THREE.Mesh(new THREE.SphereGeometry(0.06), new THREE.MeshStandardMaterial({{color:0xff6600, emissive:0xff4400, emissiveIntensity:0, transparent:true, opacity:0}}));
+            retinaL.name = "proc_retina_l";
+            retinaL.position.set(-0.3, 3.3, 0.65);
+            sysSensory.add(retinaL);
+            const retinaR = retinaL.clone();
+            retinaR.name = "proc_retina_r";
+            retinaR.position.set(0.3, 3.3, 0.65);
+            sysSensory.add(retinaR);
 
             // TRAUMA OVERLAYS
             if (bioData.trauma === "pelvic_trauma") {{
                 const pelvicGlow = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), new THREE.MeshStandardMaterial({{color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 5.0, transparent:true, opacity:0.8}}));
+                pelvicGlow.name = "proc_pelvic_floor";
                 pelvicGlow.position.set(0, -0.5, 0.2);
                 pelvicGlow.scale.set(1.5, 0.8, 1);
                 pelvicGlow.userData = {{ name: "Pelvic Floor", desc: "Severe trauma detected (Birth Complications).", metric: "Chronic Pain" }};

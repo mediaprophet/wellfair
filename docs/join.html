@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>WellFair — Join Call</title>
+  <style>
+    :root {
+      --bg: #f8f9fa; --surface: #ffffff; --border: #dee2e6;
+      --text: #212529; --dim: #6c757d; --accent: #0d6efd;
+      --green: #198754; --red: #dc3545;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 1.5rem 1rem;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1.5rem 1.25rem;
+      width: 100%; max-width: 400px; text-align: center;
+    }
+    .card h1 { font-size: 1.15rem; font-weight: 700; margin-bottom: .4rem; }
+    .card p  { font-size: .85rem; color: var(--dim); margin-bottom: 1.1rem; }
+    .btn {
+      display: block; width: 100%; padding: .65rem;
+      border: none; border-radius: 8px; font-size: .92rem; font-weight: 600;
+      cursor: pointer; margin-top: .75rem; text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-danger  { background: var(--red);    color: #fff; }
+    .btn:hover   { opacity: .88; }
+    .btn:disabled { opacity: .4; cursor: default; }
+    input[type="text"] {
+      display: block; width: 100%; padding: .6rem .75rem;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: .9rem; background: var(--bg); color: var(--text);
+      margin-bottom: .5rem;
+    }
+    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+    /* Video call UI */
+    #step-call { display: none; width: 100%; max-width: 480px; }
+    .video-container {
+      position: relative; width: 100%; border-radius: 12px;
+      overflow: hidden; background: #000; aspect-ratio: 4/3;
+      margin-bottom: .75rem;
+    }
+    #remote-video {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    #self-video {
+      position: absolute; bottom: .6rem; right: .6rem;
+      width: 28%; border-radius: 8px; border: 2px solid rgba(255,255,255,.6);
+      background: #111; object-fit: cover; aspect-ratio: 3/4;
+    }
+    .call-controls {
+      display: flex; gap: .65rem; justify-content: center; margin-bottom: .5rem;
+    }
+    .call-controls .btn {
+      width: auto; padding: .55rem 1.1rem; margin: 0; font-size: .82rem;
+    }
+    .call-status { font-size: .78rem; color: var(--dim); text-align: center; }
+
+    #step-entry, #step-vault-pair, #step-error { display: none; }
+    #step-entry.active, #step-vault-pair.active,
+    #step-error.active, #step-call.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Guest / name-entry step -->
+<div id="step-entry" class="card">
+  <div style="font-size:2rem;margin-bottom:.5rem">📹</div>
+  <h1>Join Call</h1>
+  <p>Enter your name to join as a guest.</p>
+  <input type="text" id="guest-name" placeholder="Your name" maxlength="60"
+         onkeydown="if(event.key==='Enter')joinAsGuest()" />
+  <button class="btn btn-primary" onclick="joinAsGuest()">Join call</button>
+  <button class="btn btn-outline"  onclick="showVaultPair()"
+          style="font-size:.78rem;margin-top:.4rem">
+    I have a WellFair vault — pair instead
+  </button>
+  <div id="entry-status" style="font-size:.75rem;color:var(--dim);margin-top:.6rem"></div>
+</div>
+
+<!-- Vault pairing step -->
+<div id="step-vault-pair" class="card">
+  <div style="font-size:2rem;margin-bottom:.5rem">🔐</div>
+  <h1>Pair your vault</h1>
+  <p>Open WellFair on your phone and scan the QR code at
+     <strong>webconnect.html</strong> to pair, then return here.</p>
+  <button class="btn btn-primary" onclick="showGuestEntry()">Back to guest entry</button>
+</div>
+
+<!-- Active call step -->
+<div id="step-call">
+  <div class="video-container">
+    <video id="remote-video" autoplay playsinline muted></video>
+    <video id="self-video"   autoplay playsinline muted></video>
+  </div>
+  <div class="call-controls">
+    <button class="btn btn-outline" id="btn-mute-audio" onclick="toggleAudio()">🎙 Mute</button>
+    <button class="btn btn-outline" id="btn-mute-video" onclick="toggleVideo()">📷 Video off</button>
+    <button class="btn btn-danger"  onclick="leaveCall()">End</button>
+  </div>
+  <div class="call-status" id="call-status">Connecting…</div>
+</div>
+
+<!-- Error step -->
+<div id="step-error" class="card">
+  <div style="font-size:2rem;margin-bottom:.5rem">⚠️</div>
+  <h1>Cannot join</h1>
+  <p id="error-msg">This call link is invalid or has expired.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
+<script>
+'use strict';
+
+const _GUN_NS   = 'wf-v1-signal';
+const _ICE_CFG  = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const _RELAYS   = ['https://gun.eco/gun', 'https://relay.peer.ooo/gun'];
+
+const _params    = new URLSearchParams(location.search);
+const _sessionId = _params.get('id');
+const _token     = _params.get('token');
+const _vaultMode = _params.has('vault');
+
+let _gun        = null;
+let _gunNode    = null;
+let _pc         = null;
+let _stream     = null;
+let _audioMuted = false;
+let _videoMuted = false;
+
+// ── Entry routing ─────────────────────────────────────────────────────────────
+
+(function init() {
+  if (!_sessionId) { _showError('No session ID in URL.'); return; }
+  if (_vaultMode) { _show('step-vault-pair'); return; }
+  _show('step-entry');
+  document.getElementById('guest-name').focus();
+})();
+
+function showGuestEntry() { _show('step-entry'); }
+
+function showVaultPair() {
+  const url = new URL(location.href);
+  url.searchParams.set('vault', '1');
+  history.replaceState(null, '', url);
+  _show('step-vault-pair');
+}
+
+// ── Guest join ────────────────────────────────────────────────────────────────
+
+async function joinAsGuest() {
+  const name = document.getElementById('guest-name').value.trim();
+  const st   = document.getElementById('entry-status');
+  if (!name) { st.textContent = 'Please enter your name.'; return; }
+
+  st.textContent = 'Requesting camera & microphone…';
+  try {
+    _stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+  } catch (e) {
+    st.textContent = 'Camera/mic access denied: ' + e.message; return;
+  }
+
+  _show('step-call');
+  document.getElementById('self-video').srcObject = _stream;
+
+  _gun     = Gun(_RELAYS);
+  _gunNode = _gun.get(_GUN_NS).get('sessions').get(_sessionId);
+  _pc      = new RTCPeerConnection(_ICE_CFG);
+
+  _stream.getTracks().forEach(t => _pc.addTrack(t, _stream));
+
+  _pc.onicecandidate = ({ candidate }) => {
+    if (candidate) _gunNode.get('ice_b').put(JSON.stringify(candidate));
+  };
+
+  _pc.ontrack = (ev) => {
+    document.getElementById('remote-video').srcObject = ev.streams[0];
+    document.getElementById('call-status').textContent = 'Connected';
+  };
+
+  _pc.onconnectionstatechange = () => {
+    const s = _pc.connectionState;
+    document.getElementById('call-status').textContent =
+      s === 'connected'     ? 'Connected'     :
+      s === 'disconnected'  ? 'Reconnecting…' :
+      s === 'failed'        ? 'Connection lost' : s;
+  };
+
+  // Wait for offer from vault then send answer
+  _gunNode.on(async (data) => {
+    if (!data || !data.offer || !_pc) return;
+    if (_pc.signalingState !== 'stable') return;
+    try {
+      await _pc.setRemoteDescription(JSON.parse(data.offer));
+      const answer = await _pc.createAnswer();
+      await _pc.setLocalDescription(answer);
+      _gunNode.put({ answer: JSON.stringify(answer) });
+    } catch (e) {
+      document.getElementById('call-status').textContent = 'Signalling error: ' + e.message;
+    }
+  });
+
+  _gunNode.get('ice_a').on((raw) => {
+    if (!raw || !_pc) return;
+    try { _pc.addIceCandidate(JSON.parse(raw)); } catch (_) {}
+  });
+
+  // Announce presence with token so vault can verify
+  _gunNode.get('guest').put({ name, token: _token, ts: Date.now() });
+}
+
+// ── Call controls ─────────────────────────────────────────────────────────────
+
+function toggleAudio() {
+  _audioMuted = !_audioMuted;
+  if (_stream) _stream.getAudioTracks().forEach(t => { t.enabled = !_audioMuted; });
+  document.getElementById('btn-mute-audio').textContent =
+    _audioMuted ? '🎙 Unmute' : '🎙 Mute';
+}
+
+function toggleVideo() {
+  _videoMuted = !_videoMuted;
+  if (_stream) _stream.getVideoTracks().forEach(t => { t.enabled = !_videoMuted; });
+  document.getElementById('btn-mute-video').textContent =
+    _videoMuted ? '📷 Video on' : '📷 Video off';
+}
+
+function leaveCall() {
+  if (_stream)   { _stream.getTracks().forEach(t => t.stop()); _stream = null; }
+  if (_pc)       { _pc.close(); _pc = null; }
+  if (_gunNode)  { try { _gunNode.put(null); } catch (_) {} _gunNode = null; }
+  document.getElementById('call-status').textContent = 'Call ended';
+  setTimeout(() => { window.close(); }, 1200);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function _show(stepId) {
+  ['step-entry','step-vault-pair','step-call','step-error'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === stepId);
+  });
+}
+
+function _showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  _show('step-error');
+}
+</script>
+</body>
+</html>

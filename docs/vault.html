@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>WellFair — Vault</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0d6efd" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="WellFair" />
+  <style>
+    :root {
+      --bg:      #f8f9fa; --surface: #ffffff; --border:  #dee2e6;
+      --text:    #212529; --dim:     #6c757d; --accent:  #0d6efd;
+      --green:   #198754; --yellow:  #e67e22; --red:     #dc3545;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh; display: flex; flex-direction: column;
+      align-items: center; padding: 1.25rem 1rem 3rem;
+    }
+    header { text-align:center; margin-bottom:1rem; width:100%; max-width:440px; }
+    header h1 { font-size:1.2rem; font-weight:700; }
+    header p  { color:var(--dim); font-size:0.85rem; margin-top:0.2rem; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.25rem;
+      width: 100%; max-width: 440px; margin-bottom: 0.875rem;
+    }
+    .card h2 { font-size:0.95rem; font-weight:600; margin-bottom:0.875rem; }
+
+    /* PIN entry */
+    .owner-banner {
+      background: #1a1a2e; color: #fff; border-radius: 10px;
+      padding: 1rem; text-align: center; margin-bottom: 1rem;
+    }
+    .owner-banner .icon { font-size: 2rem; margin-bottom: .4rem; }
+    .owner-banner h3 { font-size: 1rem; font-weight: 700; }
+    .owner-banner p  { font-size: .78rem; opacity: .7; margin-top: .2rem; }
+    .pin-row { display: flex; justify-content: center; gap: .5rem; margin: 1.25rem 0; }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid var(--border); background: transparent;
+      transition: background .15s, border-color .15s;
+    }
+    .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+    .pin-dot.error  { background: var(--red);    border-color: var(--red); }
+    .numpad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: .5rem; max-width: 240px; margin: 0 auto;
+    }
+    .numpad-key {
+      padding: .75rem; border: 1px solid var(--border); border-radius: 8px;
+      font-size: 1.1rem; font-weight: 600; background: var(--surface);
+      cursor: pointer; text-align: center; user-select: none;
+    }
+    .numpad-key:active { background: var(--bg); }
+    .numpad-key.del    { font-size: .9rem; color: var(--dim); }
+    .pin-hint { text-align:center; font-size:.78rem; color:var(--dim); margin-top:.75rem; }
+
+    /* Buttons */
+    .btn {
+      display:block; width:100%; padding:.65rem;
+      border:none; border-radius:8px; font-size:.9rem; font-weight:600;
+      cursor:pointer; margin-top:.875rem; text-align:center; text-decoration:none;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-danger  { background:var(--red);    color:#fff; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn:hover   { opacity:.88; }
+    .btn:disabled { opacity:.4; cursor:default; }
+    .back-link {
+      font-size:.82rem; color:var(--dim); cursor:pointer;
+      margin-bottom:.75rem; display:inline-flex; align-items:center; gap:.25rem;
+    }
+    .back-link:hover { color:var(--text); }
+
+    /* Steps */
+    #step-pin, #step-owner, #step-sanctuary-pin, #step-sanctuary { display:none; }
+    #step-pin.active, #step-owner.active,
+    #step-sanctuary-pin.active, #step-sanctuary.active { display:block; }
+
+    /* Sanctuary dark theme */
+    body.sanctuary-active {
+      --bg: #0a0a12; --surface: #141424; --border: #252545;
+      --text: #e2e8f0; --dim: #8892a8; --accent: #7c3aed;
+      --green: #16a34a; --red: #dc2626; --yellow: #d97706;
+    }
+    .sanctuary-banner {
+      background: #1a1a2e; color: #e2e8f0; border-radius: 10px;
+      padding: 1rem; text-align: center; margin-bottom: 1rem;
+    }
+    .sanctuary-banner .icon { font-size: 2rem; margin-bottom: .4rem; }
+    .sanctuary-banner h3 { font-size: 1rem; font-weight: 700; }
+    .sanctuary-banner p  { font-size: .78rem; opacity: .7; margin-top: .2rem; }
+    .sanctuary-entry {
+      border: 1px solid #2d2d4a; border-radius: 8px;
+      padding: .6rem; margin-bottom: .5rem; font-size: .82rem; background: #0d0d1a;
+    }
+    .sanctuary-entry .se-type { font-weight: 600; margin-bottom: .25rem; }
+    .sanctuary-entry .se-type.assertion  { color: #a78bfa; }
+    .sanctuary-entry .se-type.hypothesis { color: #60a5fa; }
+    .sanctuary-entry .se-content { color: #e2e8f0; margin-bottom: .25rem; line-height: 1.4; }
+    .sanctuary-entry .se-meta   { font-size: .68rem; color: #8892a8; }
+    .sanctuary-entry .se-anchor { font-family: monospace; }
+    .s-input {
+      display: block; width: 100%; background: #0d0d1a; border: 1px solid #252545;
+      color: #e2e8f0; border-radius: 6px; padding: .3rem .5rem; font-size: .82rem;
+      margin-top: .25rem; font-family: inherit;
+    }
+    .s-input:focus { outline: 2px solid #7c3aed; border-color: transparent; }
+    .s-label { display: block; font-size: .78rem; color: #8892a8; margin-bottom: .5rem; }
+    .btn-sanctuary { background: #7c3aed; color: #fff; }
+    .btn-sanctuary:hover { opacity: .88; }
+    .btn-sanctuary-outline { background: transparent; border: 1px solid #7c3aed; color: #7c3aed; }
+
+    /* Tripwire / Synthesis / Evidentiary */
+    .tw-entry {
+      border: 1px solid #2d2d4a; border-radius: 8px;
+      padding: .6rem; margin-bottom: .5rem; font-size: .82rem; background: #0d0d1a;
+    }
+    .tw-entry .tw-cat {
+      font-weight: 600; color: #f87171; font-size: .7rem;
+      text-transform: uppercase; letter-spacing: .04em; margin-bottom: .2rem;
+    }
+    .tw-entry .tw-content { color: #e2e8f0; margin-bottom: .3rem; line-height: 1.4; }
+    .tw-entry .tw-meta { font-size: .68rem; color: #8892a8; margin-bottom: .35rem; }
+    .tw-resolve { display: flex; gap: .3rem; flex-wrap: wrap; }
+    .tw-resolve button {
+      font-size: .7rem; padding: .18rem .45rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid #252545; background: #141424; color: #8892a8;
+    }
+    .tw-resolve button:hover, .tw-resolve button.res-active { border-color: #7c3aed; color: #a78bfa; }
+    .synth-hit {
+      background: #0d0d1a; border-left: 2px solid #7c3aed;
+      border-radius: 0 6px 6px 0; padding: .5rem .6rem;
+      margin-bottom: .4rem; font-size: .8rem;
+    }
+    .synth-hit .sh-content { color: #e2e8f0; line-height: 1.4; }
+    .synth-hit .sh-meta { font-size: .68rem; color: #8892a8; margin-top: .2rem; }
+    .vp-json {
+      background: #0d0d1a; border: 1px solid #252545; border-radius: 8px;
+      padding: .6rem; margin-top: .6rem; font-size: .68rem; font-family: monospace;
+      color: #a78bfa; word-break: break-all; max-height: 180px; overflow: auto; white-space: pre-wrap;
+    }
+    .ev-row { display: flex; align-items: flex-start; gap: .5rem; margin-bottom: .45rem; }
+    .ev-row input[type=checkbox] { margin-top: .15rem; accent-color: #7c3aed; flex-shrink: 0; }
+    .ev-row-text { font-size: .8rem; color: #e2e8f0; line-height: 1.35; }
+    .ev-row-meta { font-size: .68rem; color: #8892a8; }
+    .ev-row-anchor { font-size: .68rem; color: #8892a8; margin-top: .25rem; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+    .btn-ots {
+      font-size: .7rem; padding: .2rem .5rem; border-radius: 4px; cursor: pointer;
+      border: 1px solid #252545; background: #141424; color: #a78bfa;
+    }
+    .btn-ots:hover { border-color: #7c3aed; }
+    .btn-ots:disabled { opacity: .5; cursor: default; }
+
+    /* Medication panels */
+    .med-panel-header {
+      display:flex; align-items:center; gap:.45rem; font-size:.82rem; font-weight:600;
+      cursor:pointer; padding:.45rem 0; border-top:1px solid var(--border); user-select:none;
+    }
+    .med-badge { font-size:.68rem; font-weight:700; padding:.12rem .4rem; border-radius:10px; background:transparent; }
+    .med-badge.overdue { background:rgba(248,81,73,.15); color:var(--red); }
+    .med-badge.due     { background:rgba(210,153,34,.15); color:var(--yellow); }
+    .med-dose-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem .55rem; border-radius:8px; margin-bottom:.32rem;
+      background:rgba(255,255,255,.03); border:1px solid var(--border); gap:.5rem;
+    }
+    .med-dose-row.overdue { border-color:rgba(248,81,73,.4); background:rgba(248,81,73,.06); }
+    .med-dose-row.taken   { opacity:.55; }
+    .med-info { display:flex; flex-direction:column; gap:.08rem; flex:1; min-width:0; }
+    .med-name   { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .med-detail { font-size:.73rem; color:var(--dim); }
+    .med-indication { font-size:.7rem; color:var(--dim); font-style:italic; }
+    .med-actions { display:flex; flex-direction:column; gap:.22rem; align-items:flex-end; flex-shrink:0; }
+    .med-status     { font-size:.72rem; font-weight:600; }
+    .med-status.ok  { color:var(--green); }
+    .btn-take {
+      background:var(--green); color:#000; border:none; border-radius:5px;
+      padding:.22rem .6rem; font-size:.73rem; font-weight:700; cursor:pointer; white-space:nowrap;
+    }
+    .btn-take:hover { opacity:.85; }
+    .btn-skip {
+      background:transparent; color:var(--dim); border:1px solid var(--border);
+      border-radius:5px; padding:.18rem .45rem; font-size:.71rem; cursor:pointer;
+    }
+    .btn-skip:hover { color:var(--text); }
+    #med-manager-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .med-manager-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:88vh; overflow-y:auto; padding:1.1rem 1rem 2.5rem;
+    }
+    .med-manager-body h3 { font-size:.95rem; margin-bottom:.65rem; }
+    .med-list-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.5rem .55rem; border-radius:8px; border:1px solid var(--border);
+      margin-bottom:.35rem; background:rgba(255,255,255,.02);
+    }
+    .med-list-item.ceased { opacity:.45; }
+    .med-list-meta { font-size:.74rem; color:var(--dim); margin-top:.08rem; }
+    .med-form-label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .med-form-label span { display:block; margin-bottom:.2rem; }
+    .med-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.28rem .45rem; font-size:.78rem; font-family:inherit;
+    }
+    .med-input:focus { outline:none; border-color:var(--accent); }
+    .med-row { display:flex; gap:.45rem; }
+    .med-row > label { flex:1; }
+    .med-section-label {
+      font-size:.72rem; font-weight:600; color:var(--dim); text-transform:uppercase;
+      letter-spacing:.05em; margin:.6rem 0 .35rem;
+    }
+    .med-autocomplete {
+      position:absolute; top:100%; left:0; right:0; z-index:200;
+      background:var(--surface); border:1px solid var(--border); border-top:none;
+      border-radius:0 0 6px 6px; max-height:220px; overflow-y:auto;
+    }
+    .med-autocomplete-item {
+      padding:.45rem .6rem; cursor:pointer; border-bottom:1px solid var(--border);
+      display:flex; align-items:baseline; gap:.25rem;
+    }
+    .med-autocomplete-item:last-child { border-bottom:none; }
+    .med-autocomplete-item:hover { background:rgba(88,166,255,.08); }
+    .med-lod-info { font-size:.71rem; color:var(--accent); margin-top:.2rem; line-height:1.4; display:none; }
+    .interaction-alert {
+      padding:.5rem .55rem; border-radius:8px; margin-bottom:.3rem;
+      border:1px solid var(--border); background:rgba(255,255,255,.02);
+    }
+    .interaction-alert.severe   { border-color:rgba(248,81,73,.4);  background:rgba(248,81,73,.06); }
+    .interaction-alert.moderate { border-color:rgba(210,153,34,.35); background:rgba(210,153,34,.05); }
+    .interaction-alert.mild     { border-color:rgba(139,148,158,.35); }
+
+    /* ── Directory sheet ─────────────────────────────────────────────────── */
+    #dir-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .dir-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .dir-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .dir-header h3 { font-size:.95rem; font-weight:700; }
+    .dir-scroll { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .dir-search {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:8px; padding:.4rem .65rem; font-size:.85rem;
+      font-family:inherit; margin-bottom:.6rem;
+    }
+    .dir-search:focus { outline:2px solid var(--accent); border-color:transparent; }
+    .dir-contact-card {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.55rem .7rem; border-radius:8px; border:1px solid var(--border);
+      margin-bottom:.35rem; background:rgba(255,255,255,.02); cursor:pointer;
+      gap:.5rem;
+    }
+    .dir-contact-card:hover { border-color:var(--accent); }
+    .dir-contact-info { display:flex; flex-direction:column; gap:.08rem; flex:1; min-width:0; }
+    .dir-contact-name { font-size:.85rem; font-weight:600; }
+    .dir-contact-did  { font-size:.7rem; color:var(--dim); font-family:monospace;
+                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dir-rel-badge {
+      font-size:.68rem; font-weight:600; padding:.12rem .45rem; border-radius:10px;
+      border:1px solid var(--border); color:var(--dim); white-space:nowrap; flex-shrink:0;
+    }
+    .dir-rel-badge.has-agreement { border-color:var(--green); color:var(--green); }
+    /* detail sub-view */
+    .dir-detail-field { margin-bottom:.65rem; }
+    .dir-detail-label { font-size:.73rem; color:var(--dim); margin-bottom:.18rem; display:block; }
+    .dir-detail-value { font-size:.85rem; word-break:break-all; }
+    .dir-detail-mono  { font-family:monospace; font-size:.78rem; }
+    .dir-form-label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .dir-form-label span { display:block; margin-bottom:.2rem; }
+    .dir-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.28rem .45rem; font-size:.82rem;
+      font-family:inherit;
+    }
+    .dir-input:focus { outline:none; border-color:var(--accent); }
+    .dir-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+    .hs-payload {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:6px; padding:.4rem .55rem; font-size:.72rem;
+      font-family:monospace; word-break:break-all; resize:vertical; min-height:5.5rem;
+    }
+    .hs-payload:focus { outline:none; border-color:var(--accent); }
+    .hs-section { margin-bottom:1rem; }
+    .hs-section-label {
+      font-size:.72rem; font-weight:600; color:var(--dim); text-transform:uppercase;
+      letter-spacing:.05em; margin-bottom:.4rem;
+    }
+    .hs-status { font-size:.75rem; margin-top:.35rem; }
+    .hs-sig-ok  { color:var(--green); }
+    .hs-sig-bad { color:var(--red); }
+    .hs-agree-box {
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      padding:.6rem .75rem; font-size:.78rem; line-height:1.6;
+    }
+    .hs-agree-row { display:flex; gap:.35rem; align-items:baseline; margin-bottom:.2rem; }
+    .hs-agree-key { font-size:.7rem; color:var(--dim); min-width:7rem; flex-shrink:0; }
+    .hs-agree-val { font-family:monospace; font-size:.72rem; word-break:break-all; }
+
+    /* ── Queue sheet ─────────────────────────────────────────────────────── */
+    #queue-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:none; align-items:flex-end; justify-content:center;
+    }
+    .queue-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:88vh; display:flex; flex-direction:column;
+    }
+    .queue-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .queue-header h3 { font-size:.95rem; font-weight:700; }
+    .queue-scroll   { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .queue-tabs {
+      display:flex; gap:.35rem; margin-bottom:.75rem; flex-wrap:wrap;
+    }
+    .queue-tab {
+      padding:.28rem .65rem; border:1px solid var(--border); border-radius:20px;
+      font-size:.72rem; font-weight:600; cursor:pointer; background:transparent; color:var(--dim);
+    }
+    .queue-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .queue-job {
+      display:flex; align-items:flex-start; gap:.6rem;
+      padding:.55rem .65rem; border:1px solid var(--border); border-radius:8px; margin-bottom:.4rem;
+    }
+    .queue-job-icon { font-size:1rem; flex-shrink:0; margin-top:.1rem; }
+    .queue-job-body { flex:1; min-width:0; }
+    .queue-job-type { font-size:.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .queue-job-meta { font-size:.7rem; color:var(--dim); margin-top:.1rem; }
+    .queue-job-err  { font-size:.7rem; color:var(--red); margin-top:.1rem; }
+    .queue-prog { height:3px; background:var(--border); border-radius:2px; margin-top:.35rem; }
+    .queue-prog-bar { height:3px; background:var(--accent); border-radius:2px; width:0%; transition:width .3s; }
+    .queue-run-btn {
+      padding:.25rem .55rem; border:1px solid var(--border); border-radius:5px;
+      font-size:.7rem; cursor:pointer; background:transparent; color:var(--text); flex-shrink:0;
+    }
+    .queue-run-btn:hover { background:var(--bg); }
+    .queue-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+    .queue-settings { font-size:.8rem; margin-top:.5rem; }
+    .queue-settings label {
+      display:flex; align-items:center; gap:.5rem;
+      padding:.35rem 0; border-bottom:1px solid var(--border); cursor:pointer; font-size:.82rem;
+    }
+    .queue-settings label:last-child { border-bottom:none; }
+
+    /* ── Wallet sheet ────────────────────────────────────────────────────── */
+    #wallet-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:none; align-items:flex-end; justify-content:center;
+    }
+    .wallet-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:82vh; overflow-y:auto; padding:1.2rem 1rem 2rem;
+      box-sizing:border-box;
+    }
+    .wallet-header {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:.9rem;
+    }
+    .wallet-header h3 { margin:0; font-size:1.05rem; }
+    #wallet-balance {
+      font-size:1.5rem; font-weight:700; text-align:center;
+      margin:.6rem 0 .9rem; letter-spacing:-.01em;
+    }
+    #wallet-status { font-size:.82rem; min-height:1.2rem; margin-bottom:.7rem; }
+    .wallet-actions { display:flex; gap:.5rem; margin-bottom:1rem; }
+    .wallet-actions .btn { flex:1; }
+    #wallet-txlist { list-style:none; margin:0; padding:0; }
+    #wallet-qr-area { margin-top:.4rem; }
+    .wallet-onramp {
+      margin-top:1rem; padding:.6rem; border:1px dashed var(--border); border-radius:8px;
+      text-align:center; font-size:.8rem; color:var(--muted);
+    }
+
+    /* ── Diet log sheet ──────────────────────────────────────────────────── */
+    #diet-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:flex; align-items:flex-end; justify-content:center;
+    }
+    .diet-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .diet-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .diet-header h3 { font-size:.95rem; font-weight:700; }
+    .diet-scroll { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .diet-date-nav {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:.75rem;
+    }
+    .diet-date-nav button {
+      background:none; border:1px solid var(--border); color:var(--text);
+      border-radius:6px; padding:.2rem .55rem; font-size:.85rem; cursor:pointer;
+    }
+    .diet-date-nav button:hover { background:var(--bg); }
+    .diet-date-label { font-size:.82rem; font-weight:600; }
+    .diet-totals {
+      display:flex; gap:.5rem; margin-bottom:.85rem; flex-wrap:wrap;
+    }
+    .diet-total-chip {
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:10px; padding:.2rem .55rem; font-size:.72rem; color:var(--dim);
+    }
+    .diet-total-chip strong { color:var(--text); }
+    .diet-meal-section { margin-bottom:.8rem; }
+    .diet-meal-label {
+      font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+      color:var(--dim); margin-bottom:.3rem;
+    }
+    .diet-entry {
+      display:flex; align-items:flex-start; justify-content:space-between;
+      padding:.4rem .6rem; border:1px solid var(--border); border-radius:8px;
+      margin-bottom:.28rem; gap:.5rem; background:rgba(255,255,255,.02);
+    }
+    .diet-entry-info { flex:1; min-width:0; }
+    .diet-entry-name { font-size:.82rem; font-weight:600; }
+    .diet-entry-meta { font-size:.7rem; color:var(--dim); margin-top:.06rem; }
+    .diet-entry-kcal { font-size:.78rem; font-weight:600; white-space:nowrap; }
+    .diet-del-btn {
+      background:none; border:none; color:var(--dim); cursor:pointer; font-size:.8rem;
+      padding:.1rem .25rem; border-radius:4px; flex-shrink:0;
+    }
+    .diet-del-btn:hover { color:var(--red); }
+    .diet-empty { text-align:center; color:var(--dim); font-size:.82rem; padding:1.2rem 0; }
+    /* add-entry form */
+    .diet-form-label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .diet-form-label span { display:block; margin-bottom:.18rem; }
+    .diet-input {
+      display:block; width:100%; background:var(--bg); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.3rem .45rem; font-size:.82rem;
+      font-family:inherit;
+    }
+    .diet-input:focus { outline:none; border-color:var(--accent); }
+    .diet-row { display:flex; gap:.45rem; }
+    .diet-row .diet-input { flex:1; }
+    .diet-optional-toggle {
+      font-size:.73rem; color:var(--accent); cursor:pointer; border:none;
+      background:none; padding:0; margin-bottom:.5rem;
+    }
+
+    /* ── In-call data sharing panel ──────────────────────────────────────── */
+    #call-share-panel {
+      position:fixed; inset:0; z-index:1800; display:none;
+      align-items:flex-end; justify-content:center;
+      background:rgba(0,0,0,.65);
+    }
+    .share-body {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:16px 16px 0 0; width:100%; max-width:460px;
+      padding:1.25rem 1.25rem 2rem;
+    }
+    .share-title { font-size:.95rem; font-weight:700; margin-bottom:.2rem; }
+    .share-sub   { font-size:.78rem; color:var(--dim); margin-bottom:.9rem; }
+    .share-section-row {
+      display:flex; align-items:center; gap:.6rem;
+      padding:.55rem .65rem; border:1px solid var(--border);
+      border-radius:8px; margin-bottom:.45rem;
+    }
+    .share-section-row input[type=checkbox] { width:16px; height:16px; flex-shrink:0; }
+    .share-section-label { flex:1; font-size:.85rem; }
+    .share-actions { display:flex; gap:.65rem; margin-top:.85rem; }
+    .share-actions .btn { flex:1; margin:0; padding:.58rem; }
+
+    /* ── Caller gate overlays ─────────────────────────────────────────────── */
+    .gate-overlay {
+      position:fixed; inset:0; z-index:2000; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.82);
+    }
+    .gate-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px;
+      padding:1.5rem 1.25rem; width:90%; max-width:380px; text-align:center;
+    }
+    .gate-icon { font-size:2.4rem; margin-bottom:.5rem; }
+    .gate-name { font-size:1.05rem; font-weight:700; margin-bottom:.2rem; }
+    .gate-rel  { font-size:.82rem; color:var(--dim); margin-bottom:.3rem; }
+    .gate-did  { font-size:.68rem; font-family:monospace; color:var(--dim);
+                 word-break:break-all; margin-bottom:1.1rem; }
+    .gate-actions { display:flex; gap:.65rem; justify-content:center; }
+    .gate-actions .btn { width:auto; padding:.55rem 1.4rem; margin:0; font-size:.88rem; }
+
+    /* ── Active call overlay ────────────────────────────────────────────────── */
+    #active-call-overlay {
+      position:fixed;inset:0;z-index:800;display:none;background:#000;
+    }
+    #active-call-overlay.call-active { display:block; }
+    #call-remote-video {
+      position:absolute;inset:0;width:100%;height:100%;
+      object-fit:cover;background:#111;
+    }
+    #call-ticker {
+      position:absolute;top:0;left:0;right:0;z-index:20;height:34px;
+      background:rgba(0,0,0,.58);display:flex;align-items:center;
+      padding:0 .75rem;gap:.5rem;overflow:hidden;
+    }
+    #call-ticker-dot {
+      width:7px;height:7px;border-radius:50%;background:var(--green);
+      flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #call-ticker-text {
+      font-size:.71rem;color:rgba(255,255,255,.92);white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;transition:opacity .25s;
+    }
+    #call-ticker-text.fading { opacity:0; }
+    #call-caller-label {
+      position:absolute;top:42px;left:12px;z-index:20;
+      font-size:.78rem;color:rgba(255,255,255,.8);
+      background:rgba(0,0,0,.42);padding:.15rem .5rem;border-radius:5px;
+      font-variant-numeric:tabular-nums;
+    }
+    #call-local-video {
+      position:absolute;bottom:90px;left:12px;z-index:15;
+      width:112px;height:84px;object-fit:cover;
+      border-radius:8px;border:2px solid rgba(255,255,255,.22);background:#222;
+    }
+    #call-controls {
+      position:absolute;bottom:0;left:0;right:0;z-index:20;height:82px;
+      background:rgba(0,0,0,.62);display:flex;align-items:center;
+      justify-content:center;gap:.65rem;padding:0 .75rem;
+    }
+    .call-ctrl-btn {
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);
+      border-radius:50%;width:54px;height:54px;
+      color:#fff;font-size:1.1rem;cursor:pointer;transition:background .15s;
+    }
+    .call-ctrl-btn:hover { background:rgba(255,255,255,.25); }
+    .call-ctrl-btn.btn-end { background:rgba(220,53,69,.85);border-color:transparent; }
+    .call-ctrl-btn.btn-end:hover { background:#dc3545; }
+    .call-ctrl-btn.btn-active { background:rgba(13,110,253,.75);border-color:transparent; }
+    .call-ctrl-lbl {
+      font-size:.57rem;color:rgba(255,255,255,.68);margin-top:.12rem;
+      display:block;line-height:1;
+    }
+    #call-info-panel {
+      position:absolute;top:0;right:-320px;bottom:0;z-index:30;
+      width:320px;max-width:90vw;
+      background:rgba(12,18,28,.93);border-left:1px solid rgba(255,255,255,.1);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      transition:right .28s ease;display:flex;flex-direction:column;overflow:hidden;
+    }
+    #call-info-panel.panel-open { right:0; }
+    #call-live-panel {
+      position:absolute;bottom:82px;left:0;right:0;z-index:30;
+      max-height:0;overflow:hidden;
+      background:rgba(10,14,24,.9);border-top:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      transition:max-height .3s ease;
+    }
+    #call-live-panel.panel-open { max-height:300px; }
+    .call-panel-hdr {
+      display:flex;justify-content:space-between;align-items:center;
+      padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);
+      color:#fff;font-size:.88rem;font-weight:700;flex-shrink:0;
+    }
+    .call-panel-body { flex:1;overflow-y:auto;padding:.7rem 1rem; }
+    .call-panel-x {
+      background:none;border:none;color:rgba(255,255,255,.5);
+      font-size:1.05rem;cursor:pointer;line-height:1;padding:.1rem .2rem;
+    }
+    .call-panel-x:hover { color:#fff; }
+    .call-info-row {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.42rem .45rem;border-bottom:1px solid rgba(255,255,255,.07);
+      font-size:.8rem;color:rgba(255,255,255,.85);
+    }
+    .call-info-row-lbl { flex:1; }
+    .call-info-share-btn {
+      font-size:.67rem;padding:.17rem .42rem;
+      background:rgba(13,110,253,.55);border:1px solid rgba(13,110,253,.35);
+      border-radius:4px;color:#fff;cursor:pointer;
+    }
+    .call-info-share-btn:hover { background:rgba(13,110,253,.85); }
+    .call-live-inner { padding:.85rem 1rem 1rem; }
+    .call-live-inner label {
+      display:flex;align-items:center;gap:.5rem;
+      color:rgba(255,255,255,.82);font-size:.78rem;cursor:pointer;margin-bottom:0;
+    }
+
+    label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
+    input[type="text"], input[type="password"] {
+      width:100%; padding:.55rem .7rem; border:1px solid var(--border);
+      border-radius:8px; font-size:.88rem; font-family:monospace;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline:2px solid var(--accent); border-color:transparent;
+    }
+    input[type="checkbox"] { width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WellFair Vault</h1>
+  <p>Your personal health vault</p>
+</header>
+
+<!-- Demo banner -->
+<div id="demo-banner" style="display:none;background:rgba(88,166,255,.1);
+     border:1px solid rgba(88,166,255,.3);border-radius:6px;padding:.35rem .65rem;
+     margin-bottom:.75rem;font-size:.74rem;color:#58a6ff;text-align:center;
+     width:100%;max-width:440px">
+  ⚡ Demo mode — sample data only, nothing is saved
+</div>
+
+<!-- Step: PIN entry -->
+<div class="card" id="step-pin">
+  <div class="owner-banner">
+    <div class="icon">🔐</div>
+    <h3>Vault locked</h3>
+    <p>Enter your PIN to unlock your health vault</p>
+  </div>
+
+  <div class="pin-row" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+
+  <div class="numpad">
+    <div class="numpad-key" onclick="pinKey('1')">1</div>
+    <div class="numpad-key" onclick="pinKey('2')">2</div>
+    <div class="numpad-key" onclick="pinKey('3')">3</div>
+    <div class="numpad-key" onclick="pinKey('4')">4</div>
+    <div class="numpad-key" onclick="pinKey('5')">5</div>
+    <div class="numpad-key" onclick="pinKey('6')">6</div>
+    <div class="numpad-key" onclick="pinKey('7')">7</div>
+    <div class="numpad-key" onclick="pinKey('8')">8</div>
+    <div class="numpad-key" onclick="pinKey('9')">9</div>
+    <div class="numpad-key" style="visibility:hidden"></div>
+    <div class="numpad-key" onclick="pinKey('0')">0</div>
+    <div class="numpad-key del" onclick="pinKey('del')">⌫</div>
+  </div>
+  <p class="pin-hint" id="pin-hint">Enter your vault PIN</p>
+</div>
+
+<!-- Step: Owner workspace -->
+<div id="step-owner" style="width:100%;max-width:440px">
+
+  <!-- Status card -->
+  <div class="card" style="margin-bottom:.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:.9rem;font-weight:700">🔐 Vault unlocked</span>
+        <div id="vault-unlock-time" style="font-size:.72rem;color:var(--dim);margin-top:.1rem"></div>
+      </div>
+      <button class="btn btn-outline" style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
+              onclick="lockVault()">Lock</button>
+    </div>
+    <a href="webconnect.html" style="text-decoration:none" class="btn btn-outline" style="margin-top:.65rem;font-size:.82rem">
+      ↔ Connect to desktop
+    </a>
+  </div>
+
+  <!-- Drug interactions -->
+  <div class="card" id="med-interaction-panel" style="display:none;padding:.625rem 1.25rem">
+    <div class="med-panel-header" id="interaction-panel-btn" onclick="toggleInteractionPanel()">
+      <span>⚠ Drug interactions</span>
+      <span class="med-badge" id="interaction-badge"></span>
+      <span style="margin-left:auto;color:var(--dim);font-size:.8rem" id="interaction-chevron">▸</span>
+    </div>
+    <div id="interaction-body" style="margin-top:.4rem;display:none">
+      <div id="interaction-list">
+        <p style="font-size:.78rem;color:var(--dim);text-align:center;padding:.4rem 0">Checking…</p>
+      </div>
+      <p style="font-size:.68rem;color:var(--dim);margin-top:.4rem;line-height:1.4">
+        Drug-drug: RxNorm · Substance: curated dataset. Always consult your prescriber.
+      </p>
+    </div>
+  </div>
+
+  <!-- Medication reminders -->
+  <div class="card" id="med-reminder-panel" style="display:none;padding:.625rem 1.25rem">
+    <div class="med-panel-header" id="med-panel-btn" onclick="toggleMedPanel()">
+      <span>💊 Medications today</span>
+      <span class="med-badge" id="med-panel-badge"></span>
+      <span style="margin-left:auto;color:var(--dim);font-size:.8rem" id="med-panel-chevron">▾</span>
+    </div>
+    <div id="med-today-body" style="margin-top:.4rem">
+      <div id="med-dose-list">
+        <p style="font-size:.78rem;color:var(--dim);text-align:center;padding:.6rem 0">Loading…</p>
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-top:.45rem;font-size:.76rem;padding:.3rem .8rem"
+              onclick="openMedManager()">Manage medications…</button>
+    </div>
+  </div>
+
+  <!-- Dead Man's Switch -->
+  <div id="dms-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="toggleDmsPanel()">⚡ Dead Man's Switch</button>
+    <div id="dms-body" style="display:none;margin-top:.6rem;
+         background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .5rem">
+        If you miss a check-in, an encrypted alert is sent to your trustees via Nym.
+      </p>
+      <label style="display:block;font-size:.78rem;margin-bottom:.4rem">Check-in interval:
+        <select id="dms-interval" style="background:var(--surface);border:1px solid var(--border);
+                color:var(--text);border-radius:4px;padding:.2rem .4rem;font-size:.78rem">
+          <option value="3600000">1 hour</option>
+          <option value="21600000">6 hours</option>
+          <option value="43200000">12 hours</option>
+          <option value="86400000" selected>24 hours</option>
+          <option value="604800000">7 days</option>
+        </select>
+      </label>
+      <label style="display:block;font-size:.78rem;margin-bottom:.3rem">Trustee 1 Nym address:
+        <input type="text" id="dms-trustee-1" placeholder="…"
+               style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                      color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;margin-top:.2rem" />
+      </label>
+      <label style="display:block;font-size:.78rem;margin-bottom:.5rem">Trustee 2 Nym address (optional):
+        <input type="text" id="dms-trustee-2" placeholder="…"
+               style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                      color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;margin-top:.2rem" />
+      </label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.4rem">
+        <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+                onclick="dmsCheckin()">Check in now</button>
+        <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+                onclick="dmsTestFire()">Test fire</button>
+      </div>
+      <div id="dms-status" style="font-size:.75rem;color:var(--dim)"></div>
+    </div>
+  </div>
+
+  <!-- Anonymous notification -->
+  <div id="anon-notify-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="toggleAnonPanel()">☁ Anonymous notification</button>
+    <div id="anon-body" style="display:none;margin-top:.6rem;
+         background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.2);
+         border-radius:8px;padding:.75rem">
+      <p style="font-size:.78rem;color:var(--dim);margin:0 0 .4rem">
+        Send a message via Nym — no identity disclosed.
+      </p>
+      <input type="text" id="anon-recipient" placeholder="Recipient Nym address…"
+             style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                    color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;
+                    margin-bottom:.35rem" />
+      <textarea id="anon-message" rows="3" placeholder="Your message…"
+                style="display:block;width:100%;background:var(--surface);border:1px solid var(--border);
+                       color:var(--text);border-radius:4px;padding:.25rem .4rem;font-size:.78rem;
+                       font-family:inherit;resize:vertical;margin-bottom:.4rem"></textarea>
+      <button class="btn btn-primary" style="font-size:.78rem;padding:.35rem .9rem"
+              onclick="sendAnonMessage()">Send anonymously</button>
+      <div id="anon-status" style="font-size:.75rem;color:var(--dim);margin-top:.3rem"></div>
+    </div>
+  </div>
+
+  <!-- ⚙️ Model preferences panel -->
+  <div id="model-prefs-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="_toggleModelPrefsBody()">⚙️ Model preferences</button>
+    <div id="model-prefs-body" style="display:none;margin-top:.6rem;
+         background:var(--surface);border:1px solid var(--border);
+         border-radius:8px;padding:.85rem 1rem">
+      <div id="model-prefs-content"></div>
+    </div>
+  </div>
+
+  <!-- Contacts / Verified Directory + Queue + Diet Log -->
+  <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <div style="display:flex;gap:.5rem">
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openDirectory()">👥 Contacts</button>
+      <button class="btn btn-outline" id="queue-btn"
+              style="font-size:.78rem;padding:.3rem .6rem;flex:1;position:relative"
+              onclick="openQueue()">
+        ⏱ Queue
+        <span id="queue-badge" style="display:none;position:absolute;top:-5px;right:-5px;
+              background:var(--accent);color:#fff;border-radius:10px;font-size:.6rem;
+              padding:1px 5px;font-weight:700"></span>
+      </button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openDietLog()">🍽 Diet</button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openWallet()">💳 Wallet</button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openBiometrics()">📊 Biometrics</button>
+    </div>
+  </div>
+
+  <!-- Sanctuary mode -->
+  <div id="sanctuary-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem;
+            border-color:#7c3aed;color:#7c3aed"
+            onclick="enterSanctuaryPinStep()">⚫ Sanctuary Mode</button>
+  </div>
+
+</div>
+
+<!-- Wallet sheet -->
+<div id="wallet-sheet" onclick="if(event.target===this)closeWallet()">
+  <div class="wallet-body">
+    <div class="wallet-header">
+      <h3>💳 Personal Wallet</h3>
+      <button class="btn btn-outline" style="padding:.25rem .65rem;font-size:.78rem"
+              onclick="closeWallet()">Close</button>
+    </div>
+    <div id="wallet-status"></div>
+    <div id="wallet-nym-status" style="font-size:.82rem;min-height:1.1rem;margin-bottom:.4rem"></div>
+    <div id="wallet-balance">—</div>
+    <div class="wallet-actions">
+      <button class="btn btn-outline" id="wallet-send-btn" disabled
+              onclick="walletUiSend()">↑ Send</button>
+      <button class="btn btn-outline" id="wallet-receive-btn" disabled
+              onclick="walletUiReceive()">↓ Receive</button>
+    </div>
+    <div id="wallet-qr-area"></div>
+    <ul id="wallet-txlist"></ul>
+    <div class="wallet-onramp">
+      Buy Bitcoin via exchange — <em>coming soon (HCW-3)</em>
+    </div>
+  </div>
+</div>
+
+<!-- Biometrics sheet — Samsung Health CSV import + RDF export -->
+<div id="biometrics-sheet" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1100;display:none;align-items:flex-end;justify-content:center"
+     onclick="if(event.target===this)closeBiometrics()">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;padding:1rem 1rem 2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <h3 style="margin:0;font-size:1rem;font-weight:700">📊 Biometrics</h3>
+      <button onclick="closeBiometrics()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--dim)">✕</button>
+    </div>
+
+    <!-- WASM status indicator -->
+    <div id="wasm-status" style="font-size:.75rem;color:var(--dim);margin-bottom:.75rem">Checking WASM engine…</div>
+
+    <!-- Import section -->
+    <div style="background:var(--bg);border-radius:10px;padding:.75rem;margin-bottom:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem">Import Samsung Health export</p>
+      <select id="bio-csv-type" style="width:100%;padding:.4rem;border-radius:6px;border:1px solid var(--dim);background:var(--surface);color:var(--text);font-size:.82rem;margin-bottom:.5rem">
+        <option value="weight">Weight</option>
+        <option value="sleep">Sleep</option>
+        <option value="heart_rate">Heart rate</option>
+        <option value="steps">Steps</option>
+      </select>
+      <label style="display:block;font-size:.78rem;color:var(--dim);margin-bottom:.35rem">Select CSV file from Samsung Health export zip</label>
+      <input type="file" id="bio-csv-file" accept=".csv" style="font-size:.78rem;width:100%">
+      <button onclick="_bioImportCSV()" class="btn" style="margin-top:.6rem;width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.45rem;font-weight:600;font-size:.85rem">
+        Import
+      </button>
+      <div id="bio-import-status" style="font-size:.75rem;margin-top:.4rem;min-height:1.1rem"></div>
+    </div>
+
+    <!-- Stored records summary -->
+    <div id="bio-records-summary" style="background:var(--bg);border-radius:10px;padding:.75rem;margin-bottom:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .4rem">Stored records</p>
+      <div id="bio-counts" style="font-size:.78rem;color:var(--dim)">Loading…</div>
+    </div>
+
+    <!-- Export / SPARQL -->
+    <div style="background:var(--bg);border-radius:10px;padding:.75rem">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem">Export &amp; query</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button onclick="_bioExportTurtle()" class="btn btn-outline" style="font-size:.78rem;flex:1">
+          ↓ Export as Turtle RDF
+        </button>
+        <button onclick="_bioValidate()" class="btn btn-outline" style="font-size:.78rem;flex:1">
+          ✓ Validate (SHACL)
+        </button>
+      </div>
+      <textarea id="bio-sparql" placeholder="SPARQL query (SELECT/ASK/CONSTRUCT)…"
+        style="width:100%;margin-top:.5rem;height:5rem;font-size:.72rem;font-family:monospace;background:var(--surface);color:var(--text);border:1px solid var(--dim);border-radius:6px;padding:.4rem;box-sizing:border-box;resize:vertical"></textarea>
+      <button onclick="_bioRunSPARQL()" class="btn" style="margin-top:.4rem;width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:.4rem;font-weight:600;font-size:.82rem">
+        Run query
+      </button>
+      <pre id="bio-sparql-result" style="font-size:.68rem;background:var(--bg);border-radius:6px;padding:.4rem;margin-top:.4rem;overflow:auto;max-height:10rem;white-space:pre-wrap;display:none"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- Diet log sheet -->
+<div id="diet-sheet" style="display:none" onclick="if(event.target===this)closeDietLog()">
+  <div class="diet-body">
+    <div class="diet-header">
+      <h3>🍽 Diet Log</h3>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        <button class="btn" style="font-size:.78rem;padding:.25rem .65rem;background:var(--accent);color:#fff;border:none;border-radius:6px"
+                onclick="_dlShowAddForm()">+ Add</button>
+        <button class="btn btn-outline" style="padding:.25rem .65rem;font-size:.78rem"
+                onclick="closeDietLog()">Close</button>
+      </div>
+    </div>
+    <div class="diet-scroll" id="diet-scroll">
+
+      <!-- Date navigation -->
+      <div class="diet-date-nav">
+        <button onclick="_dlNavDate(-1)">‹</button>
+        <span class="diet-date-label" id="diet-date-label">Today</span>
+        <button onclick="_dlNavDate(1)">›</button>
+      </div>
+
+      <!-- Daily totals row -->
+      <div class="diet-totals" id="diet-totals"></div>
+
+      <!-- Meal sections populated by JS -->
+      <div id="diet-log-body"></div>
+
+      <!-- Add entry form (hidden by default) -->
+      <div id="diet-add-form" style="display:none;border-top:1px solid var(--border);padding-top:.85rem;margin-top:.5rem">
+        <p style="font-size:.82rem;font-weight:700;margin-bottom:.65rem">Add food entry</p>
+
+        <!-- Barcode scanner -->
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+          <button type="button" class="btn btn-outline"
+                  style="font-size:.78rem;padding:.25rem .65rem"
+                  onclick="_dlStartScan()">📷 Scan barcode</button>
+          <span id="dl-scan-status" style="font-size:.75rem;color:var(--dim)"></span>
+        </div>
+        <video id="dl-scan-video" autoplay playsinline muted
+               style="display:none;width:100%;max-height:200px;border-radius:8px;
+                      background:#000;margin-bottom:.5rem;object-fit:cover"></video>
+        <input type="hidden" id="dl-source" value="manual">
+
+        <label class="diet-form-label">
+          <span>Food name *</span>
+          <input id="dl-name" class="diet-input" type="text" placeholder="e.g. Oatmeal" autocomplete="off">
+        </label>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1.4">
+            <span>Meal</span>
+            <select id="dl-meal" class="diet-input">
+              <option value="breakfast">Breakfast</option>
+              <option value="lunch">Lunch</option>
+              <option value="dinner">Dinner</option>
+              <option value="snack" selected>Snack</option>
+              <option value="drink">Drink</option>
+            </select>
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Time</span>
+            <input id="dl-time" class="diet-input" type="time">
+          </label>
+        </div>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1.2">
+            <span>Qty</span>
+            <input id="dl-qty" class="diet-input" type="number" min="0" step="any" placeholder="1" value="1">
+          </label>
+          <label class="diet-form-label" style="flex:1.6">
+            <span>Unit</span>
+            <select id="dl-unit" class="diet-input">
+              <option value="serving">serving</option>
+              <option value="g">g</option>
+              <option value="ml">ml</option>
+              <option value="piece">piece</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp</option>
+              <option value="tsp">tsp</option>
+              <option value="oz">oz</option>
+            </select>
+          </label>
+          <label class="diet-form-label" style="flex:1.2">
+            <span>Calories</span>
+            <input id="dl-kcal" class="diet-input" type="number" min="0" step="1" placeholder="0">
+          </label>
+        </div>
+
+        <div class="diet-row" style="margin-bottom:.35rem">
+          <label class="diet-form-label" style="flex:1">
+            <span>Protein (g)</span>
+            <input id="dl-protein" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Carbs (g)</span>
+            <input id="dl-carbs" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label class="diet-form-label" style="flex:1">
+            <span>Fat (g)</span>
+            <input id="dl-fat" class="diet-input" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+        </div>
+
+        <button class="diet-optional-toggle" onclick="_dlToggleOptional(this)">▸ Optional fields</button>
+        <div id="dl-optional" style="display:none">
+          <label class="diet-form-label">
+            <span>Brand / product</span>
+            <input id="dl-brand" class="diet-input" type="text" placeholder="optional">
+          </label>
+          <div class="diet-row" style="margin-bottom:.35rem">
+            <label class="diet-form-label" style="flex:1">
+              <span>Fibre (g)</span>
+              <input id="dl-fiber" class="diet-input" type="number" min="0" step="0.1" placeholder="">
+            </label>
+            <label class="diet-form-label" style="flex:1">
+              <span>Sugar (g)</span>
+              <input id="dl-sugar" class="diet-input" type="number" min="0" step="0.1" placeholder="">
+            </label>
+            <label class="diet-form-label" style="flex:1">
+              <span>Sodium (mg)</span>
+              <input id="dl-sodium" class="diet-input" type="number" min="0" step="1" placeholder="">
+            </label>
+          </div>
+          <label class="diet-form-label">
+            <span>Notes</span>
+            <input id="dl-notes" class="diet-input" type="text" placeholder="optional">
+          </label>
+        </div>
+
+        <p id="dl-save-status" style="font-size:.75rem;min-height:1.1rem;margin:.35rem 0"></p>
+        <div style="display:flex;gap:.5rem;margin-top:.1rem">
+          <button class="btn" style="flex:1;font-size:.82rem;padding:.35rem .8rem;
+                  background:var(--accent);color:#fff;border:none;border-radius:6px"
+                  onclick="_dlSave()">Save entry</button>
+          <button class="btn btn-outline" style="font-size:.82rem;padding:.35rem .8rem"
+                  onclick="_dlHideAddForm()">Cancel</button>
+        </div>
+      </div>
+
+    </div><!-- .diet-scroll -->
+  </div><!-- .diet-body -->
+</div>
+
+<!-- Medication manager — bottom sheet -->
+<div id="med-manager-sheet" style="display:none" onclick="if(event.target===this)closeMedManager()">
+  <div class="med-manager-body">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+      <h3>💊 Medication Management</h3>
+      <button class="btn btn-outline" style="padding:.25rem .65rem;font-size:.78rem"
+              onclick="closeMedManager()">Close</button>
+    </div>
+    <div id="med-manager-list" style="margin-bottom:1rem">
+      <p style="font-size:.78rem;color:var(--dim)">Loading…</p>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:.85rem">
+      <p style="font-size:.82rem;font-weight:600;margin-bottom:.6rem">Add medication</p>
+      <label class="med-form-label">
+        <span>Drug name *</span>
+        <div style="position:relative">
+          <input type="text" id="med-add-name" class="med-input" placeholder="e.g. Atorvastatin"
+                 autocomplete="off" oninput="_medNameInput(event)"
+                 onfocus="if(this.value.length>=3)_medNameInput({target:this})"
+                 onblur="setTimeout(()=>{const s=document.getElementById('med-name-suggestions');if(s)s.style.display='none'},200)" />
+          <div id="med-name-suggestions" class="med-autocomplete" style="display:none"></div>
+        </div>
+        <div id="med-lod-info" class="med-lod-info"></div>
+      </label>
+      <div class="med-row">
+        <label class="med-form-label">
+          <span>Dose *</span>
+          <input type="number" id="med-add-dose" class="med-input" placeholder="e.g. 20" min="0" step="any" />
+        </label>
+        <label class="med-form-label">
+          <span>Unit</span>
+          <select id="med-add-unit" class="med-input">
+            <option value="mg">mg</option><option value="mcg">mcg</option>
+            <option value="g">g</option><option value="IU">IU</option>
+            <option value="mL">mL</option><option value="units">units</option>
+          </select>
+        </label>
+      </div>
+      <label class="med-form-label">
+        <span>Route</span>
+        <select id="med-add-route" class="med-input">
+          <option value="oral">Oral (swallowed)</option>
+          <option value="sublingual">Sublingual (under tongue)</option>
+          <option value="inhaled">Inhaled</option>
+          <option value="topical">Topical (skin)</option>
+          <option value="injected">Injected / IV</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="med-form-label">
+        <span>Frequency</span>
+        <select id="med-add-freq" class="med-input" onchange="_updateScheduleInputs()">
+          <option value="once_daily">Once daily</option>
+          <option value="twice_daily">Twice daily</option>
+          <option value="three_daily">Three times daily</option>
+          <option value="four_daily">Four times daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="as_needed">As needed (PRN)</option>
+        </select>
+      </label>
+      <div id="med-schedule-times" style="margin-bottom:.35rem"></div>
+      <label class="med-form-label">
+        <span>Reason / indication</span>
+        <input type="text" id="med-add-indication" class="med-input" placeholder="e.g. Cholesterol" />
+      </label>
+      <label class="med-form-label">
+        <span>Prescriber (optional)</span>
+        <input type="text" id="med-add-prescriber" class="med-input" placeholder="e.g. Dr Smith" />
+      </label>
+      <label class="med-form-label">
+        <span>Start date</span>
+        <input type="date" id="med-add-start" class="med-input" />
+      </label>
+      <button class="btn btn-primary" style="width:100%;margin-top:.75rem;font-size:.82rem"
+              onclick="saveMedication()">Save medication</button>
+      <div id="med-save-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Queue sheet -->
+<div id="queue-sheet" onclick="if(event.target===this)closeQueue()">
+  <div class="queue-body">
+    <div class="queue-header">
+      <h3>⏱ Job Queue</h3>
+      <div style="display:flex;gap:.45rem;align-items:center">
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_queueRunAll()">▶ Run all</button>
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="closeQueue()">Close</button>
+      </div>
+    </div>
+    <div class="queue-scroll">
+      <!-- Filter tabs -->
+      <div class="queue-tabs" id="queue-tabs">
+        <button class="queue-tab active" data-filter="all"     onclick="_queueSetFilter('all')">All</button>
+        <button class="queue-tab"        data-filter="pending" onclick="_queueSetFilter('pending')">Pending</button>
+        <button class="queue-tab"        data-filter="running" onclick="_queueSetFilter('running')">Running</button>
+        <button class="queue-tab"        data-filter="done"    onclick="_queueSetFilter('done')">Done</button>
+        <button class="queue-tab"        data-filter="failed"  onclick="_queueSetFilter('failed')">Failed</button>
+      </div>
+      <!-- Job list -->
+      <div id="queue-job-list"></div>
+      <!-- Scheduler settings -->
+      <details style="margin-top:1rem">
+        <summary style="font-size:.78rem;font-weight:600;cursor:pointer;color:var(--dim)">
+          Scheduler settings
+        </summary>
+        <div class="queue-settings" style="margin-top:.5rem">
+          <label><input type="checkbox" id="sched-idle"     checked onchange="_schedUpdateSettings()" />
+            Run when idle (screen hidden)</label>
+          <label><input type="checkbox" id="sched-charging" checked onchange="_schedUpdateSettings()" />
+            Run when charging (or 00:00–06:00)</label>
+          <label><input type="checkbox" id="sched-desktop"  checked onchange="_schedUpdateSettings()" />
+            Offload to desktop when connected</label>
+        </div>
+      </details>
+      <details style="margin-top:.75rem">
+        <summary style="font-size:.78rem;font-weight:600;cursor:pointer;color:var(--dim)">
+          Translation settings
+        </summary>
+        <div class="queue-settings" style="margin-top:.5rem">
+          <div style="font-size:.75rem;color:var(--dim);margin-bottom:.4rem">
+            Tier 1 (WebSpeech) is always on. Tier 3 requires your consent each session.
+          </div>
+          <label style="font-size:.78rem">
+            External API endpoint (Tier 3)
+            <input type="url" id="transcode-api-url" class="dir-input"
+                   placeholder="https://your-translation-api/translate"
+                   style="font-size:.75rem;margin-top:.25rem"
+                   onchange="configureExternalApi(this.value)" />
+          </label>
+          <div style="display:flex;gap:.5rem;margin-top:.4rem">
+            <button class="btn btn-outline"
+                    style="width:auto;font-size:.75rem;padding:.22rem .6rem"
+                    onclick="_txcGrant()">Grant consent (this session)</button>
+            <span id="transcode-consent-badge"
+                  style="font-size:.75rem;color:var(--dim);align-self:center"></span>
+          </div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:.3rem">
+            Detected tier: <span id="transcode-tier-label">—</span>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- Directory sheet -->
+<div id="dir-sheet" style="display:none" onclick="if(event.target===this)closeDirectory()">
+  <div class="dir-body">
+    <div class="dir-header">
+      <h3>👥 Contacts</h3>
+      <div style="display:flex;gap:.45rem;align-items:center">
+        <button class="btn btn-primary" id="dir-add-btn"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_dirShowAddForm()">+ Add</button>
+        <button class="btn btn-outline" id="dir-receive-btn"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_hsShowReceive()">↙ Receive</button>
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="closeDirectory()">Close</button>
+      </div>
+    </div>
+
+    <!-- List view -->
+    <div id="dir-list-view" class="dir-scroll">
+      <input class="dir-search" id="dir-search" type="text"
+             placeholder="Search by name or identity credential…"
+             oninput="_dirFilterList(this.value)" />
+      <div id="dir-contact-list">
+        <p class="dir-empty">No contacts yet — tap + Add to create one.</p>
+      </div>
+    </div>
+
+    <!-- Add contact form -->
+    <div id="dir-add-view" class="dir-scroll" style="display:none">
+      <span class="back-link" onclick="_dirShowListView()">← Back</span>
+      <p style="font-size:.88rem;font-weight:600;margin-bottom:.75rem">New contact</p>
+      <label class="dir-form-label">
+        <span>Name *</span>
+        <input type="text" id="dir-add-name" class="dir-input" placeholder="e.g. Dr Sarah Jones" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Identity credential (did:key or did:peer)</span>
+        <input type="text" id="dir-add-did" class="dir-input"
+               placeholder="did:key:z6Mk…" style="font-family:monospace;font-size:.78rem" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>WebID / profile URL (optional)</span>
+        <input type="text" id="dir-add-webid" class="dir-input" placeholder="https://…" />
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Notes (private)</span>
+        <textarea id="dir-add-notes" class="dir-input" rows="3"
+                  placeholder="Anything you want to remember about this contact…"
+                  style="resize:vertical"></textarea>
+      </label>
+      <label class="dir-form-label" style="margin-top:.45rem">
+        <span>Call profile</span>
+        <select id="dir-add-profile" class="dir-input"
+                style="font-size:.82rem;padding:.38rem .5rem"></select>
+        <span style="font-size:.7rem;color:var(--dim);margin-top:.2rem;display:block"
+              id="dir-add-profile-desc"></span>
+      </label>
+      <button class="btn btn-primary" style="margin-top:.75rem;font-size:.82rem"
+              onclick="_dirSaveNewContact()">Save contact</button>
+      <div id="dir-add-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;text-align:center"></div>
+    </div>
+
+    <!-- Contact detail view -->
+    <div id="dir-detail-view" class="dir-scroll" style="display:none">
+      <span class="back-link" onclick="_dirShowListView()">← Contacts</span>
+      <div id="dir-detail-content"></div>
+    </div>
+
+    <!-- Handshake view — initiator proposal + receiver flow -->
+    <div id="dir-handshake-view" class="dir-scroll" style="display:none">
+      <span class="back-link" id="hs-back-link" onclick="_dirShowListView()">← Contacts</span>
+
+      <!-- Stage A: proposal generated (initiator) -->
+      <div id="hs-stage-proposal" style="display:none">
+        <p style="font-size:.88rem;font-weight:600;margin-bottom:.65rem">Handshake proposal</p>
+        <div class="hs-section">
+          <p class="hs-section-label">Your proposal payload</p>
+          <textarea class="hs-payload" id="hs-proposal-payload" readonly></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.76rem;padding:.28rem .7rem"
+                  onclick="_hsCopyPayload('hs-proposal-payload')">Copy to clipboard</button>
+          <p class="hs-status" id="hs-proposal-nym-status"></p>
+        </div>
+        <p style="font-size:.78rem;color:var(--dim);line-height:1.5;margin-top:.35rem">
+          Share this with your contact. They paste it into their vault and accept.
+          Once they send back their response, paste it below to finalise.
+        </p>
+        <div class="hs-section" style="margin-top:1rem">
+          <p class="hs-section-label">Paste their response</p>
+          <textarea class="hs-payload" id="hs-response-input"
+                    placeholder="Paste the response blob here…"></textarea>
+          <button class="btn btn-primary"
+                  style="width:auto;margin:.4rem 0 0;font-size:.78rem;padding:.32rem .8rem"
+                  onclick="_hsFinalisePasted()">Finalise handshake</button>
+          <p class="hs-status" id="hs-finalise-status"></p>
+        </div>
+      </div>
+
+      <!-- Stage B: receive & review (receiver) -->
+      <div id="hs-stage-receive" style="display:none">
+        <p style="font-size:.88rem;font-weight:600;margin-bottom:.65rem">Receive handshake</p>
+        <div class="hs-section">
+          <p class="hs-section-label">Paste the proposal from your contact</p>
+          <textarea class="hs-payload" id="hs-proposal-input"
+                    placeholder="Paste the handshake proposal here…"></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.78rem;padding:.32rem .8rem"
+                  onclick="_hsParseProposal()">Parse &amp; review</button>
+          <p class="hs-status" id="hs-parse-status"></p>
+        </div>
+        <div id="hs-review-section" style="display:none;margin-top:.75rem">
+          <p class="hs-section-label">Agreement details</p>
+          <div class="hs-agree-box" id="hs-agree-detail"></div>
+          <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap">
+            <button class="btn btn-primary"
+                    style="width:auto;margin:0;font-size:.78rem;padding:.32rem .9rem"
+                    onclick="_hsAccept()">Accept</button>
+            <button class="btn btn-outline"
+                    style="width:auto;margin:0;font-size:.78rem;padding:.32rem .9rem"
+                    onclick="_dirShowListView()">Decline</button>
+          </div>
+          <p class="hs-status" id="hs-accept-status"></p>
+        </div>
+        <div id="hs-response-section" style="display:none;margin-top:.75rem">
+          <p class="hs-section-label">Your response — send this back</p>
+          <textarea class="hs-payload" id="hs-response-payload" readonly></textarea>
+          <button class="btn btn-outline"
+                  style="width:auto;margin:.4rem 0 0;font-size:.76rem;padding:.28rem .7rem"
+                  onclick="_hsCopyPayload('hs-response-payload')">Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sanctuary PIN entry step -->
+<div class="card" id="step-sanctuary-pin">
+  <span class="back-link" onclick="exitSanctuaryPinStep()">← Back to vault</span>
+  <div class="sanctuary-banner">
+    <div class="icon">⚫</div>
+    <h3>Sanctuary Mode</h3>
+    <p id="sanctuary-pin-banner-desc">Enter Sanctuary PIN to continue</p>
+  </div>
+  <div class="pin-row" id="sp-dots">
+    <div class="pin-dot" id="spd0"></div>
+    <div class="pin-dot" id="spd1"></div>
+    <div class="pin-dot" id="spd2"></div>
+    <div class="pin-dot" id="spd3"></div>
+  </div>
+  <div class="numpad">
+    <div class="numpad-key" onclick="sanctuaryPinKey('1')">1</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('2')">2</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('3')">3</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('4')">4</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('5')">5</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('6')">6</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('7')">7</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('8')">8</div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('9')">9</div>
+    <div class="numpad-key" style="visibility:hidden"></div>
+    <div class="numpad-key" onclick="sanctuaryPinKey('0')">0</div>
+    <div class="numpad-key del" onclick="sanctuaryPinKey('del')">⌫</div>
+  </div>
+  <p class="pin-hint" id="sanctuary-pin-hint">Enter your Sanctuary PIN</p>
+</div>
+
+<!-- Sanctuary workspace -->
+<div id="step-sanctuary">
+  <div class="card" style="background:#1a1a2e;border-color:#2d2d4a;color:#e2e8f0;margin-bottom:.875rem">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:1rem;font-weight:700;letter-spacing:.02em">⚫ Sanctuary Mode</span>
+        <div style="font-size:.7rem;opacity:.55;margin-top:.15rem">Isolated · Encrypted · Anchored</div>
+      </div>
+      <button class="btn btn-sanctuary-outline"
+              style="width:auto;margin:0;font-size:.75rem;padding:.3rem .75rem"
+              onclick="exitSanctuaryMode()">Exit ↩</button>
+    </div>
+  </div>
+
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">📓 Unvarnished Log</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Record sensitive facts without clinical or legal commitment.
+      Each entry is encrypted and DLT-anchored before storage.
+    </p>
+    <label class="s-label">Entry type
+      <select id="sanctuary-entry-type" class="s-input" style="margin-bottom:.5rem">
+        <option value="assertion">◉ Veiled Assertion — definitive fact</option>
+        <option value="hypothesis">◎ Hypothesis Node — epistemic uncertainty</option>
+      </select>
+    </label>
+    <label class="s-label">Content
+      <textarea id="sanctuary-entry-content" class="s-input" rows="4"
+                placeholder="Describe what happened, when, who was involved…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+    <button class="btn btn-sanctuary" onclick="logSanctuaryEntry()">Log &amp; anchor entry</button>
+    <div id="sanctuary-entry-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div style="margin-top:1.25rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em">Previous entries</p>
+      <div id="sanctuary-log-list"></div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🚨 Tripwire Dashboard</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Log external events that conflict with your sanctuary record.
+    </p>
+    <label class="s-label">Collision type
+      <select id="tw-category" class="s-input" style="margin-bottom:.4rem">
+        <option value="prescription">Prescription conflict</option>
+        <option value="coercion">Coercive control pattern</option>
+        <option value="false_claim">False claim / fabrication</option>
+        <option value="legal">Legal or administrative</option>
+        <option value="surveillance">Surveillance / digital</option>
+        <option value="other">Other</option>
+      </select>
+    </label>
+    <label class="s-label">Describe the external query or event
+      <textarea id="tw-trigger" class="s-input" rows="3"
+                placeholder="What happened, who was involved, when…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+    <button class="btn btn-sanctuary" onclick="logTripwire()">Log collision</button>
+    <div id="tw-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div style="margin-top:1.25rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em">Active collisions · Resolution Engine</p>
+      <div id="tw-feed"></div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">⚗ Synthesis Engine</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Input an external claim and run it against your immutable record.
+    </p>
+    <label class="s-label">External claim to audit
+      <textarea id="synth-claim" class="s-input" rows="4"
+                placeholder="Paste or type the claim, report, or assertion to audit…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+    </label>
+    <button class="btn btn-sanctuary" onclick="runContradictionAudit()">Run contradiction audit</button>
+    <div id="synth-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div id="synth-report"></div>
+    <div style="margin-top:1rem;border-top:1px solid #252545;padding-top:.875rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.5rem;
+                text-transform:uppercase;letter-spacing:.05em">Sentinel ruleset</p>
+      <textarea id="sentinel-rules" class="s-input" rows="4"
+                placeholder="One pattern per line — e.g.: coercion, forced compliance, missed dose, threat…"
+                style="resize:vertical;margin-bottom:.5rem"></textarea>
+      <button class="btn btn-sanctuary-outline" onclick="saveSentinelRules()">Save ruleset</button>
+      <div id="sentinel-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🔒 Evidentiary Export</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      Package sanctuary entries as a cryptographically sealed Verifiable Presentation.
+    </p>
+    <div id="ev-entry-list"><div style="color:#8892a8;font-size:.78rem">Loading entries…</div></div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem">
+      <button class="btn btn-sanctuary" onclick="generateVP()">Generate Verifiable Presentation</button>
+      <button class="btn btn-sanctuary-outline" onclick="refreshEvidentiary()">Refresh list</button>
+    </div>
+    <div id="ev-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    <div id="ev-vp-output"></div>
+    <div style="margin-top:1rem;border-top:1px solid #252545;padding-top:.875rem">
+      <p style="font-size:.7rem;font-weight:600;color:#8892a8;margin-bottom:.4rem;
+                text-transform:uppercase;letter-spacing:.05em">Bitcoin anchoring via OpenTimestamps</p>
+      <p style="font-size:.75rem;color:#8892a8;line-height:1.5">
+        Commitment hashes are published anonymously to Bitcoin via public calendar servers.
+        Each hash is one anonymous leaf in a Merkle tree — no on-chain identity.
+        A <code style="font-size:.7rem;color:#a78bfa">.ots</code> proof file can be verified offline.
+      </p>
+      <button class="btn btn-sanctuary-outline" style="margin-top:.6rem"
+              onclick="exportCommitmentManifest()">Export commitment manifest</button>
+      <div id="dlt-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+    </div>
+  </div>
+
+  <div class="card" style="background:#141424;border-color:#252545;color:#e2e8f0">
+    <h2 style="color:#e2e8f0;margin-bottom:.3rem">🛡 Contingency Protocols</h2>
+    <p style="font-size:.76rem;color:#8892a8;margin-bottom:.875rem;line-height:1.5">
+      When your Duress PIN is entered at the vault screen, these contacts receive
+      a silent anonymous alert via Nym.
+    </p>
+    <label class="s-label">Duress contact 1 (Nym address)
+      <input type="text" id="duress-contact-1" class="s-input" placeholder="…" />
+    </label>
+    <label class="s-label" style="margin-top:.4rem">Duress contact 2 (optional)
+      <input type="text" id="duress-contact-2" class="s-input" placeholder="…" />
+    </label>
+    <label class="s-label" style="margin-top:.4rem">Enter Duress PIN to save contacts
+      <input type="password" id="duress-pin-update" class="s-input" placeholder="••••" maxlength="4" />
+    </label>
+    <button class="btn btn-sanctuary-outline" style="margin-top:.75rem"
+            onclick="saveDuressContacts()">Save duress contacts</button>
+    <div id="duress-contacts-status" style="font-size:.75rem;margin-top:.4rem;color:#8892a8"></div>
+  </div>
+</div>
+
+<!-- ── Active Call Overlay — shown during calls ───────────────────────────── -->
+<div id="active-call-overlay">
+
+  <!-- Ticker: live module readouts across the top -->
+  <div id="call-ticker">
+    <span id="call-ticker-dot"></span>
+    <span id="call-ticker-text">Call in progress</span>
+  </div>
+
+  <!-- Remote peer video — fills overlay background -->
+  <video id="call-remote-video" autoplay playsinline></video>
+
+  <!-- Call timer / caller label — top-left below ticker -->
+  <div id="call-caller-label">0:00</div>
+
+  <!-- Local camera PiP — bottom-left corner -->
+  <video id="call-local-video" autoplay playsinline muted></video>
+
+  <!-- Bottom control bar -->
+  <div id="call-controls">
+    <button class="call-ctrl-btn" id="call-btn-mute"
+            onclick="_callOverlayToggleMute()" title="Mute">
+      <span id="call-btn-mute-icon">🔇</span>
+      <span class="call-ctrl-lbl">Mute</span>
+    </button>
+    <button class="call-ctrl-btn btn-end"
+            onclick="typeof endCall==='function'&&endCall()" title="End call">
+      📞<span class="call-ctrl-lbl">End</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-share"
+            onclick="_callOverlayOpenShare()" title="Share data">
+      📤<span class="call-ctrl-lbl">Share</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-info"
+            onclick="_callOverlayToggleInfo()" title="Patient info">
+      📋<span class="call-ctrl-lbl">Info</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-live"
+            onclick="_callOverlayToggleLive()" title="Live indicators">
+      📊<span class="call-ctrl-lbl">Live</span>
+    </button>
+  </div>
+
+  <!-- Info slide-out panel (from right) -->
+  <div id="call-info-panel">
+    <div class="call-panel-hdr">
+      <span>Health Data</span>
+      <button class="call-panel-x" onclick="_callOverlayToggleInfo()">✕</button>
+    </div>
+    <div class="call-panel-body" id="call-info-content">
+      <p style="color:rgba(255,255,255,.45);font-size:.78rem;margin-top:.4rem">Loading…</p>
+    </div>
+  </div>
+
+  <!-- Live indicators drawer (slides up from bottom controls) -->
+  <div id="call-live-panel">
+    <div class="call-live-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+        <span style="font-size:.82rem;font-weight:700;color:#fff">📊 Live indicators</span>
+        <button onclick="stopAgent();_callOverlayToggleLive()"
+                style="font-size:.7rem;padding:.18rem .5rem;border:1px solid rgba(220,53,69,.55);
+                       border-radius:5px;background:transparent;
+                       color:rgba(220,53,69,.9);cursor:pointer">All off</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.38rem;margin-bottom:.55rem">
+        <label>
+          <input type="checkbox" id="agent-chk-vision-emotion"
+                 onchange="_cvToggle('vision.emotion', this.checked)" />
+          <span><strong style="color:#fff">Facial expression</strong> — emotion tracking</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-vision-rpg"
+                 onchange="_cvToggle('vision.rpg', this.checked)" />
+          <span><strong style="color:#fff">Heart rate indicator</strong> — remote pulse via camera</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-audio-prosody"
+                 onchange="_cvToggle('audio.prosody', this.checked)" />
+          <span><strong style="color:#fff">Vocal pattern analysis</strong> — tone, pitch, speech rate</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-text-linguistic"
+                 onchange="_cvToggle('text.linguistic', this.checked)" />
+          <span><strong style="color:#fff">Language patterns</strong> — text analysis</span>
+        </label>
+      </div>
+      <div id="agent-active-modules" style="font-size:.72rem;color:rgba(255,255,255,.45)">No modules active</div>
+      <p style="font-size:.67rem;color:rgba(255,255,255,.38);margin-top:.35rem;line-height:1.4">
+        All analysis runs on your device. No raw video or audio is transmitted.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- VC-11 in-call data sharing approval panel -->
+<div id="call-share-panel" style="display:none;position:fixed;inset:0;z-index:1800;
+     align-items:flex-end;justify-content:center;background:rgba(0,0,0,.65)">
+  <div class="share-body">
+    <div class="share-title">📤 Data sharing request</div>
+    <div class="share-sub" id="share-requester">A call participant is requesting health data.</div>
+    <div id="share-sections"></div>
+    <div id="share-status" style="font-size:.75rem;color:var(--dim);margin-top:.4rem"></div>
+    <div class="share-actions">
+      <button class="btn btn-primary" onclick="_shareApprove()">Share selected</button>
+      <button class="btn btn-outline" onclick="_shareDeny()">Deny all</button>
+    </div>
+  </div>
+</div>
+
+<!-- VC-9 incoming call overlays — fixed position, above all panels -->
+<div id="gate-ring-overlay" class="gate-overlay">
+  <div class="gate-card">
+    <div class="gate-icon">📞</div>
+    <div class="gate-name" id="gate-ring-name"></div>
+    <div class="gate-rel"  id="gate-ring-rel"></div>
+    <div class="gate-did"  id="gate-ring-did"></div>
+    <div class="gate-actions">
+      <button class="btn btn-primary"  onclick="gateAcceptCall()">Accept</button>
+      <button class="btn btn-danger"   onclick="gateRejectCall()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate-verify-overlay" class="gate-overlay">
+  <div class="gate-card">
+    <div class="gate-icon">🔍</div>
+    <div class="gate-name" id="gate-verify-name"></div>
+    <div class="gate-rel" style="color:var(--yellow);margin-bottom:.3rem">Identity not verified</div>
+    <div class="gate-did" id="gate-verify-did"></div>
+    <p style="font-size:.78rem;color:var(--dim);margin-bottom:1rem">
+      This caller is not in your Contacts or has no signed agreement.
+      Ask them to share their identity credential before accepting.
+    </p>
+    <div class="gate-actions">
+      <button class="btn btn-outline" onclick="gateVerifyAccept()">Accept anyway</button>
+      <button class="btn btn-danger"  onclick="gateVerifyReject()">Reject</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js" crossorigin="anonymous"></script>
+<script src="js/vault-idb.js?v=8"></script>
+<script src="js/vault-crypto.js?v=6"></script>
+<script src="js/vault-did.js?v=6"></script>
+<script src="js/vault-nym.js?v=7"></script>
+<script src="js/vault-mock.js?v=6"></script>
+<!-- VC-7 Verified Directory — must load after vault-crypto (needs _sEnc/_sDec) -->
+<script src="js/vault-directory.js?v=6"></script>
+<!-- Call profiles — must load after vault-directory.js -->
+<script src="js/vault-call-profiles.js?v=1"></script>
+<script src="js/vault-model-prefs.js?v=1"></script>
+<!-- VC-8 Semantic Handshake — must load after vault-directory.js -->
+<script src="js/vault-handshake.js?v=6"></script>
+<!-- VC-9 Caller Gating — must load after vault-directory.js + vault-nym.js -->
+<script src="js/vault-comms-gate.js?v=6"></script>
+<!-- VC-10 Call session — must load after vault-comms-gate.js -->
+<script src="js/vault-comms-call.js?v=7"></script>
+<!-- WA-1 AgentController — must load after vault-comms-call.js -->
+<script src="js/vault-cv.js?v=7.5"></script>
+<!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
+<script src="js/vault-scheduler.js?v=6"></script>
+<!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->
+<script src="js/vault-transcript.js?v=7"></script>
+<!-- VC-14 Language Transcoding — must load after vault-transcript.js -->
+<script src="js/vault-comms-transcode.js?v=6"></script>
+<!-- VC-15 Content Package — must load after vault-comms-transcode.js -->
+<script src="js/vault-package.js?v=7"></script>
+<!-- Sanctuary: pins → log/tripwire/synthesis → evidentiary/OTS -->
+<script src="js/vault-sanctuary-pins.js?v=6"></script>
+<script src="js/vault-sanctuary-log.js?v=6"></script>
+<script src="js/vault-sanctuary-evidence.js?v=6"></script>
+<!-- Medications: reminders/schedule → LOD/interactions → manager sheet -->
+<script src="js/vault-meds-reminders.js?v=6"></script>
+<script src="js/vault-meds-lod.js?v=6"></script>
+<script src="js/vault-meds-manager.js?v=6"></script>
+<!-- Medication Sprint 6 — diet log + DL-1 barcode scanning -->
+<script src="js/vault-diet.js?v=7"></script>
+<script src="js/vault-diet-barcode.js?v=7"></script>
+<!-- WASM bridge — wellfare-core (lazy-loads pkg/wellfare_core.js if built) -->
+<script src="js/vault-wasm.js?v=1"></script>
+<!-- HCW-1 — Human-Centric Wallet -->
+<script src="js/vault-wallet.js?v=2"></script>
+<script>
+'use strict';
+
+// ── FinalizationRegistry — GC diagnostic ─────────────────────────────────────
+const _gcRegistry = new FinalizationRegistry(label =>
+  console.debug('[WellFair] GC confirmed:', label));
+
+// ── Vault state ───────────────────────────────────────────────────────────────
+let vaultDidKey = null;
+const VAULT_PIN = '1234'; // replace with real vault credential check
+
+let pinEntry = '';
+
+// ── Step management ───────────────────────────────────────────────────────────
+function showStep(id) {
+  ['step-pin','step-owner','step-sanctuary-pin','step-sanctuary'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.classList.toggle('active', s === id);
+  });
+}
+
+// ── Owner PIN ─────────────────────────────────────────────────────────────────
+function resetPin() {
+  pinEntry = '';
+  updatePinDots('');
+  document.getElementById('pin-hint').textContent = 'Enter your vault PIN';
+  document.getElementById('pin-hint').style.color = '';
+}
+
+function updatePinDots(state) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.toggle('filled', i < pinEntry.length && state !== 'error');
+    d.classList.toggle('error',  state === 'error');
+  }
+}
+
+async function pinKey(k) {
+  if (k === 'del') { pinEntry = pinEntry.slice(0, -1); updatePinDots(''); return; }
+  if (pinEntry.length >= 4) return;
+  pinEntry += k;
+  updatePinDots('');
+
+  if (pinEntry.length === 4) {
+    const entered = pinEntry;
+    if (entered === VAULT_PIN) {
+      document.getElementById('pin-hint').textContent = '✓ Verified';
+      document.getElementById('pin-hint').style.color = 'var(--green)';
+      deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
+      setTimeout(openOwnerWorkspace, 400);
+    } else {
+      document.getElementById('pin-hint').textContent = 'Checking…';
+      const isDuress = await _checkAndFireDuress(entered);
+      if (isDuress) {
+        document.getElementById('pin-hint').textContent = '✓ Verified';
+        document.getElementById('pin-hint').style.color = 'var(--green)';
+        deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
+        setTimeout(openOwnerWorkspace, 400);
+      } else {
+        updatePinDots('error');
+        document.getElementById('pin-hint').textContent = 'Incorrect PIN — try again';
+        document.getElementById('pin-hint').style.color = 'var(--red)';
+        setTimeout(resetPin, 1200);
+      }
+    }
+  }
+}
+
+// ── Owner workspace ───────────────────────────────────────────────────────────
+function openOwnerWorkspace() {
+  acquireWakeLock();
+  startGate();
+  startScheduler();
+  document.getElementById('med-interaction-panel').style.display = 'block';
+  document.getElementById('med-reminder-panel').style.display    = 'block';
+  document.getElementById('dms-panel').style.display             = 'block';
+  document.getElementById('anon-notify-panel').style.display     = 'block';
+  document.getElementById('model-prefs-panel').style.display     = 'block';
+  if (!duressModeActive) {
+    document.getElementById('dir-panel').style.display       = 'block';
+    document.getElementById('sanctuary-panel').style.display = 'block';
+  }
+  document.getElementById('vault-unlock-time').textContent =
+    'Unlocked ' + new Date().toLocaleTimeString();
+  initMedReminders();
+  showStep('step-owner');
+}
+
+function lockVault() {
+  releaseWakeLock();
+  stopGate();
+  stopScheduler();
+  if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
+  clearTimeout(dmsTimer);
+  ['med-interaction-panel','med-reminder-panel','dms-panel',
+   'anon-notify-panel','model-prefs-panel','dir-panel','sanctuary-panel'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  document.getElementById('dir-sheet').style.display   = 'none';
+  document.getElementById('queue-sheet').style.display = 'none';
+  document.getElementById('diet-sheet').style.display  = 'none';
+  initDirectory(null);
+  duressModeActive = false;
+  document.body.classList.remove('sanctuary-active');
+  sanctuaryKey    = null;
+  sanctuaryActive = false;
+  resetPin();
+  showStep('step-pin');
+}
+
+// ── Directory UI ──────────────────────────────────────────────────────────────
+
+let _dirAllContacts = [];
+
+function openDirectory() {
+  document.getElementById('dir-sheet').style.display = 'flex';
+  _dirShowListView();
+  _dirLoadContacts();
+}
+
+function closeDirectory() {
+  document.getElementById('dir-sheet').style.display = 'none';
+}
+
+function _dirHideAllViews() {
+  ['dir-list-view','dir-add-view','dir-detail-view','dir-handshake-view'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+function _dirShowListView() {
+  _dirHideAllViews();
+  document.getElementById('dir-list-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display   = '';
+  document.getElementById('dir-receive-btn').style.display = '';
+  document.getElementById('dir-search').value            = '';
+}
+
+function _dirShowAddForm() {
+  _dirHideAllViews();
+  document.getElementById('dir-add-view').style.display  = 'block';
+  document.getElementById('dir-add-btn').style.display   = 'none';
+  document.getElementById('dir-receive-btn').style.display = 'none';
+  ['dir-add-name','dir-add-did','dir-add-webid','dir-add-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('dir-add-status').textContent = '';
+
+  // Populate call profile selector
+  const sel = document.getElementById('dir-add-profile');
+  if (sel && typeof callProfileSelectOptions === 'function') {
+    sel.innerHTML = callProfileSelectOptions('generic_call');
+    _dirUpdateProfileDesc('dir-add-profile-desc', 'generic_call');
+    sel.onchange = () => _dirUpdateProfileDesc('dir-add-profile-desc', sel.value);
+  }
+}
+
+function _dirShowDetail() {
+  _dirHideAllViews();
+  document.getElementById('dir-detail-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display     = 'none';
+  document.getElementById('dir-receive-btn').style.display = 'none';
+}
+
+function _dirShowHandshakeView(backLabel) {
+  _dirHideAllViews();
+  document.getElementById('dir-handshake-view').style.display = 'block';
+  document.getElementById('dir-add-btn').style.display        = 'none';
+  document.getElementById('dir-receive-btn').style.display    = 'none';
+  if (backLabel) document.getElementById('hs-back-link').textContent = backLabel;
+}
+
+async function _dirLoadContacts() {
+  const listEl = document.getElementById('dir-contact-list');
+  try {
+    _dirAllContacts = await getAllContacts();
+    _dirRenderList(_dirAllContacts);
+  } catch (e) {
+    if (e.name === 'OperationError') {
+      // Decryption failure — key mismatch (e.g. demo mode or key rotation). Treat as empty.
+      _dirAllContacts = [];
+      _dirRenderList([]);
+    } else {
+      listEl.innerHTML = `<p class="dir-empty" style="color:var(--red)">Error loading contacts: ${e.message}</p>`;
+    }
+  }
+}
+
+function _dirRenderList(contacts) {
+  const listEl = document.getElementById('dir-contact-list');
+  if (!contacts.length) {
+    listEl.innerHTML = '<p class="dir-empty">No contacts yet — tap + Add to create one.</p>';
+    return;
+  }
+  listEl.innerHTML = contacts.map(c => {
+    const cp = typeof getCallProfile === 'function'
+      ? getCallProfile(c.callProfileId || 'generic_call') : null;
+    const profilePip = cp && cp.id !== 'generic_call'
+      ? `<span title="${_dirEsc(cp.label)}"
+               style="font-size:.9rem;margin-left:.3rem;opacity:.8">${cp.icon}</span>`
+      : '';
+    return `
+    <div class="dir-contact-card" onclick="_dirOpenDetail('${_dirEsc(c.id)}')">
+      <div class="dir-contact-info">
+        <span class="dir-contact-name">${_dirEsc(c.name)}${profilePip}</span>
+        <span class="dir-contact-did">${_dirEsc(c.did || '—')}</span>
+      </div>
+      <span class="dir-rel-badge" id="dir-rel-${_dirEsc(c.id)}">contact</span>
+    </div>`;
+  }).join('');
+  contacts.forEach(async c => {
+    const rel   = await getRelationship(c.id).catch(() => null);
+    const badge = document.getElementById(`dir-rel-${c.id}`);
+    if (!badge) return;
+    if (rel?.agreement?.theirSig) {
+      badge.textContent = rel.type || 'linked';
+      badge.classList.add('has-agreement');
+    } else if (rel) {
+      badge.textContent = 'pending';
+    }
+  });
+}
+
+function _dirFilterList(query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q
+    ? _dirAllContacts.filter(c =>
+        c.name.toLowerCase().includes(q) || (c.did || '').toLowerCase().includes(q))
+    : _dirAllContacts;
+  _dirRenderList(filtered);
+}
+
+async function _dirOpenDetail(id) {
+  const contact = _dirAllContacts.find(c => c.id === id);
+  if (!contact) return;
+  const rel = await getRelationship(id).catch(() => null);
+
+  const agStatus = rel?.agreement?.theirSig
+    ? '<span style="color:var(--green);font-weight:600">Signed by both parties</span>'
+    : rel
+      ? '<span style="color:var(--yellow)">Pending counterparty signature</span>'
+      : '<span style="color:var(--dim)">No agreement yet</span>';
+
+  document.getElementById('dir-detail-content').innerHTML = `
+    <div style="margin-bottom:1rem">
+      <p style="font-size:1rem;font-weight:700;margin-bottom:.2rem">${_dirEsc(contact.name)}</p>
+      <p style="font-size:.75rem;color:var(--dim)">Added ${new Date(contact.created_at).toLocaleDateString()}</p>
+    </div>
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Identity credential</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(contact.did || '—')}</div>
+    </div>
+    ${contact.webId ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">WebID</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(contact.webId)}</div>
+    </div>` : ''}
+    ${contact.notes ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">Notes</span>
+      <div class="dir-detail-value" style="white-space:pre-wrap">${_dirEsc(contact.notes)}</div>
+    </div>` : ''}
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Relationship type</span>
+      <div class="dir-detail-value">${rel ? _dirEsc(rel.type || 'personal') : '—'}</div>
+    </div>
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Usage agreement</span>
+      <div class="dir-detail-value">${agStatus}</div>
+    </div>
+    ${rel?.peerDid ? `<div class="dir-detail-field">
+      <span class="dir-detail-label">Channel identity credential (did:peer)</span>
+      <div class="dir-detail-value dir-detail-mono">${_dirEsc(rel.peerDid)}</div>
+    </div>` : ''}
+    <div class="dir-detail-field">
+      <span class="dir-detail-label">Call profile</span>
+      <div class="dir-detail-value" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+        ${(() => {
+          const cp = typeof getCallProfile === 'function'
+            ? getCallProfile(contact.callProfileId || 'generic_call') : null;
+          const badge = cp
+            ? `<span style="background:${cp.color}1a;border:1px solid ${cp.color}55;
+                color:${cp.color};border-radius:5px;padding:.12rem .45rem;font-size:.78rem;font-weight:600">
+                ${cp.icon} ${cp.label}</span>`
+            : '<span style="color:var(--dim)">General call</span>';
+          const opts = typeof callProfileSelectOptions === 'function'
+            ? callProfileSelectOptions(contact.callProfileId || 'generic_call') : '';
+          return `${badge}
+            <select onchange="_dirUpdateCallProfile('${_dirEsc(contact.id)}', this.value)"
+                    style="font-size:.75rem;padding:.15rem .3rem;border:1px solid var(--border);
+                           border-radius:5px;background:var(--surface);color:var(--text);
+                           max-width:160px">${opts}</select>`;
+        })()}
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem;
+                border-top:1px solid var(--border);padding-top:.875rem">
+      <button class="btn btn-outline"
+              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
+              onclick="_hsInitiate('${_dirEsc(contact.id)}')">Initiate handshake</button>
+      <button class="btn btn-danger"
+              style="width:auto;margin:0;font-size:.78rem;padding:.3rem .75rem"
+              onclick="_dirDeleteContact('${_dirEsc(contact.id)}')">Delete</button>
+    </div>`;
+  _dirShowDetail();
+}
+
+async function _dirSaveNewContact() {
+  const name      = document.getElementById('dir-add-name').value.trim();
+  const did       = document.getElementById('dir-add-did').value.trim();
+  const webId     = document.getElementById('dir-add-webid').value.trim();
+  const notes     = document.getElementById('dir-add-notes').value.trim();
+  const profileId = document.getElementById('dir-add-profile')?.value || 'generic_call';
+  const st        = document.getElementById('dir-add-status');
+
+  if (!name) { st.style.color = 'var(--red)'; st.textContent = 'Name is required.'; return; }
+
+  st.style.color = 'var(--dim)'; st.textContent = 'Saving…';
+  try {
+    await addContact(name, did || '', webId || null, notes, profileId);
+    st.style.color = 'var(--green)'; st.textContent = 'Contact saved.';
+    _dirAllContacts = await getAllContacts();
+    setTimeout(() => { _dirShowListView(); _dirRenderList(_dirAllContacts); }, 600);
+  } catch (e) {
+    st.style.color = 'var(--red)'; st.textContent = `Error: ${e.message}`;
+  }
+}
+
+// Helper: update description text below the call profile selector
+function _dirUpdateProfileDesc(descElId, profileId) {
+  const el = document.getElementById(descElId);
+  if (!el || typeof getCallProfile !== 'function') return;
+  el.textContent = getCallProfile(profileId).description;
+}
+
+// Update a contact's call profile and re-render the detail view
+async function _dirUpdateCallProfile(contactId, profileId) {
+  try {
+    await updateContact(contactId, { callProfileId: profileId });
+    _dirAllContacts = await getAllContacts();
+    await _dirOpenDetail(contactId);
+  } catch (e) {
+    console.warn('[Directory] call profile update failed:', e.message);
+  }
+}
+
+async function _dirDeleteContact(id) {
+  if (!confirm('Delete this contact and their relationship records?')) return;
+  try {
+    await deleteContact(id);
+    _dirAllContacts = _dirAllContacts.filter(c => c.id !== id);
+    _dirShowListView();
+    _dirRenderList(_dirAllContacts);
+  } catch (e) {
+    alert(`Delete failed: ${e.message}`);
+  }
+}
+
+function _dirEsc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Handshake UI (VC-8) ───────────────────────────────────────────────────────
+
+// Initiator path: generate proposal, show payload for sharing
+async function _hsInitiate(contactId) {
+  _dirShowHandshakeView('← Contact');
+  document.getElementById('hs-stage-proposal').style.display = 'block';
+  document.getElementById('hs-stage-receive').style.display  = 'none';
+  document.getElementById('hs-proposal-payload').value       = '';
+  document.getElementById('hs-response-input').value         = '';
+  document.getElementById('hs-proposal-nym-status').textContent = 'Generating…';
+  document.getElementById('hs-finalise-status').textContent  = '';
+
+  try {
+    const result = await initiateHandshake(contactId);
+    document.getElementById('hs-proposal-payload').value = result.qrData;
+    document.getElementById('hs-proposal-nym-status').textContent =
+      result.nymSent ? '✓ Also sent via Nym' : '';
+    document.getElementById('hs-proposal-nym-status').className = 'hs-status hs-sig-ok';
+  } catch (e) {
+    document.getElementById('hs-proposal-nym-status').textContent = 'Error: ' + e.message;
+    document.getElementById('hs-proposal-nym-status').className = 'hs-status hs-sig-bad';
+  }
+}
+
+// Receiver path: show receive sub-view
+function _hsShowReceive() {
+  _dirShowHandshakeView('← Contacts');
+  document.getElementById('hs-stage-proposal').style.display = 'none';
+  document.getElementById('hs-stage-receive').style.display  = 'block';
+  document.getElementById('hs-proposal-input').value         = '';
+  document.getElementById('hs-parse-status').textContent     = '';
+  document.getElementById('hs-review-section').style.display = 'none';
+  document.getElementById('hs-response-section').style.display = 'none';
+  document.getElementById('hs-accept-status').textContent    = '';
+  // Store pending parsed data
+  window._hsPendingPayload = null;
+}
+
+async function _hsParseProposal() {
+  const raw  = document.getElementById('hs-proposal-input').value.trim();
+  const stat = document.getElementById('hs-parse-status');
+  if (!raw) { stat.className = 'hs-status hs-sig-bad'; stat.textContent = 'Paste a proposal first.'; return; }
+
+  stat.className = 'hs-status'; stat.textContent = 'Parsing…';
+  try {
+    const info = await receiveHandshake(raw);
+    window._hsPendingPayload = raw;
+
+    const sigLabel = info.sigValid
+      ? '<span class="hs-sig-ok">✓ Valid Ed25519 signature</span>'
+      : '<span class="hs-sig-bad">⚠ Signature invalid</span>';
+
+    const permissions = (info.agreement.permission || [])
+      .map(p => `<span style="background:rgba(13,110,253,.08);border-radius:4px;
+                              padding:.1rem .35rem;font-size:.72rem;margin-right:.25rem">${_dirEsc(p.target)}</span>`)
+      .join('');
+
+    document.getElementById('hs-agree-detail').innerHTML = `
+      <div class="hs-agree-row"><span class="hs-agree-key">From</span>
+        <span class="hs-agree-val">${_dirEsc(info.contactName ?? '(unknown contact)')}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Their identity credential</span>
+        <span class="hs-agree-val">${_dirEsc(info.did)}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Channel (did:peer)</span>
+        <span class="hs-agree-val">${_dirEsc(info.peerDid)}</span></div>
+      <div class="hs-agree-row"><span class="hs-agree-key">Data access requested</span>
+        <span>${permissions || '<span style="color:var(--dim)">none</span>'}</span></div>
+      <div class="hs-agree-row" style="margin-top:.35rem"><span class="hs-agree-key">Signature</span>
+        <span>${sigLabel}</span></div>`;
+
+    document.getElementById('hs-review-section').style.display = 'block';
+    stat.textContent = '';
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Parse error: ' + e.message;
+  }
+}
+
+async function _hsAccept() {
+  const stat = document.getElementById('hs-accept-status');
+  stat.className = 'hs-status'; stat.textContent = 'Signing…';
+  try {
+    const result = await acceptHandshake(window._hsPendingPayload, true);
+    if (!result) { stat.textContent = 'Declined.'; return; }
+    document.getElementById('hs-response-payload').value = result.blob;
+    document.getElementById('hs-response-section').style.display = 'block';
+    stat.className = 'hs-status hs-sig-ok';
+    stat.textContent = '✓ Relationship saved. Copy your response and send it back.';
+    await _dirLoadContacts();
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Error: ' + e.message;
+  }
+}
+
+// Initiator path: finalise after pasting counterparty response
+async function _hsFinalisePasted() {
+  const raw  = document.getElementById('hs-response-input').value.trim();
+  const stat = document.getElementById('hs-finalise-status');
+  if (!raw) { stat.className = 'hs-status hs-sig-bad'; stat.textContent = 'Paste the response first.'; return; }
+
+  stat.className = 'hs-status'; stat.textContent = 'Verifying…';
+  try {
+    const result = await finaliseHandshake(raw);
+    stat.className = 'hs-status hs-sig-ok';
+    stat.textContent = `✓ Handshake complete with ${result.contact.name}`;
+    await _dirLoadContacts();
+    setTimeout(() => _dirShowListView(), 1800);
+  } catch (e) {
+    stat.className = 'hs-status hs-sig-bad';
+    stat.textContent = 'Error: ' + e.message;
+  }
+}
+
+function _hsCopyPayload(inputId) {
+  const el = document.getElementById(inputId);
+  el.select();
+  document.execCommand('copy');
+  window.getSelection()?.removeAllRanges();
+}
+
+window.addEventListener('pagehide', () => {
+  clearTimeout(dmsTimer);
+  releaseWakeLock();
+});
+
+// ── VC-12b Queue UI ──────────────────────────────────────────────────────────
+
+let _queueFilter = 'all';
+
+function openQueue() {
+  document.getElementById('queue-sheet').style.display = 'flex';
+  _queueRender();
+  _txcUpdateTierLabel();
+}
+
+function closeQueue() {
+  document.getElementById('queue-sheet').style.display = 'none';
+}
+
+function _queueSetFilter(f) {
+  _queueFilter = f;
+  document.querySelectorAll('.queue-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.filter === f));
+  _queueRender();
+}
+
+async function _queueRender() {
+  const list = document.getElementById('queue-job-list');
+  if (!list) return;
+  let jobs = [];
+  try { jobs = await getJobList(); } catch (_) {}
+  jobs.sort((a, b) => (b.priority - a.priority) || (a.created_at < b.created_at ? -1 : 1));
+
+  const filtered = _queueFilter === 'all' ? jobs : jobs.filter(j => j.status === _queueFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="queue-empty">No ${_queueFilter === 'all' ? '' : _queueFilter + ' '}jobs.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(j => {
+    const icon = j.status === 'done'    ? '✅' :
+                 j.status === 'failed'  ? '❌' :
+                 j.status === 'running' ? '🔄' :
+                 j.status === 'cancelled'? '🚫' : '⏳';
+    const est = j.estimated_ms ? `~${(j.estimated_ms/1000).toFixed(1)}s` : '';
+    const retries = j.retry_count > 0 ? ` · retry ${j.retry_count}` : '';
+    const created = j.created_at ? new Date(j.created_at).toLocaleTimeString() : '';
+    return `
+      <div class="queue-job" id="qj-${j.id}">
+        <div class="queue-job-icon">${icon}</div>
+        <div class="queue-job-body">
+          <div class="queue-job-type">${j.type}</div>
+          <div class="queue-job-meta">${created}${est ? ' · ' + est : ''}${retries}</div>
+          ${j.error ? `<div class="queue-job-err">${j.error}</div>` : ''}
+          <div class="queue-prog"><div class="queue-prog-bar" id="qpb-${j.id}" style="width:0%"></div></div>
+        </div>
+        ${j.status === 'pending' || j.status === 'failed' ? `
+          <button class="queue-run-btn" onclick="runJobNow('${j.id}').then(()=>_queueRender())">▶</button>` : ''}
+        ${j.status === 'done' && (j.type === 'transcript.generate' || j.type === 'transcript.annotate') && j.result_ref ? `
+          <button class="queue-run-btn" title="View transcript"
+                  onclick="_queueViewTranscript('${j.id}')">📄</button>
+          <button class="queue-run-btn" title="Download session package"
+                  onclick="_queueDownloadPackage('${j.id}')">📦</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function _queueRunAll() {
+  const jobs = await getJobList();
+  const pending = jobs.filter(j => j.status === 'pending');
+  for (const j of pending) await runJobNow(j.id);
+  _queueRender();
+}
+
+function _queueViewTranscript(jobId) {
+  getJobList().then(jobs => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job || !job.result_ref) return;
+    try {
+      const result = JSON.parse(job.result_ref);
+      if (!result.html) return;
+      const blob = new Blob([result.html], { type: 'text/html' });
+      const url  = URL.createObjectURL(blob);
+      const win  = window.open(url, '_blank');
+      // Revoke after tab has had time to load
+      if (win) setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    } catch (_) {}
+  });
+}
+
+function _queueDownloadPackage(jobId) {
+  getJobList().then(async jobs => {
+    const job = jobs.find(j => j.id === jobId);
+    if (!job || !job.result_ref) return;
+    try {
+      const result = JSON.parse(job.result_ref);
+      if (!result.sessionId || typeof downloadPackage !== 'function') return;
+      await downloadPackage(result.sessionId);
+    } catch (e) {
+      console.warn('[Queue] Package download error:', e.message);
+    }
+  });
+}
+
+function _txcGrant() {
+  const granted = typeof grantExternalApiConsent === 'function' && grantExternalApiConsent();
+  const badge = document.getElementById('transcode-consent-badge');
+  if (badge) badge.textContent = granted ? '✅ Granted' : '⚠ No endpoint configured';
+}
+
+function _txcUpdateTierLabel() {
+  const el = document.getElementById('transcode-tier-label');
+  if (!el) return;
+  const tier = typeof detectAvailableTier === 'function' ? detectAvailableTier() : null;
+  el.textContent = tier || 'none';
+}
+
+function _schedUpdateSettings() {
+  // Settings are read live in _checkConditions via the checkboxes.
+  // (Override the condition check to respect UI toggles.)
+}
+
+function _queueUpdateBadge() {
+  getJobList().then(jobs => {
+    const pending = jobs.filter(j => j.status === 'pending' || j.status === 'running').length;
+    const badge = document.getElementById('queue-badge');
+    if (!badge) return;
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline'; }
+    else              badge.style.display = 'none';
+  }).catch(() => {});
+}
+
+// Refresh queue panel on job events
+document.addEventListener('wf:job-enqueued', () => {
+  _queueUpdateBadge();
+  if (document.getElementById('queue-sheet').style.display === 'flex') _queueRender();
+});
+document.addEventListener('wf:job-updated', (ev) => {
+  _queueUpdateBadge();
+  if (document.getElementById('queue-sheet').style.display === 'flex') _queueRender();
+});
+document.addEventListener('wf:job-progress', (ev) => {
+  const bar = document.getElementById('qpb-' + ev.detail.id);
+  if (bar) bar.style.width = (ev.detail.pct || 0) + '%';
+});
+
+// ── VC-14 Transcription lifecycle ────────────────────────────────────────────
+
+document.addEventListener('wf:call', (ev) => {
+  const { event, sessionId } = ev.detail || {};
+  if (event === 'call.started' || event === 'call.answered') {
+    if (typeof startRealtimeTranscription === 'function') {
+      const stream = typeof _callStream !== 'undefined' ? _callStream : null;
+      startRealtimeTranscription(stream, sessionId, navigator.language || 'en');
+    }
+    _callOverlayOpen(sessionId);
+  } else if (event === 'call.ended') {
+    if (typeof stopRealtimeTranscription === 'function') stopRealtimeTranscription();
+    _callOverlayClose();
+  }
+});
+
+// ── VC-11 In-call data sharing ────────────────────────────────────────────────
+
+let _sharePending = null; // { id, sections, callSessionId }
+
+document.addEventListener('wf:data-request', (ev) => {
+  const { id, sections, callSessionId } = ev.detail;
+  _sharePending = { id, sections, callSessionId };
+
+  const container = document.getElementById('share-sections');
+  container.innerHTML = sections.map(s => {
+    const label = (typeof SECTION_LABELS !== 'undefined' && SECTION_LABELS[s]) || s;
+    return `<div class="share-section-row">
+      <input type="checkbox" id="share-sec-${s.replace(/:/g,'-')}" value="${s}" checked />
+      <span class="share-section-label">${label}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('share-status').textContent = '';
+  document.getElementById('call-share-panel').style.display = 'flex';
+});
+
+async function _shareApprove() {
+  if (!_sharePending) return;
+  const { id, sections, callSessionId } = _sharePending;
+  const st = document.getElementById('share-status');
+  st.textContent = 'Sharing…'; st.style.color = 'var(--dim)';
+
+  const approved = sections.filter(s => {
+    const el = document.getElementById('share-sec-' + s.replace(/:/g,'-'));
+    return el && el.checked;
+  });
+  if (!approved.length) { st.textContent = 'Nothing selected.'; st.style.color = 'var(--yellow)'; return; }
+
+  const sharedAt = new Date().toISOString();
+  const receipts = [];
+
+  for (const section of approved) {
+    const raw = typeof VAULT !== 'undefined' ? VAULT[section] : null;
+    const data = raw ? JSON.stringify(raw) : '{}';
+    let sig = '';
+    if (typeof vaultDidKey !== 'undefined' && vaultDidKey) {
+      const sigBytes = new Uint8Array(await crypto.subtle.sign(
+        { name: 'Ed25519' }, vaultDidKey.privateKey, new TextEncoder().encode(data)));
+      sig = toB64(sigBytes);
+    }
+    callSendData(id, section, data, sig, callSessionId);
+    receipts.push({ section, sig, sharedAt });
+  }
+
+  // Build VP receipt JSON-LD
+  const receiptJsonLd = {
+    '@context': ['https://www.w3.org/2018/credentials/v1', 'https://wellfare.social/ns/vault#'],
+    '@type': 'wf:DataSharingReceipt',
+    '@id': 'urn:uuid:' + crypto.randomUUID(),
+    'wf:callSessionId': callSessionId,
+    'wf:requestId': id,
+    'wf:issuer': typeof vaultDidKey !== 'undefined' && vaultDidKey ? vaultDidKey.did : '',
+    'wf:sharedAt': sharedAt,
+    'wf:sections': receipts,
+  };
+
+  callSendReceipt(id, JSON.stringify(receiptJsonLd), callSessionId);
+
+  // Store receipt in IDB wf-s keyed by session+request ID
+  if (typeof _dbPut === 'function' && typeof _ST_LOG !== 'undefined') {
+    try {
+      await _dbPut(_ST_LOG, {
+        id: 'receipt-' + id, type: 'data_sharing_receipt',
+        callSessionId, sharedAt, sections: approved,
+        receiptJsonLd: JSON.stringify(receiptJsonLd),
+      });
+    } catch (_) {}
+  }
+
+  st.textContent = '✓ Shared ' + approved.length + ' section(s)';
+  st.style.color = 'var(--green)';
+  setTimeout(() => {
+    document.getElementById('call-share-panel').style.display = 'none';
+    _sharePending = null;
+  }, 1200);
+}
+
+function _shareDeny() {
+  document.getElementById('call-share-panel').style.display = 'none';
+  _sharePending = null;
+}
+
+// ── Model preferences panel ───────────────────────────────────────────────────
+
+function _toggleModelPrefsBody() {
+  const body = document.getElementById('model-prefs-body');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (open && typeof renderModelPrefPanel === 'function') {
+    renderModelPrefPanel('model-prefs-content');
+  }
+}
+
+// ── Active call overlay helpers ───────────────────────────────────────────────
+
+let _callOverlayMuted  = false;
+let _callDurationSecs  = 0;
+let _callDurationTimer = null;
+
+function _callOverlayOpen(sessionId) {
+  const overlay = document.getElementById('active-call-overlay');
+  if (!overlay) return;
+  overlay.classList.add('call-active');
+
+  // Reset mute state
+  _callOverlayMuted = false;
+  const muteIcon = document.getElementById('call-btn-mute-icon');
+  if (muteIcon) muteIcon.textContent = '🔇';
+  const muteBtn = document.getElementById('call-btn-mute');
+  if (muteBtn) muteBtn.classList.remove('btn-active');
+
+  // Restore CV module defaults from model preferences
+  const _cvPrefMap = {
+    'vision-emotion':  'cvDefaultEmotion',
+    'vision-rpg':      'cvDefaultRpg',
+    'audio-prosody':   'cvDefaultProsody',
+    'text-linguistic': 'cvDefaultLinguistic',
+  };
+  Object.entries(_cvPrefMap).forEach(([id, prefKey]) => {
+    const el = document.getElementById('agent-chk-' + id);
+    if (!el) return;
+    const enabled = typeof getModelPref === 'function' ? getModelPref(prefKey) : false;
+    el.checked = enabled;
+    if (enabled) _cvToggle(id.replace('-', '.'), true);
+  });
+  const activeEl = document.getElementById('agent-active-modules');
+  if (activeEl) { activeEl.textContent = 'No modules active'; activeEl.style.color = 'rgba(255,255,255,.45)'; }
+
+  // Start call duration timer
+  _callDurationSecs = 0;
+  clearInterval(_callDurationTimer);
+  _callDurationTimer = setInterval(_callOverlayTick, 1000);
+  _callOverlayTick();
+
+  // Populate the info panel with vault sections
+  _callOverlayPopulateInfo();
+}
+
+function _callOverlayClose() {
+  const overlay = document.getElementById('active-call-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('call-active');
+
+  // Close sub-panels and reset button states
+  ['call-info-panel','call-live-panel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('panel-open');
+  });
+  ['call-btn-info','call-btn-live'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('btn-active');
+  });
+
+  clearInterval(_callDurationTimer);
+  _callDurationTimer = null;
+
+  // Reset ticker source flag so duration resumes on next call
+  const tickerText = document.getElementById('call-ticker-text');
+  if (tickerText) delete tickerText.dataset.source;
+}
+
+function _callOverlayTick() {
+  _callDurationSecs++;
+  const m = Math.floor(_callDurationSecs / 60).toString().padStart(2, '0');
+  const s = (_callDurationSecs % 60).toString().padStart(2, '0');
+  const dur = `${m}:${s}`;
+  const label = document.getElementById('call-caller-label');
+  if (label) label.textContent = dur;
+  // Show duration in ticker only when no telemetry is streaming
+  const tickerText = document.getElementById('call-ticker-text');
+  if (tickerText && tickerText.dataset.source !== 'live') {
+    tickerText.textContent = 'Call in progress · ' + dur;
+  }
+}
+
+function _callOverlayToggleMute() {
+  _callOverlayMuted = !_callOverlayMuted;
+  if (typeof _callStream !== 'undefined' && _callStream) {
+    _callStream.getAudioTracks().forEach(t => { t.enabled = !_callOverlayMuted; });
+  }
+  const icon = document.getElementById('call-btn-mute-icon');
+  const btn  = document.getElementById('call-btn-mute');
+  if (icon) icon.textContent = _callOverlayMuted ? '🎙' : '🔇';
+  if (btn)  btn.classList.toggle('btn-active', _callOverlayMuted);
+}
+
+function _callOverlayToggleInfo() {
+  const panel = document.getElementById('call-info-panel');
+  const btn   = document.getElementById('call-btn-info');
+  if (!panel) return;
+  const open = panel.classList.toggle('panel-open');
+  if (btn) btn.classList.toggle('btn-active', open);
+  // Close live panel if open
+  if (open) {
+    document.getElementById('call-live-panel')?.classList.remove('panel-open');
+    document.getElementById('call-btn-live')?.classList.remove('btn-active');
+  }
+}
+
+function _callOverlayToggleLive() {
+  const panel = document.getElementById('call-live-panel');
+  const btn   = document.getElementById('call-btn-live');
+  if (!panel) return;
+  const open = panel.classList.toggle('panel-open');
+  if (btn) btn.classList.toggle('btn-active', open);
+  // Close info panel if open
+  if (open) {
+    document.getElementById('call-info-panel')?.classList.remove('panel-open');
+    document.getElementById('call-btn-info')?.classList.remove('btn-active');
+  }
+}
+
+function _callOverlayOpenShare() {
+  if (typeof SECTION_LABELS === 'undefined') return;
+  const sections = Object.keys(SECTION_LABELS);
+  document.dispatchEvent(new CustomEvent('wf:data-request', {
+    detail: { id: 'manual-' + Date.now(), sections, callSessionId: null }
+  }));
+}
+
+function _callShareSection(key) {
+  document.dispatchEvent(new CustomEvent('wf:data-request', {
+    detail: { id: 'share-' + Date.now(), sections: [key], callSessionId: null }
+  }));
+}
+
+async function _callOverlayPopulateInfo() {
+  const content = document.getElementById('call-info-content');
+  if (!content) return;
+  if (typeof SECTION_LABELS === 'undefined') {
+    content.innerHTML = '<p style="color:rgba(255,255,255,.45);font-size:.78rem">Health data unavailable.</p>';
+    return;
+  }
+
+  // Resolve call profile for active contact
+  let profile      = typeof getCallProfile === 'function' ? getCallProfile('generic_call') : null;
+  let contactName  = null;
+  const contactId  = typeof callGetActiveContactId === 'function' ? callGetActiveContactId() : null;
+  if (contactId && typeof getContact === 'function') {
+    try {
+      const contact = await getContact(contactId);
+      if (contact) {
+        contactName = contact.name;
+        if (contact.callProfileId && typeof getCallProfile === 'function') {
+          profile = getCallProfile(contact.callProfileId);
+        }
+      }
+    } catch (_) {}
+  }
+
+  const profileSections = new Set(profile?.sections ?? []);
+  const allSections     = Object.entries(SECTION_LABELS);
+  const inProfile       = allSections.filter(([k]) => profileSections.has(k));
+  const notInProfile    = allSections.filter(([k]) => !profileSections.has(k));
+
+  const makeRow = (key, label, highlighted) => {
+    const style = highlighted
+      ? 'border-left:2px solid ' + (profile?.color ?? '#0d6efd') + ';padding-left:.6rem'
+      : 'opacity:.65';
+    return `<div class="call-info-row" style="${style}">
+      <span class="call-info-row-lbl">${label}</span>
+      <button class="call-info-share-btn"
+        onclick="_callShareSection('${key.replace(/['"]/g,'')}')">Share</button>
+    </div>`;
+  };
+
+  // Header: profile badge + optional "share all profile sections" button
+  const headerColor = profile?.color ?? '#6c757d';
+  const profileBadge = profile
+    ? `<span style="background:${headerColor}33;border:1px solid ${headerColor}66;
+        color:${headerColor === '#6c757d' ? 'rgba(255,255,255,.7)' : headerColor};
+        border-radius:5px;padding:.18rem .55rem;font-size:.78rem;font-weight:600">
+        ${profile.icon} ${profile.label}</span>`
+    : '';
+  const contactLine = contactName
+    ? `<p style="font-size:.82rem;color:#fff;font-weight:600;margin-bottom:.3rem">${_esc(contactName)}</p>` : '';
+  const shareAllBtn = inProfile.length
+    ? `<button onclick="_callShareAllProfile()" class="call-info-share-btn"
+         style="font-size:.7rem;padding:.22rem .6rem;margin-top:.5rem;display:block">
+         Share ${inProfile.length} profile section${inProfile.length > 1 ? 's' : ''}</button>`
+    : '';
+
+  const noProfileNote = !inProfile.length
+    ? `<p style="font-size:.71rem;color:rgba(255,255,255,.4);margin:.5rem 0">
+        No health data configured for this contact.<br>
+        Change their call profile in Contacts to add sections.</p>`
+    : '';
+
+  const divider = notInProfile.length && inProfile.length
+    ? `<p style="font-size:.68rem;color:rgba(255,255,255,.35);margin:.6rem 0 .35rem;
+        text-transform:uppercase;letter-spacing:.04em">Other sections</p>`
+    : '';
+
+  content.innerHTML =
+    `<div style="margin-bottom:.65rem">${contactLine}${profileBadge}${shareAllBtn}</div>` +
+    noProfileNote +
+    inProfile.map(([k, l])    => makeRow(k, l, true)).join('') +
+    divider +
+    notInProfile.map(([k, l]) => makeRow(k, l, false)).join('');
+}
+
+function _callShareAllProfile() {
+  const contactId = typeof callGetActiveContactId === 'function' ? callGetActiveContactId() : null;
+  getContact(contactId).then(contact => {
+    if (!contact) return;
+    const sections = getCallProfileSections(contact.callProfileId || 'generic_call');
+    if (!sections.length) return;
+    document.dispatchEvent(new CustomEvent('wf:data-request', {
+      detail: { id: 'profile-share-' + Date.now(), sections, callSessionId: null }
+    }));
+  }).catch(() => {});
+}
+
+// Called from vault-cv.js to push live readings into the ticker
+function callOverlayUpdateTicker(text) {
+  const el = document.getElementById('call-ticker-text');
+  if (!el) return;
+  if (el.textContent === text) return;
+  el.classList.add('fading');
+  setTimeout(() => {
+    el.textContent = text;
+    el.dataset.source = 'live';
+    el.classList.remove('fading');
+  }, 200);
+}
+
+// ── Biometrics UI (WASM bridge) ───────────────────────────────────────────────
+
+function openBiometrics() {
+    const sheet = document.getElementById('biometrics-sheet');
+    sheet.style.display = 'flex';
+    _bioRefresh();
+}
+
+function closeBiometrics() {
+    document.getElementById('biometrics-sheet').style.display = 'none';
+}
+
+async function _bioRefresh() {
+    // WASM status
+    const statusEl = document.getElementById('wasm-status');
+    if (window.vaultWasm) {
+        await window.vaultWasm.load();
+        statusEl.textContent = window.vaultWasm.isAvailable()
+            ? '⚡ WASM engine ready (wellfare-core)'
+            : '⚠ WASM pkg not built — import disabled. Run: cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg';
+        statusEl.style.color = window.vaultWasm.isAvailable() ? 'var(--accent)' : '#f87171';
+    } else {
+        statusEl.textContent = '⚠ vault-wasm.js not loaded';
+        statusEl.style.color = '#f87171';
+    }
+
+    // Record counts by type
+    const countsEl = document.getElementById('bio-counts');
+    try {
+        const all = await _dbGetAll(_ST_BIOMETRICS);
+        if (!all.length) { countsEl.textContent = 'No records yet — import a CSV to get started.'; return; }
+        const by = {};
+        all.forEach(r => { by[r.type] = (by[r.type] || 0) + 1; });
+        countsEl.innerHTML = Object.entries(by)
+            .map(([t, n]) => `<span style="margin-right:.75rem">${t}: <strong>${n}</strong></span>`)
+            .join('');
+    } catch { countsEl.textContent = 'Could not read IDB.'; }
+}
+
+async function _bioImportCSV() {
+    const statusEl = document.getElementById('bio-import-status');
+    const file = document.getElementById('bio-csv-file').files[0];
+    const type = document.getElementById('bio-csv-type').value;
+    if (!file) { statusEl.textContent = 'Select a CSV file first.'; return; }
+    if (!window.vaultWasm?.isAvailable()) {
+        statusEl.textContent = 'WASM engine not available — build pkg first.';
+        return;
+    }
+    statusEl.textContent = 'Parsing…';
+    try {
+        const csv = await file.text();
+        const n = await window.vaultWasm.importCSVToVault(type, csv);
+        statusEl.textContent = n > 0 ? `✓ Imported ${n} records.` : 'No records found in file.';
+        _bioRefresh();
+    } catch (e) {
+        statusEl.textContent = `Error: ${e.message}`;
+    }
+}
+
+async function _bioExportTurtle() {
+    if (!window.vaultWasm?.isAvailable()) { alert('WASM engine not available.'); return; }
+    const turtle = await window.vaultWasm.exportVaultToTurtle();
+    if (!turtle) { alert('No data to export.'); return; }
+    const blob = new Blob([turtle], { type: 'text/turtle' });
+    const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `wellfair-vault-${new Date().toISOString().slice(0,10)}.ttl`,
+    });
+    a.click();
+}
+
+async function _bioValidate() {
+    if (!window.vaultWasm?.isAvailable()) { alert('WASM engine not available.'); return; }
+    const turtle = await window.vaultWasm.exportVaultToTurtle();
+    if (!turtle) { alert('No data to validate.'); return; }
+    const report = await window.vaultWasm.validateHealthTurtle(turtle);
+    if (!report) { alert('Validation returned no result.'); return; }
+    const msg = report.valid
+        ? `✓ Valid — ${report.checked} shapes checked, no violations.`
+        : `✗ ${report.violations?.length || 0} violation(s) found:\n` +
+          (report.violations || []).map(v => `• ${v.shape}: ${v.message}`).join('\n');
+    alert(msg);
+}
+
+async function _bioRunSPARQL() {
+    const sparql = document.getElementById('bio-sparql').value.trim();
+    const resultEl = document.getElementById('bio-sparql-result');
+    if (!sparql) return;
+    if (!window.vaultWasm?.isAvailable()) {
+        resultEl.style.display = 'block';
+        resultEl.textContent = 'WASM engine not available.';
+        return;
+    }
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'Running…';
+    try {
+        const result = await window.vaultWasm.sparqlOverVault(sparql);
+        resultEl.textContent = JSON.stringify(result, null, 2);
+    } catch (e) {
+        resultEl.textContent = `Error: ${e.message}`;
+    }
+}
+
+// ── Diet Log UI ───────────────────────────────────────────────────────────────
+
+let _dlCurrentDate = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+function openDietLog() {
+  _dlCurrentDate = new Date().toISOString().slice(0, 10);
+  document.getElementById('diet-sheet').style.display = 'flex';
+  _dlHideAddForm();
+  _dlRenderDay();
+}
+
+function closeDietLog() {
+  document.getElementById('diet-sheet').style.display = 'none';
+}
+
+function _dlNavDate(delta) {
+  const d = new Date(_dlCurrentDate + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  _dlCurrentDate = d.toISOString().slice(0, 10);
+  _dlRenderDay();
+}
+
+let _dlScanStop = null; // stopFn returned by dlStartBarcodeScanner
+
+function _dlShowAddForm() {
+  const now = new Date();
+  document.getElementById('dl-time').value =
+    `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('dl-save-status').textContent = '';
+  const scanSt = document.getElementById('dl-scan-status');
+  if (scanSt) scanSt.textContent = '';
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = 'manual';
+  document.getElementById('diet-add-form').style.display = 'block';
+  document.getElementById('diet-scroll').scrollTo({ top: 9999, behavior: 'smooth' });
+}
+
+function _dlHideAddForm() {
+  if (_dlScanStop) { _dlScanStop(); _dlScanStop = null; }
+  const scanSt = document.getElementById('dl-scan-status');
+  if (scanSt) scanSt.textContent = '';
+  document.getElementById('diet-add-form').style.display = 'none';
+  ['dl-name','dl-brand','dl-notes'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['dl-qty','dl-kcal','dl-protein','dl-carbs','dl-fat','dl-fiber','dl-sugar','dl-sodium']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('dl-qty').value = '1';
+  document.getElementById('dl-optional').style.display = 'none';
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = 'manual';
+}
+
+function _dlToggleOptional(btn) {
+  const el = document.getElementById('dl-optional');
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  btn.textContent  = open ? '▸ Optional fields' : '▾ Optional fields';
+}
+
+async function _dlStartScan() {
+  const statusEl = document.getElementById('dl-scan-status');
+  const videoEl  = document.getElementById('dl-scan-video');
+  if (!statusEl || !videoEl) return;
+
+  // Cancel any in-progress scan first
+  if (_dlScanStop) { _dlScanStop(); _dlScanStop = null; }
+
+  statusEl.textContent = 'Point at barcode — scanning…';
+  statusEl.style.color = 'var(--dim)';
+
+  try {
+    _dlScanStop = await dlStartBarcodeScanner(videoEl, async (barcode) => {
+      _dlScanStop = null;
+      statusEl.textContent = 'Looking up product…';
+      statusEl.style.color = 'var(--dim)';
+
+      const result = await dlLookupBarcode(barcode);
+      if (result.found) {
+        _dlFillFromScan(result.fields);
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = 'Found: ' + (result.fields.name || barcode);
+      } else {
+        statusEl.style.color = 'var(--yellow)';
+        statusEl.textContent = 'Product not found — enter manually';
+        const srcEl = document.getElementById('dl-source');
+        if (srcEl) srcEl.value = 'manual';
+      }
+    });
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = e.message;
+    _dlScanStop = null;
+  }
+}
+
+function _dlFillFromScan(fields) {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val != null && val !== '') el.value = val;
+  };
+  set('dl-name',    fields.name);
+  set('dl-brand',   fields.brand);
+  set('dl-qty',     fields.quantity);
+  set('dl-kcal',    fields.kcal);
+  set('dl-protein', fields.protein_g);
+  set('dl-carbs',   fields.carbs_g);
+  set('dl-fat',     fields.fat_g);
+  set('dl-fiber',   fields.fiber_g);
+  set('dl-sugar',   fields.sugar_g);
+  set('dl-sodium',  fields.sodium_mg);
+  set('dl-notes',   fields.notes);
+
+  const unitEl = document.getElementById('dl-unit');
+  if (unitEl && fields.unit) unitEl.value = fields.unit;
+
+  const srcEl = document.getElementById('dl-source');
+  if (srcEl) srcEl.value = fields.source || 'barcode';
+
+  // Auto-expand optional fields when scan returned data for them
+  if (fields.brand || fields.fiber_g != null || fields.sugar_g != null || fields.sodium_mg != null) {
+    const opt = document.getElementById('dl-optional');
+    const btn = document.querySelector('.diet-optional-toggle');
+    if (opt && opt.style.display === 'none') {
+      opt.style.display = 'block';
+      if (btn) btn.textContent = '▾ Optional fields';
+    }
+  }
+}
+
+async function _dlSave() {
+  const status = document.getElementById('dl-save-status');
+  status.style.color = 'var(--red)';
+  const name = document.getElementById('dl-name')?.value.trim();
+  if (!name) { status.textContent = 'Food name is required.'; return; }
+  try {
+    await dlAddEntry({
+      date:       _dlCurrentDate,
+      time:       document.getElementById('dl-time')?.value,
+      meal:       document.getElementById('dl-meal')?.value,
+      name,
+      brand:      document.getElementById('dl-brand')?.value,
+      quantity:   document.getElementById('dl-qty')?.value,
+      unit:       document.getElementById('dl-unit')?.value,
+      kcal:       document.getElementById('dl-kcal')?.value,
+      protein_g:  document.getElementById('dl-protein')?.value,
+      carbs_g:    document.getElementById('dl-carbs')?.value,
+      fat_g:      document.getElementById('dl-fat')?.value,
+      fiber_g:    document.getElementById('dl-fiber')?.value  || null,
+      sugar_g:    document.getElementById('dl-sugar')?.value  || null,
+      sodium_mg:  document.getElementById('dl-sodium')?.value || null,
+      notes:      document.getElementById('dl-notes')?.value,
+      source:     document.getElementById('dl-source')?.value || 'manual',
+    });
+    status.style.color = 'var(--green)';
+    status.textContent = '✓ Saved';
+    setTimeout(() => { _dlHideAddForm(); _dlRenderDay(); }, 600);
+  } catch (e) {
+    status.textContent = e.message;
+  }
+}
+
+async function _dlDeleteEntry(id) {
+  await dlDeleteEntry(id);
+  _dlRenderDay();
+}
+
+async function _dlRenderDay() {
+  const today = new Date().toISOString().slice(0, 10);
+  const label = document.getElementById('diet-date-label');
+  const totalsEl = document.getElementById('diet-totals');
+  const bodyEl   = document.getElementById('diet-log-body');
+
+  if (_dlCurrentDate === today) {
+    label.textContent = 'Today';
+  } else {
+    const d = new Date(_dlCurrentDate + 'T12:00:00');
+    label.textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+  }
+
+  let entries = [];
+  try { entries = await dlGetByDate(_dlCurrentDate); } catch (_) {}
+
+  // Totals row
+  const t = dlDailyTotals(entries);
+  totalsEl.innerHTML = entries.length
+    ? `<div class="diet-total-chip"><strong>${t.kcal}</strong> kcal</div>
+       <div class="diet-total-chip"><strong>${t.protein_g}g</strong> protein</div>
+       <div class="diet-total-chip"><strong>${t.carbs_g}g</strong> carbs</div>
+       <div class="diet-total-chip"><strong>${t.fat_g}g</strong> fat</div>`
+    : '';
+
+  // Group by meal
+  const MEAL_ORDER = ['breakfast','lunch','dinner','snack','drink'];
+  const MEAL_LABELS = { breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snack:'Snack', drink:'Drink' };
+  const groups = {};
+  for (const e of entries) {
+    const m = MEAL_ORDER.includes(e.meal) ? e.meal : 'snack';
+    (groups[m] = groups[m] || []).push(e);
+  }
+
+  if (!entries.length) {
+    bodyEl.innerHTML = '<p class="diet-empty">No entries for this day — tap + Add to log food.</p>';
+    return;
+  }
+
+  bodyEl.innerHTML = MEAL_ORDER
+    .filter(m => groups[m]?.length)
+    .map(m => `
+      <div class="diet-meal-section">
+        <div class="diet-meal-label">${MEAL_LABELS[m]}</div>
+        ${groups[m].map(e => {
+          const macroStr = [
+            e.protein_g ? `${e.protein_g}g P` : '',
+            e.carbs_g   ? `${e.carbs_g}g C`   : '',
+            e.fat_g     ? `${e.fat_g}g F`     : '',
+          ].filter(Boolean).join(' · ');
+          const unitStr = `${e.quantity} ${e.unit}`;
+          return `<div class="diet-entry">
+            <div class="diet-entry-info">
+              <div class="diet-entry-name">${_dlEsc(e.name)}${e.brand ? ' <span style="font-weight:400;color:var(--dim)">· ' + _dlEsc(e.brand) + '</span>' : ''}</div>
+              <div class="diet-entry-meta">${unitStr}${macroStr ? ' · ' + macroStr : ''}${e.notes ? ' · ' + _dlEsc(e.notes) : ''}</div>
+            </div>
+            <span class="diet-entry-kcal">${e.kcal ? e.kcal + ' kcal' : ''}</span>
+            <button class="diet-del-btn" title="Delete" onclick="_dlDeleteEntry('${_dlEsc(e.id)}')">✕</button>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+}
+
+function _dlEsc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const _missing = [];
+  try { await crypto.subtle.generateKey({ name: 'Ed25519' }, false, ['sign', 'verify']); } catch (_) { _missing.push('Ed25519'); }
+  try { await crypto.subtle.generateKey({ name: 'X25519'  }, false, ['deriveBits']);       } catch (_) { _missing.push('X25519');  }
+  if (_missing.length) {
+    document.body.innerHTML =
+      `<div style="font-family:system-ui;max-width:36rem;margin:4rem auto;padding:1.5rem;` +
+      `background:#1a1a2e;color:#e2e8f0;border-radius:.75rem;border:1px solid #e53e3e">` +
+      `<h2 style="margin:0 0 .75rem;color:#fc8181">Browser not supported</h2>` +
+      `<p style="line-height:1.6;margin:0 0 .75rem">WellFair requires WebCrypto algorithms ` +
+      `not available in this browser: <strong style="color:#fc8181">${_missing.join(', ')}</strong>.</p>` +
+      `<p style="line-height:1.6;margin:0">Please use <strong>Chrome 111+</strong>, ` +
+      `<strong>Edge 111+</strong>, or <strong>Firefox 130+</strong>.</p></div>`;
+    return;
+  }
+
+  vaultDidKey = await generateDidKey();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+  if (new URLSearchParams(location.search).has('demo')) {
+    document.getElementById('demo-banner').style.display = 'block';
+    // Generate a one-time throwaway AES key so Directory/Scheduler/etc. don't throw
+    crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt'])
+      .then(k => { initDirectory(k); startScheduler(); startGate(); });
+    openOwnerWorkspace();
+    return;
+  }
+
+  initNym();
+  showStep('step-pin');
+})();
+</script>
+</body>
+</html>

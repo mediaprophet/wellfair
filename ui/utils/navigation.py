@@ -1,4 +1,5 @@
 import streamlit as st
+from ui.utils.package_bridge import is_nav_section_available, missing_caps_for, _NAV_FEATURE_MAP
 
 # Grouped nav structure: (group_label, [ (key, label), ... ])
 _NAV_GROUPS = [
@@ -28,6 +29,9 @@ _NAV_GROUPS = [
     ]),
     ("SANCTUARY", [
         ("sanctuary_mode",    "🛡️ Sanctuary Mode"),
+    ]),
+    ("SYSTEM", [
+        ("packages",          "📦 Packages"),
     ]),
 ]
 
@@ -72,11 +76,21 @@ def render_sidebar_nav(dark_mode: bool = False, is_sanctuary: bool = False) -> s
 
         for key, label in items:
             active = key == current
+            available = is_nav_section_available(key)
+
             if active:
                 st.sidebar.markdown(
                     f"<div style='background:{active_bg};border-left:3px solid {active_border};"
                     f"padding:8px 12px;border-radius:8px;font-weight:700;margin-bottom:3px;"
                     f"color:{active_text};font-size:0.9rem;'>{label}</div>",
+                    unsafe_allow_html=True,
+                )
+            elif not available:
+                # Show dimmed, non-clickable item with a lock indicator
+                st.sidebar.markdown(
+                    f"<div style='opacity:0.38;padding:8px 12px;border-radius:8px;"
+                    f"margin-bottom:3px;color:#71717a;font-size:0.9rem;"
+                    f"cursor:default;user-select:none;'>{label} 🔒</div>",
                     unsafe_allow_html=True,
                 )
             else:

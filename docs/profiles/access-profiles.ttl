@@ -27,7 +27,28 @@ wf:bloodPressure     a rdf:Property ; rdfs:label "Blood pressure"@en .
 wf:sleep             a rdf:Property ; rdfs:label "Sleep"@en .
 wf:steps             a rdf:Property ; rdfs:label "Activity & steps"@en .
 wf:weight            a rdf:Property ; rdfs:label "Weight"@en .
-wf:medications       a rdf:Property ; rdfs:label "Current medications"@en .
+wf:medications          a rdf:Property ; rdfs:label "Current medications"@en .
+wf:medicationAdherence  a rdf:Property ; rdfs:label "Medication adherence log"@en ;
+    rdfs:comment "Daily take/skip log. Clinical profiles only — not shared with emergency responders."@en .
+wf:medicationHistory    a rdf:Property ; rdfs:label "Ceased / historical medications"@en .
+wf:medicationInteractions a rdf:Property ; rdfs:label "Drug interaction alerts"@en ;
+    rdfs:comment "Interaction alerts derived from current medication list and substance logs."@en .
+
+# Pharmacological linked-data vocabulary (SPARQL endpoint references)
+@prefix rxnorm: <http://purl.bioontology.org/ontology/RXNORM/> .
+@prefix atc:    <http://purl.bioontology.org/ontology/ATC/> .
+@prefix chembl: <http://rdf.ebi.ac.uk/terms/chembl#> .
+@prefix wd:     <http://www.wikidata.org/entity/> .
+@prefix wdt:    <http://www.wikidata.org/prop/direct/> .
+
+wf:rxcui          a rdf:Property ; rdfs:label "RxNorm CUI"@en ; rdfs:range xsd:string .
+wf:atcCode        a rdf:Property ; rdfs:label "ATC classification code"@en ; rdfs:range xsd:string .
+wf:linkedDataUri  a rdf:Property ; rdfs:label "Canonical linked-data URI for this substance"@en ;
+    rdfs:range xsd:anyURI ;
+    rdfs:comment "Wikidata or ChEMBL entity URI — enables pharmacological SPARQL queries without transmitting personal data."@en .
+wf:scheduleTimes  a rdf:Property ; rdfs:label "Scheduled dose times (HH:MM, local)"@en .
+wf:adherenceStatus a rdf:Property ; rdfs:label "Adherence status for a logged dose"@en ;
+    rdfs:comment "One of: taken | skipped | late | unknown."@en .
 wf:allergies         a rdf:Property ; rdfs:label "Allergies & adverse reactions"@en .
 wf:conditions        a rdf:Property ; rdfs:label "Medical conditions"@en .
 wf:bloodType         a rdf:Property ; rdfs:label "Blood type & Rh factor"@en .
@@ -148,26 +169,29 @@ wf:OwnerWorkspaceProfile
     wf:accessMode         wf:ReadWrite ;
     wf:requiresAudit      false ;
     # All data paths available to the owner
-    sh:property [ sh:path wf:overview          ] ;
-    sh:property [ sh:path wf:heartRate         ] ;
-    sh:property [ sh:path wf:bloodPressure     ] ;
-    sh:property [ sh:path wf:sleep             ] ;
-    sh:property [ sh:path wf:steps             ] ;
-    sh:property [ sh:path wf:weight            ] ;
-    sh:property [ sh:path wf:medications       ] ;
-    sh:property [ sh:path wf:allergies         ] ;
-    sh:property [ sh:path wf:conditions        ] ;
-    sh:property [ sh:path wf:bloodType         ] ;
-    sh:property [ sh:path wf:dnr               ] ;
-    sh:property [ sh:path wf:emergencyContacts ] ;
-    sh:property [ sh:path wf:surgicalHistory   ] ;
-    sh:property [ sh:path wf:mentalHealth      ] ;
-    sh:property [ sh:path wf:sexualHealth      ] ;
-    sh:property [ sh:path wf:socialContext     ] ;
-    sh:property [ sh:path wf:documents         ] ;
-    sh:property [ sh:path wf:notes             ] ;
-    sh:property [ sh:path wf:auditLog          ] ;
-    sh:property [ sh:path wf:vaultSettings     ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:steps                  ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:bloodType              ] ;
+    sh:property [ sh:path wf:dnr                    ] ;
+    sh:property [ sh:path wf:emergencyContacts      ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] ;
+    sh:property [ sh:path wf:mentalHealth           ] ;
+    sh:property [ sh:path wf:sexualHealth           ] ;
+    sh:property [ sh:path wf:socialContext          ] ;
+    sh:property [ sh:path wf:documents              ] ;
+    sh:property [ sh:path wf:notes                  ] ;
+    sh:property [ sh:path wf:auditLog               ] ;
+    sh:property [ sh:path wf:vaultSettings          ] .
 
 
 # ── Emergency / First Responder ───────────────────────────────────────────────
@@ -224,15 +248,18 @@ wf:GeneralPractitionerProfile
     wf:uiIcon       "👨‍⚕️" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:ClinicalProfessionalVC ;
-    sh:property [ sh:path wf:overview      ] ;
-    sh:property [ sh:path wf:heartRate     ] ;
-    sh:property [ sh:path wf:bloodPressure ] ;
-    sh:property [ sh:path wf:sleep         ] ;
-    sh:property [ sh:path wf:steps         ] ;
-    sh:property [ sh:path wf:weight        ] ;
-    sh:property [ sh:path wf:medications   ] ;
-    sh:property [ sh:path wf:allergies     ] ;
-    sh:property [ sh:path wf:conditions    ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:steps                  ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] .
 
 
 # ── Specialist ────────────────────────────────────────────────────────────────
@@ -245,13 +272,16 @@ wf:SpecialistProfile
     wf:uiIcon       "🔬" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:ClinicalProfessionalVC ;
-    sh:property [ sh:path wf:overview        ] ;
-    sh:property [ sh:path wf:heartRate       ] ;
-    sh:property [ sh:path wf:bloodPressure   ] ;
-    sh:property [ sh:path wf:medications     ] ;
-    sh:property [ sh:path wf:allergies       ] ;
-    sh:property [ sh:path wf:conditions      ] ;
-    sh:property [ sh:path wf:surgicalHistory ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] .
 
 
 # ── Psychiatrist / Mental Health Clinician ────────────────────────────────────
@@ -264,10 +294,12 @@ wf:PsychiatristProfile
     wf:uiIcon       "🧠" ;
     wf:accessCondition    wf:NormalAccess ;
     wf:credentialRequired wf:MentalHealthPractitionerVC ;
-    sh:property [ sh:path wf:overview      ] ;
-    sh:property [ sh:path wf:mentalHealth  ] ;
-    sh:property [ sh:path wf:sleep         ] ;
-    sh:property [ sh:path wf:medications   ] .
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:mentalHealth           ] ;
+    sh:property [ sh:path wf:sleep                  ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationInteractions ] .
 
 
 # ── Social Worker ─────────────────────────────────────────────────────────────
@@ -328,3 +360,345 @@ wf:LegalAdvocateProfile
     wf:sessionScoped      true ;
     # No sh:property entries — all sections opt-in per session
     .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VC-7 — Verified Directory: Contact Graph Data Vocabulary & Shapes
+#
+# Classes and properties for the contact graph stored in IDB wf-contacts,
+# wf-relationships, and wf-agreements. All records about people use SHACL
+# shapes rather than OWL class membership (architecture rule 3).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Directory class vocabulary ────────────────────────────────────────────────
+
+wf:Contact
+    a rdfs:Class ;
+    rdfs:label   "Contact"@en ;
+    rdfs:comment "A person in the vault owner's Verified Directory. Stored encrypted in IDB wf-contacts."@en .
+
+wf:Relationship
+    a rdfs:Class ;
+    rdfs:label   "Relationship edge"@en ;
+    rdfs:comment "A directed relationship between the vault owner and a Contact, backed by a signed UsageAgreement. Stored encrypted in IDB wf-relationships."@en .
+
+wf:UsageAgreement
+    a rdfs:Class ;
+    rdfs:label   "Signed usage agreement"@en ;
+    rdfs:comment "An ODRL Agreement signed by both parties governing data sharing permissions. Stored encrypted in IDB wf-agreements."@en .
+
+
+# ── Contact properties ────────────────────────────────────────────────────────
+
+wf:contactDid
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Identity credential identifier (did:key or did:peer)"@en ;
+    rdfs:comment "The contact's identity credential — a did:key for ephemeral sessions or a did:peer for an established relationship channel."@en .
+
+wf:contactWebId
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "WebID or profile URL"@en .
+
+wf:contactNymAddress
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Nym mixnet address"@en ;
+    rdfs:comment "Contact's Nym mixnet address for anonymous routing via the nymAdapter."@en .
+
+wf:contactNotes
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Private notes"@en ;
+    rdfs:comment "Vault-owner private notes about this contact. Encrypted at rest."@en .
+
+
+# ── Relationship properties ───────────────────────────────────────────────────
+
+wf:relationshipType
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:label  "Relationship category"@en ;
+    rdfs:comment "One of: personal | professional | clinical | legal."@en .
+
+wf:peerDid
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "did:peer for this relationship channel"@en ;
+    rdfs:comment "Per-relationship did:peer generated during the Semantic Handshake (VC-8)."@en .
+
+wf:agreementRef
+    a rdf:Property ;
+    rdfs:domain wf:Relationship ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "UsageAgreement reference"@en ;
+    rdfs:comment "Pointer to the wf:UsageAgreement record governing this relationship."@en .
+
+
+# ── UsageAgreement properties ─────────────────────────────────────────────────
+
+wf:agreementOdrl
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "ODRL Agreement JSON-LD"@en ;
+    rdfs:comment "Full ODRL Agreement serialised as a JSON-LD string."@en .
+
+wf:agreementSig
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Initiator Ed25519 signature"@en ;
+    rdfs:comment "Base64 Ed25519 signature over canonical agreement JSON, signed by the initiator."@en .
+
+wf:counterpartySig
+    a rdf:Property ;
+    rdfs:domain wf:UsageAgreement ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Counterparty Ed25519 signature"@en ;
+    rdfs:comment "Counterparty's Base64 Ed25519 signature over canonical agreement JSON."@en .
+
+
+# ── SHACL NodeShapes for directory records ────────────────────────────────────
+
+wf:callProfileId
+    a rdf:Property ;
+    rdfs:domain wf:Contact ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Call profile identifier"@en ;
+    rdfs:comment "ID of the wf:CallProfile shape that governs which vault sections are surfaced in the call overlay Info panel when a video call is active with this contact. Defaults to 'generic_call'."@en .
+
+wf:ContactShape
+    a sh:NodeShape ;
+    sh:targetClass wf:Contact ;
+    rdfs:label     "Contact record shape"@en ;
+    rdfs:comment   "Validates a wf:Contact record — the plaintext form stored encrypted in IDB wf-contacts."@en ;
+    sh:property [
+        sh:path     wf:contactDid ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        rdfs:label  "Required: identity credential identifier"@en ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactWebId ;
+        sh:datatype xsd:anyURI ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactNymAddress ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:contactNotes ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:callProfileId ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+        sh:defaultValue "generic_call" ;
+    ] .
+
+
+wf:RelationshipShape
+    a sh:NodeShape ;
+    sh:targetClass wf:Relationship ;
+    rdfs:label     "Relationship edge shape"@en ;
+    rdfs:comment   "Validates a wf:Relationship record stored encrypted in IDB wf-relationships."@en ;
+    sh:property [
+        sh:path     wf:relationshipType ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in       ( "personal" "professional" "clinical" "legal" ) ;
+    ] ;
+    sh:property [
+        sh:path     wf:peerDid ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementRef ;
+        sh:maxCount 1 ;
+    ] .
+
+
+wf:UsageAgreementShape
+    a sh:NodeShape ;
+    sh:targetClass wf:UsageAgreement ;
+    rdfs:label     "Usage agreement shape"@en ;
+    rdfs:comment   "Validates a wf:UsageAgreement record stored encrypted in IDB wf-agreements."@en ;
+    sh:property [
+        sh:path     wf:agreementOdrl ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementSig ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:counterpartySig ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# VC-10 — Call Profiles: per-contact data-sharing presets for video calls
+#
+# A CallProfile is attached to a Contact record (wf:callProfileId) and governs
+# which vault sections are surfaced in the call overlay Info panel during an
+# active call with that contact. Unlike access profiles (which govern what a
+# connector session may read), call profiles are suggestions to the vault owner
+# about what they might want to share — the owner always remains in control.
+#
+# Safe default: wf:GenericCallProfile — no sections offered.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+wf:CallProfile
+    a rdfs:Class ;
+    rdfs:subClassOf sh:NodeShape ;
+    rdfs:label   "Call profile"@en ;
+    rdfs:comment "A data-sharing preset attached to a directory contact. Determines which vault sections are highlighted in the call overlay Info panel. Not a restriction — the vault owner may always share any section manually."@en .
+
+wf:callProfileType
+    a rdf:Property ;
+    rdfs:domain wf:CallProfile ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Call profile type identifier"@en .
+
+
+# ── Generic call (no health data) ────────────────────────────────────────────
+
+wf:GenericCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "generic_call" ;
+    rdfs:label   "General call"@en ;
+    rdfs:comment "Standard video or audio call. No health data sections are offered by default. Suitable for friends, work colleagues, or any contact who does not need health information."@en ;
+    wf:uiIcon    "📞" ;
+    wf:uiColor   "#6c757d" .
+
+
+# ── Health consultation ───────────────────────────────────────────────────────
+
+wf:HealthConsultationCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "health_consultation" ;
+    rdfs:label   "Health consultation"@en ;
+    rdfs:comment "GP, nurse, or primary care provider. Overview, current medications, conditions, vitals, and allergies are surfaced for sharing."@en ;
+    wf:uiIcon    "🩺" ;
+    wf:uiColor   "#0d6efd" ;
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:weight                 ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationAdherence    ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] .
+
+
+# ── Mental health session ─────────────────────────────────────────────────────
+
+wf:MentalHealthCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "mental_health_call" ;
+    rdfs:label   "Mental health session"@en ;
+    rdfs:comment "Psychologist, counsellor, or mental health support worker. Mental health records, sleep patterns, and psychiatric medications surfaced."@en ;
+    wf:uiIcon    "🧠" ;
+    wf:uiColor   "#6f42c1" ;
+    sh:property [ sh:path wf:overview            ] ;
+    sh:property [ sh:path wf:mentalHealth        ] ;
+    sh:property [ sh:path wf:sleep               ] ;
+    sh:property [ sh:path wf:medications         ] ;
+    sh:property [ sh:path wf:medicationAdherence ] .
+
+
+# ── Social work check-in ──────────────────────────────────────────────────────
+
+wf:SocialWorkCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "social_work_call" ;
+    rdfs:label   "Social work check-in"@en ;
+    rdfs:comment "Social worker, case manager, or community support worker. Social and housing context and emergency contacts surfaced. No clinical data."@en ;
+    wf:uiIcon    "🤝" ;
+    wf:uiColor   "#198754" ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Specialist consultation ───────────────────────────────────────────────────
+
+wf:SpecialistCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "specialist_call" ;
+    rdfs:label   "Specialist consultation"@en ;
+    rdfs:comment "Hospital specialist (cardiologist, oncologist, etc.). Full clinical picture including medication interactions, conditions, and surgical history."@en ;
+    wf:uiIcon    "🔬" ;
+    wf:uiColor   "#6610f2" ;
+    sh:property [ sh:path wf:overview               ] ;
+    sh:property [ sh:path wf:heartRate              ] ;
+    sh:property [ sh:path wf:bloodPressure          ] ;
+    sh:property [ sh:path wf:medications            ] ;
+    sh:property [ sh:path wf:medicationHistory      ] ;
+    sh:property [ sh:path wf:medicationInteractions ] ;
+    sh:property [ sh:path wf:allergies              ] ;
+    sh:property [ sh:path wf:conditions             ] ;
+    sh:property [ sh:path wf:surgicalHistory        ] .
+
+
+# ── Carer / family call ───────────────────────────────────────────────────────
+
+wf:CarerCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "carer_call" ;
+    rdfs:label   "Carer / family call"@en ;
+    rdfs:comment "Trusted carer or family member. Overview, medications, conditions, allergies, and emergency contacts surfaced."@en ;
+    wf:uiIcon    "🏠" ;
+    wf:uiColor   "#fd7e14" ;
+    sh:property [ sh:path wf:overview          ] ;
+    sh:property [ sh:path wf:medications       ] ;
+    sh:property [ sh:path wf:conditions        ] ;
+    sh:property [ sh:path wf:allergies         ] ;
+    sh:property [ sh:path wf:emergencyContacts ] .
+
+
+# ── Legal consultation ────────────────────────────────────────────────────────
+
+wf:LegalCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "legal_call" ;
+    rdfs:label   "Legal consultation"@en ;
+    rdfs:comment "Legal representative or advocate. No sections surfaced by default — the vault owner selects exactly what evidence or context to share for this specific legal matter."@en ;
+    wf:uiIcon    "⚖️" ;
+    wf:uiColor   "#6c757d" .
+
+
+# ── Crisis support ────────────────────────────────────────────────────────────
+
+wf:CrisisSupportCallProfile
+    a wf:CallProfile ;
+    wf:callProfileType "crisis_support_call" ;
+    rdfs:label   "Crisis support"@en ;
+    rdfs:comment "Crisis support worker (e.g. Beyond Blue, Lifeline, domestic violence service). Social context, emergency contacts, and mental health sections surfaced. Designed for situations where the vault owner needs immediate practical or safety support."@en ;
+    wf:uiIcon    "🆘" ;
+    wf:uiColor   "#dc3545" ;
+    sh:property [ sh:path wf:socialContext     ] ;
+    sh:property [ sh:path wf:emergencyContacts ] ;
+    sh:property [ sh:path wf:mentalHealth      ] .
