@@ -770,6 +770,17 @@
     </div>
   </div>
 
+  <!-- ⚙️ Model preferences panel -->
+  <div id="model-prefs-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
+    <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .8rem"
+            onclick="_toggleModelPrefsBody()">⚙️ Model preferences</button>
+    <div id="model-prefs-body" style="display:none;margin-top:.6rem;
+         background:var(--surface);border:1px solid var(--border);
+         border-radius:8px;padding:.85rem 1rem">
+      <div id="model-prefs-content"></div>
+    </div>
+  </div>
+
   <!-- Contacts / Verified Directory + Queue + Diet Log -->
   <div id="dir-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
     <div style="display:flex;gap:.5rem">
@@ -1576,6 +1587,7 @@
 <script src="js/vault-directory.js?v=6"></script>
 <!-- Call profiles — must load after vault-directory.js -->
 <script src="js/vault-call-profiles.js?v=1"></script>
+<script src="js/vault-model-prefs.js?v=1"></script>
 <!-- VC-8 Semantic Handshake — must load after vault-directory.js -->
 <script src="js/vault-handshake.js?v=6"></script>
 <!-- VC-9 Caller Gating — must load after vault-directory.js + vault-nym.js -->
@@ -1682,6 +1694,7 @@ function openOwnerWorkspace() {
   document.getElementById('med-reminder-panel').style.display    = 'block';
   document.getElementById('dms-panel').style.display             = 'block';
   document.getElementById('anon-notify-panel').style.display     = 'block';
+  document.getElementById('model-prefs-panel').style.display     = 'block';
   if (!duressModeActive) {
     document.getElementById('dir-panel').style.display       = 'block';
     document.getElementById('sanctuary-panel').style.display = 'block';
@@ -1699,7 +1712,7 @@ function lockVault() {
   if (_medCheckInterval) { clearInterval(_medCheckInterval); _medCheckInterval = null; }
   clearTimeout(dmsTimer);
   ['med-interaction-panel','med-reminder-panel','dms-panel',
-   'anon-notify-panel','dir-panel','sanctuary-panel'].forEach(id => {
+   'anon-notify-panel','model-prefs-panel','dir-panel','sanctuary-panel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   document.getElementById('dir-sheet').style.display   = 'none';
@@ -2336,6 +2349,18 @@ function _shareDeny() {
   _sharePending = null;
 }
 
+// ── Model preferences panel ───────────────────────────────────────────────────
+
+function _toggleModelPrefsBody() {
+  const body = document.getElementById('model-prefs-body');
+  if (!body) return;
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (open && typeof renderModelPrefPanel === 'function') {
+    renderModelPrefPanel('model-prefs-content');
+  }
+}
+
 // ── Active call overlay helpers ───────────────────────────────────────────────
 
 let _callOverlayMuted  = false;
@@ -2347,15 +2372,26 @@ function _callOverlayOpen(sessionId) {
   if (!overlay) return;
   overlay.classList.add('call-active');
 
-  // Reset checkboxes and mute state
+  // Reset mute state
   _callOverlayMuted = false;
   const muteIcon = document.getElementById('call-btn-mute-icon');
   if (muteIcon) muteIcon.textContent = '🔇';
   const muteBtn = document.getElementById('call-btn-mute');
   if (muteBtn) muteBtn.classList.remove('btn-active');
-  ['vision-emotion','vision-rpg','audio-prosody','text-linguistic'].forEach(id => {
+
+  // Restore CV module defaults from model preferences
+  const _cvPrefMap = {
+    'vision-emotion':  'cvDefaultEmotion',
+    'vision-rpg':      'cvDefaultRpg',
+    'audio-prosody':   'cvDefaultProsody',
+    'text-linguistic': 'cvDefaultLinguistic',
+  };
+  Object.entries(_cvPrefMap).forEach(([id, prefKey]) => {
     const el = document.getElementById('agent-chk-' + id);
-    if (el) el.checked = false;
+    if (!el) return;
+    const enabled = typeof getModelPref === 'function' ? getModelPref(prefKey) : false;
+    el.checked = enabled;
+    if (enabled) _cvToggle(id.replace('-', '.'), true);
   });
   const activeEl = document.getElementById('agent-active-modules');
   if (activeEl) { activeEl.textContent = 'No modules active'; activeEl.style.color = 'rgba(255,255,255,.45)'; }

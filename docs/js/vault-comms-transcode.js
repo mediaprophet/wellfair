@@ -13,6 +13,7 @@
 //   stopRealtimeTranscription()
 //   transcodeSegment(segment, targetLang)   → job handler (transcript.transcode)
 //   configureExternalApi(endpoint)          → set external API endpoint (owner settings)
+//   getWhisperModelId()                     → resolved model id from owner preferences
 
 // ── Module state ──────────────────────────────────────────────────────────────
 
@@ -22,6 +23,14 @@ let _txcSelfDid      = null;
 let _txcLangHint     = 'en';
 let _txcExternalApi  = null;      // user-configured external endpoint
 let _txcExternalConsent = false;  // must be re-granted each session
+
+// Returns the Whisper model id chosen by the vault owner.
+// Falls back to whisper-base if vault-model-prefs.js is not loaded.
+function getWhisperModelId() {
+  return (typeof getModelPref === 'function')
+    ? (getModelPref('whisperModel') || 'Xenova/whisper-base')
+    : 'Xenova/whisper-base';
+}
 
 // ── Tier detection ─────────────────────────────────────────────────────────────
 
@@ -139,6 +148,8 @@ async function transcodeSegment(segment, targetLang, onProgress) {
   const { original, lang } = segment;
 
   // Tier 2 — local transformers.js
+  // Model size is configurable via vault-model-prefs.js (owner preference).
+  // Translation uses the opus-mt family; the Whisper model pref governs future ASR batching.
   if (typeof pipeline === 'function') {
     try {
       onProgress && onProgress(30);
