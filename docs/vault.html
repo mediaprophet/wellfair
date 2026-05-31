@@ -498,6 +498,105 @@
     .gate-actions { display:flex; gap:.65rem; justify-content:center; }
     .gate-actions .btn { width:auto; padding:.55rem 1.4rem; margin:0; font-size:.88rem; }
 
+    /* ── Active call overlay ────────────────────────────────────────────────── */
+    #active-call-overlay {
+      position:fixed;inset:0;z-index:800;display:none;background:#000;
+    }
+    #active-call-overlay.call-active { display:block; }
+    #call-remote-video {
+      position:absolute;inset:0;width:100%;height:100%;
+      object-fit:cover;background:#111;
+    }
+    #call-ticker {
+      position:absolute;top:0;left:0;right:0;z-index:20;height:34px;
+      background:rgba(0,0,0,.58);display:flex;align-items:center;
+      padding:0 .75rem;gap:.5rem;overflow:hidden;
+    }
+    #call-ticker-dot {
+      width:7px;height:7px;border-radius:50%;background:var(--green);
+      flex-shrink:0;animation:pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #call-ticker-text {
+      font-size:.71rem;color:rgba(255,255,255,.92);white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;transition:opacity .25s;
+    }
+    #call-ticker-text.fading { opacity:0; }
+    #call-caller-label {
+      position:absolute;top:42px;left:12px;z-index:20;
+      font-size:.78rem;color:rgba(255,255,255,.8);
+      background:rgba(0,0,0,.42);padding:.15rem .5rem;border-radius:5px;
+      font-variant-numeric:tabular-nums;
+    }
+    #call-local-video {
+      position:absolute;bottom:90px;left:12px;z-index:15;
+      width:112px;height:84px;object-fit:cover;
+      border-radius:8px;border:2px solid rgba(255,255,255,.22);background:#222;
+    }
+    #call-controls {
+      position:absolute;bottom:0;left:0;right:0;z-index:20;height:82px;
+      background:rgba(0,0,0,.62);display:flex;align-items:center;
+      justify-content:center;gap:.65rem;padding:0 .75rem;
+    }
+    .call-ctrl-btn {
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);
+      border-radius:50%;width:54px;height:54px;
+      color:#fff;font-size:1.1rem;cursor:pointer;transition:background .15s;
+    }
+    .call-ctrl-btn:hover { background:rgba(255,255,255,.25); }
+    .call-ctrl-btn.btn-end { background:rgba(220,53,69,.85);border-color:transparent; }
+    .call-ctrl-btn.btn-end:hover { background:#dc3545; }
+    .call-ctrl-btn.btn-active { background:rgba(13,110,253,.75);border-color:transparent; }
+    .call-ctrl-lbl {
+      font-size:.57rem;color:rgba(255,255,255,.68);margin-top:.12rem;
+      display:block;line-height:1;
+    }
+    #call-info-panel {
+      position:absolute;top:0;right:-320px;bottom:0;z-index:30;
+      width:320px;max-width:90vw;
+      background:rgba(12,18,28,.93);border-left:1px solid rgba(255,255,255,.1);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+      transition:right .28s ease;display:flex;flex-direction:column;overflow:hidden;
+    }
+    #call-info-panel.panel-open { right:0; }
+    #call-live-panel {
+      position:absolute;bottom:82px;left:0;right:0;z-index:30;
+      max-height:0;overflow:hidden;
+      background:rgba(10,14,24,.9);border-top:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      transition:max-height .3s ease;
+    }
+    #call-live-panel.panel-open { max-height:300px; }
+    .call-panel-hdr {
+      display:flex;justify-content:space-between;align-items:center;
+      padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);
+      color:#fff;font-size:.88rem;font-weight:700;flex-shrink:0;
+    }
+    .call-panel-body { flex:1;overflow-y:auto;padding:.7rem 1rem; }
+    .call-panel-x {
+      background:none;border:none;color:rgba(255,255,255,.5);
+      font-size:1.05rem;cursor:pointer;line-height:1;padding:.1rem .2rem;
+    }
+    .call-panel-x:hover { color:#fff; }
+    .call-info-row {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.42rem .45rem;border-bottom:1px solid rgba(255,255,255,.07);
+      font-size:.8rem;color:rgba(255,255,255,.85);
+    }
+    .call-info-row-lbl { flex:1; }
+    .call-info-share-btn {
+      font-size:.67rem;padding:.17rem .42rem;
+      background:rgba(13,110,253,.55);border:1px solid rgba(13,110,253,.35);
+      border-radius:4px;color:#fff;cursor:pointer;
+    }
+    .call-info-share-btn:hover { background:rgba(13,110,253,.85); }
+    .call-live-inner { padding:.85rem 1rem 1rem; }
+    .call-live-inner label {
+      display:flex;align-items:center;gap:.5rem;
+      color:rgba(255,255,255,.82);font-size:.78rem;cursor:pointer;margin-bottom:0;
+    }
+
     label { font-size:.82rem; color:var(--dim); display:block; margin-bottom:.3rem; }
     input[type="text"], input[type="password"] {
       width:100%; padding:.55rem .7rem; border:1px solid var(--border);
@@ -668,45 +767,6 @@
       <button class="btn btn-primary" style="font-size:.78rem;padding:.35rem .9rem"
               onclick="sendAnonMessage()">Send anonymously</button>
       <div id="anon-status" style="font-size:.75rem;color:var(--dim);margin-top:.3rem"></div>
-    </div>
-  </div>
-
-  <!-- WA-1 Webizen Agent — in-call consent panel (hidden until call is active) -->
-  <div id="agent-panel" style="display:none;width:100%;max-width:440px;margin-bottom:.5rem">
-    <div style="background:rgba(13,110,253,.06);border:1px solid rgba(13,110,253,.25);
-                border-radius:10px;padding:.75rem 1rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem">
-        <span style="font-size:.82rem;font-weight:700">🤖 Live indicators</span>
-        <button onclick="stopAgent()" style="font-size:.72rem;padding:.2rem .55rem;
-                border:1px solid var(--red);border-radius:5px;background:transparent;
-                color:var(--red);cursor:pointer">All off</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:.35rem;margin-bottom:.55rem">
-        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
-          <input type="checkbox" id="agent-chk-vision-emotion"
-                 onchange="_cvToggle('vision.emotion', this.checked)" />
-          <span><strong>Facial expression</strong> — emotion tracking</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
-          <input type="checkbox" id="agent-chk-vision-rpg"
-                 onchange="_cvToggle('vision.rpg', this.checked)" />
-          <span><strong>Heart rate indicator</strong> — remote pulse via camera</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
-          <input type="checkbox" id="agent-chk-audio-prosody"
-                 onchange="_cvToggle('audio.prosody', this.checked)" />
-          <span><strong>Vocal pattern analysis</strong> — tone, pitch, speech rate</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:.5rem;font-size:.78rem;cursor:pointer">
-          <input type="checkbox" id="agent-chk-text-linguistic"
-                 onchange="_cvToggle('text.linguistic', this.checked)" />
-          <span><strong>Language pattern analysis</strong> — text pattern analysis</span>
-        </label>
-      </div>
-      <div id="agent-active-modules" style="font-size:.72rem;color:var(--dim)">No modules active</div>
-      <p style="font-size:.68rem;color:var(--dim);margin-top:.35rem;line-height:1.4">
-        All analysis runs on your device. No raw video, audio, or transcript is sent.
-      </p>
     </div>
   </div>
 
@@ -1358,11 +1418,100 @@
   </div>
 </div>
 
-<!-- WA-2 Call video elements — hidden; used for MediaPipe frame analysis -->
-<video id="call-local-video"  autoplay playsinline muted
-       style="display:none;position:absolute;width:1px;height:1px;pointer-events:none"></video>
-<video id="call-remote-video" autoplay playsinline
-       style="display:none;position:absolute;width:1px;height:1px;pointer-events:none"></video>
+<!-- ── Active Call Overlay — shown during calls ───────────────────────────── -->
+<div id="active-call-overlay">
+
+  <!-- Ticker: live module readouts across the top -->
+  <div id="call-ticker">
+    <span id="call-ticker-dot"></span>
+    <span id="call-ticker-text">Call in progress</span>
+  </div>
+
+  <!-- Remote peer video — fills overlay background -->
+  <video id="call-remote-video" autoplay playsinline></video>
+
+  <!-- Call timer / caller label — top-left below ticker -->
+  <div id="call-caller-label">0:00</div>
+
+  <!-- Local camera PiP — bottom-left corner -->
+  <video id="call-local-video" autoplay playsinline muted></video>
+
+  <!-- Bottom control bar -->
+  <div id="call-controls">
+    <button class="call-ctrl-btn" id="call-btn-mute"
+            onclick="_callOverlayToggleMute()" title="Mute">
+      <span id="call-btn-mute-icon">🔇</span>
+      <span class="call-ctrl-lbl">Mute</span>
+    </button>
+    <button class="call-ctrl-btn btn-end"
+            onclick="typeof endCall==='function'&&endCall()" title="End call">
+      📞<span class="call-ctrl-lbl">End</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-share"
+            onclick="_callOverlayOpenShare()" title="Share data">
+      📤<span class="call-ctrl-lbl">Share</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-info"
+            onclick="_callOverlayToggleInfo()" title="Patient info">
+      📋<span class="call-ctrl-lbl">Info</span>
+    </button>
+    <button class="call-ctrl-btn" id="call-btn-live"
+            onclick="_callOverlayToggleLive()" title="Live indicators">
+      📊<span class="call-ctrl-lbl">Live</span>
+    </button>
+  </div>
+
+  <!-- Info slide-out panel (from right) -->
+  <div id="call-info-panel">
+    <div class="call-panel-hdr">
+      <span>Health Data</span>
+      <button class="call-panel-x" onclick="_callOverlayToggleInfo()">✕</button>
+    </div>
+    <div class="call-panel-body" id="call-info-content">
+      <p style="color:rgba(255,255,255,.45);font-size:.78rem;margin-top:.4rem">Loading…</p>
+    </div>
+  </div>
+
+  <!-- Live indicators drawer (slides up from bottom controls) -->
+  <div id="call-live-panel">
+    <div class="call-live-inner">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+        <span style="font-size:.82rem;font-weight:700;color:#fff">📊 Live indicators</span>
+        <button onclick="stopAgent();_callOverlayToggleLive()"
+                style="font-size:.7rem;padding:.18rem .5rem;border:1px solid rgba(220,53,69,.55);
+                       border-radius:5px;background:transparent;
+                       color:rgba(220,53,69,.9);cursor:pointer">All off</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.38rem;margin-bottom:.55rem">
+        <label>
+          <input type="checkbox" id="agent-chk-vision-emotion"
+                 onchange="_cvToggle('vision.emotion', this.checked)" />
+          <span><strong style="color:#fff">Facial expression</strong> — emotion tracking</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-vision-rpg"
+                 onchange="_cvToggle('vision.rpg', this.checked)" />
+          <span><strong style="color:#fff">Heart rate indicator</strong> — remote pulse via camera</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-audio-prosody"
+                 onchange="_cvToggle('audio.prosody', this.checked)" />
+          <span><strong style="color:#fff">Vocal pattern analysis</strong> — tone, pitch, speech rate</span>
+        </label>
+        <label>
+          <input type="checkbox" id="agent-chk-text-linguistic"
+                 onchange="_cvToggle('text.linguistic', this.checked)" />
+          <span><strong style="color:#fff">Language patterns</strong> — text analysis</span>
+        </label>
+      </div>
+      <div id="agent-active-modules" style="font-size:.72rem;color:rgba(255,255,255,.45)">No modules active</div>
+      <p style="font-size:.67rem;color:rgba(255,255,255,.38);margin-top:.35rem;line-height:1.4">
+        All analysis runs on your device. No raw video or audio is transmitted.
+      </p>
+    </div>
+  </div>
+
+</div>
 
 <!-- VC-11 in-call data sharing approval panel -->
 <div id="call-share-panel" style="display:none;position:fixed;inset:0;z-index:1800;
@@ -1425,7 +1574,7 @@
 <!-- VC-10 Call session — must load after vault-comms-gate.js -->
 <script src="js/vault-comms-call.js?v=7"></script>
 <!-- WA-1 AgentController — must load after vault-comms-call.js -->
-<script src="js/vault-cv.js?v=7.4"></script>
+<script src="js/vault-cv.js?v=7.5"></script>
 <!-- VC-12 Background Job Scheduler — must load after vault-comms-call.js -->
 <script src="js/vault-scheduler.js?v=6"></script>
 <!-- VC-13 Event Log & Transcript — must load after vault-scheduler.js -->
@@ -2029,20 +2178,10 @@ document.addEventListener('wf:call', (ev) => {
       const stream = typeof _callStream !== 'undefined' ? _callStream : null;
       startRealtimeTranscription(stream, sessionId, navigator.language || 'en');
     }
-    // WA-1: show agent consent panel; reset all checkboxes to unchecked
-    const agentPanel = document.getElementById('agent-panel');
-    if (agentPanel) {
-      agentPanel.style.display = 'block';
-      ['vision-emotion','vision-rpg','audio-prosody','text-linguistic'].forEach(id => {
-        const el = document.getElementById('agent-chk-' + id);
-        if (el) el.checked = false;
-      });
-    }
+    _callOverlayOpen(sessionId);
   } else if (event === 'call.ended') {
     if (typeof stopRealtimeTranscription === 'function') stopRealtimeTranscription();
-    // WA-1: hide agent consent panel
-    const agentPanel = document.getElementById('agent-panel');
-    if (agentPanel) agentPanel.style.display = 'none';
+    _callOverlayClose();
   }
 });
 
@@ -2131,6 +2270,161 @@ async function _shareApprove() {
 function _shareDeny() {
   document.getElementById('call-share-panel').style.display = 'none';
   _sharePending = null;
+}
+
+// ── Active call overlay helpers ───────────────────────────────────────────────
+
+let _callOverlayMuted  = false;
+let _callDurationSecs  = 0;
+let _callDurationTimer = null;
+
+function _callOverlayOpen(sessionId) {
+  const overlay = document.getElementById('active-call-overlay');
+  if (!overlay) return;
+  overlay.classList.add('call-active');
+
+  // Reset checkboxes and mute state
+  _callOverlayMuted = false;
+  const muteIcon = document.getElementById('call-btn-mute-icon');
+  if (muteIcon) muteIcon.textContent = '🔇';
+  const muteBtn = document.getElementById('call-btn-mute');
+  if (muteBtn) muteBtn.classList.remove('btn-active');
+  ['vision-emotion','vision-rpg','audio-prosody','text-linguistic'].forEach(id => {
+    const el = document.getElementById('agent-chk-' + id);
+    if (el) el.checked = false;
+  });
+  const activeEl = document.getElementById('agent-active-modules');
+  if (activeEl) { activeEl.textContent = 'No modules active'; activeEl.style.color = 'rgba(255,255,255,.45)'; }
+
+  // Start call duration timer
+  _callDurationSecs = 0;
+  clearInterval(_callDurationTimer);
+  _callDurationTimer = setInterval(_callOverlayTick, 1000);
+  _callOverlayTick();
+
+  // Populate the info panel with vault sections
+  _callOverlayPopulateInfo();
+}
+
+function _callOverlayClose() {
+  const overlay = document.getElementById('active-call-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('call-active');
+
+  // Close sub-panels and reset button states
+  ['call-info-panel','call-live-panel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('panel-open');
+  });
+  ['call-btn-info','call-btn-live'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('btn-active');
+  });
+
+  clearInterval(_callDurationTimer);
+  _callDurationTimer = null;
+
+  // Reset ticker source flag so duration resumes on next call
+  const tickerText = document.getElementById('call-ticker-text');
+  if (tickerText) delete tickerText.dataset.source;
+}
+
+function _callOverlayTick() {
+  _callDurationSecs++;
+  const m = Math.floor(_callDurationSecs / 60).toString().padStart(2, '0');
+  const s = (_callDurationSecs % 60).toString().padStart(2, '0');
+  const dur = `${m}:${s}`;
+  const label = document.getElementById('call-caller-label');
+  if (label) label.textContent = dur;
+  // Show duration in ticker only when no telemetry is streaming
+  const tickerText = document.getElementById('call-ticker-text');
+  if (tickerText && tickerText.dataset.source !== 'live') {
+    tickerText.textContent = 'Call in progress · ' + dur;
+  }
+}
+
+function _callOverlayToggleMute() {
+  _callOverlayMuted = !_callOverlayMuted;
+  if (typeof _callStream !== 'undefined' && _callStream) {
+    _callStream.getAudioTracks().forEach(t => { t.enabled = !_callOverlayMuted; });
+  }
+  const icon = document.getElementById('call-btn-mute-icon');
+  const btn  = document.getElementById('call-btn-mute');
+  if (icon) icon.textContent = _callOverlayMuted ? '🎙' : '🔇';
+  if (btn)  btn.classList.toggle('btn-active', _callOverlayMuted);
+}
+
+function _callOverlayToggleInfo() {
+  const panel = document.getElementById('call-info-panel');
+  const btn   = document.getElementById('call-btn-info');
+  if (!panel) return;
+  const open = panel.classList.toggle('panel-open');
+  if (btn) btn.classList.toggle('btn-active', open);
+  // Close live panel if open
+  if (open) {
+    document.getElementById('call-live-panel')?.classList.remove('panel-open');
+    document.getElementById('call-btn-live')?.classList.remove('btn-active');
+  }
+}
+
+function _callOverlayToggleLive() {
+  const panel = document.getElementById('call-live-panel');
+  const btn   = document.getElementById('call-btn-live');
+  if (!panel) return;
+  const open = panel.classList.toggle('panel-open');
+  if (btn) btn.classList.toggle('btn-active', open);
+  // Close info panel if open
+  if (open) {
+    document.getElementById('call-info-panel')?.classList.remove('panel-open');
+    document.getElementById('call-btn-info')?.classList.remove('btn-active');
+  }
+}
+
+function _callOverlayOpenShare() {
+  if (typeof SECTION_LABELS === 'undefined') return;
+  const sections = Object.keys(SECTION_LABELS);
+  document.dispatchEvent(new CustomEvent('wf:data-request', {
+    detail: { id: 'manual-' + Date.now(), sections, callSessionId: null }
+  }));
+}
+
+function _callShareSection(key) {
+  document.dispatchEvent(new CustomEvent('wf:data-request', {
+    detail: { id: 'share-' + Date.now(), sections: [key], callSessionId: null }
+  }));
+}
+
+function _callOverlayPopulateInfo() {
+  const content = document.getElementById('call-info-content');
+  if (!content) return;
+  if (typeof SECTION_LABELS === 'undefined') {
+    content.innerHTML = '<p style="color:rgba(255,255,255,.45);font-size:.78rem">Health data unavailable.</p>';
+    return;
+  }
+  const rows = Object.entries(SECTION_LABELS).map(([key, label]) =>
+    `<div class="call-info-row">
+      <span class="call-info-row-lbl">${label}</span>
+      <button class="call-info-share-btn"
+        onclick="_callShareSection('${key.replace(/['"]/g,'')}')">Share</button>
+    </div>`
+  ).join('');
+  content.innerHTML =
+    `<p style="font-size:.71rem;color:rgba(255,255,255,.42);margin-bottom:.6rem">
+      Tap Share to send a section to the caller.
+    </p>${rows}`;
+}
+
+// Called from vault-cv.js to push live readings into the ticker
+function callOverlayUpdateTicker(text) {
+  const el = document.getElementById('call-ticker-text');
+  if (!el) return;
+  if (el.textContent === text) return;
+  el.classList.add('fading');
+  setTimeout(() => {
+    el.textContent = text;
+    el.dataset.source = 'live';
+    el.classList.remove('fading');
+  }, 200);
 }
 
 // ── Diet Log UI ───────────────────────────────────────────────────────────────

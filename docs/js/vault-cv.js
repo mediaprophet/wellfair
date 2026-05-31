@@ -30,6 +30,27 @@ let _agentFrame      = {};     // telemetry accumulator for current frame
 let _agentPrevHash   = null;   // hash chain tail
 let _agentSeq        = 0;      // monotonic frame sequence number
 
+// ── Ticker / last-readings cache (for call overlay ticker strip) ───────────
+
+let _cvLastReadings = {}; // module → latest payload from worker
+
+function _cvFormatTicker() {
+  const active = Object.values(CV_MODULE).filter(m => _agentWorkers[m]);
+  if (!active.length) return null; // null = let duration timer own the ticker
+
+  const parts = [];
+  const em = _cvLastReadings[CV_MODULE.EMOTION];
+  const rp = _cvLastReadings[CV_MODULE.RPG];
+  const pr = _cvLastReadings[CV_MODULE.PROSODY];
+
+  if (em?.emotion)  parts.push(`${em.emotion} ${Math.round((em.confidence ?? 0) * 100)}%`);
+  if (rp?.bpm)      parts.push(`♥ ${Math.round(rp.bpm)} bpm`);
+  if (pr?.pitchHz)  parts.push(`🎵 ${Math.round(pr.pitchHz)} Hz`);
+
+  if (!parts.length) return active.map(m => m.split('.').pop()).join(' · ') + ' · active';
+  return parts.join(' · ');
+}
+
 // ── Audio pipeline state (WA-4) ────────────────────────────────────────────
 
 let _audioCtx         = null;  // AudioContext
@@ -240,6 +261,7 @@ function _onWorkerMessage(module, payload) {
     return;
   }
 
+  _cvLastReadings[module] = payload;
   _agentFrame[module] = payload;
   // Emit a telemetry frame once all active workers have reported
   const active = Object.keys(_agentWorkers);
@@ -278,6 +300,12 @@ function _buildFrame() {
 }
 
 async function _emitTelemetry(frame) {
+  // Push latest readings into the call overlay ticker
+  const tickerText = _cvFormatTicker();
+  if (tickerText && typeof callOverlayUpdateTicker === 'function') {
+    callOverlayUpdateTicker(tickerText);
+  }
+
   // SHA-256 hash chain (same pattern as wf-events)
   const payloadStr = JSON.stringify(frame.payload);
   const hashBuf    = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payloadStr));
@@ -312,15 +340,20 @@ async function _emitTelemetry(frame) {
   }
 }
 
-// Refresh the active-module indicator line in the consent UI
+// Refresh the active-module indicator line and call overlay ticker
 function _updateConsentUI() {
   const indicator = document.getElementById('agent-active-modules');
-  if (!indicator) return;
-  const active = Object.values(CV_MODULE)
-    .filter(m => _agentWorkers[m])
-    .map(m => m.split('.').pop());
-  indicator.textContent = active.length ? 'Active: ' + active.join(' · ') : 'No modules active';
-  indicator.style.color = active.length ? 'var(--green)' : 'var(--dim)';
+  const active = Object.values(CV_MODULE).filter(m => _agentWorkers[m]);
+  if (indicator) {
+    const labels = active.map(m => m.split('.').pop());
+    indicator.textContent = labels.length ? 'Active: ' + labels.join(' · ') : 'No modules active';
+    indicator.style.color = labels.length ? 'var(--green,#198754)' : 'rgba(255,255,255,.45)';
+  }
+  // When all modules off, release ticker back to the duration timer
+  if (!active.length) {
+    const tickerText = document.getElementById('call-ticker-text');
+    if (tickerText) delete tickerText.dataset.source;
+  }
 }
 
 // Called from vault.html consent checkboxes
