@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -11,16 +11,41 @@ permissions:
   id-token: write
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        run: |
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build wellfare-core WASM
+        run: |
+          mkdir -p docs
+          cd wellfare-core
+          wasm-pack build --release --target web --out-dir ../docs/pkg
+
+      - name: Build Stlite Demo
+        run: |
+          python scripts/build_stlite.py
+          cp README.md docs/README.md || true
+          cp COPYRIGHT.md docs/COPYRIGHT.md || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3.0.1
+        with:
+          path: docs
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
       - uses: actions/deploy-pages@v4
         id: deployment
