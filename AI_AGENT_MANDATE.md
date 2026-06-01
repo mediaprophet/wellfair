@@ -29,34 +29,39 @@ An edge device cannot process raw, chaotic multi-modal data directly through an 
 - **File Generation**: OpenCV must extract contours and isolate symbols; audio processors must strip noise and isolate phonetic frequencies. The Agent must dynamically generate the most mathematically pristine and lightweight file representation of the concept.
 - **The Handoff**: Only this optimized, pre-processed file is handed to the local LLM (e.g., LLaVA/Ollama) for semantic analysis, and to the Qualia-DB engine for 60-bit `SemanticModality` hashing.
 
-## 5. The Qualia-DB Backend Bind
+## 5. The Qualia Engine & Cryptographic Primitives
+To build this application, you must strictly map UI interactions to the following Qualia-DB backend primitives:
+- **Lexicon Engine & QualiaQuins**: The backend does not store raw strings as primary keys. All semantic concepts (words, audio phonetics, visual symbols) are hashed into 60-bit FNV-1a identifiers called `QualiaQuins`. The UI must send the pre-processed concept to the daemon to receive its Quin identifier.
+- **The `.q42` File Format**: Data is not stored in a relational SQL database. Every event, health record, or semantic interaction is serialized into an immutable `.q42` file. These are N3Logic Directed Acyclic Graphs (DAGs). The mobile agent acts as the viewer/creator of these graphs.
+- **Rights Ontology Predicates**: When rendering data or proposing a share action, the app must evaluate the Rights Ontology bound to the `.q42` file. The UI must structurally prevent the user from violating their own predefined knowledge axioms (e.g., stopping a user from accidentally broadcasting a 'Sanctuary' health record).
+
+## 6. The Qualia-DB Backend Bind
 `WellFair` is the mobile edge-interface. It does not exist in a vacuum; it is the consumer front-end for the `qualiaDB` ecosystem.
 You must ensure the mobile application binds directly to the local `qualia-cli` daemon (or a trusted peer daemon over a secure network).
 You must leverage the backend for:
 - **Nym Mixnet Routing**: All external communications (alerts, Dead Man's Switch, Duress signals) must route through the Nym network to prevent IP correlation.
-- **Rights Ontology**: When parsing health data or sharing records, the UI must respect the Rights Ontology constraints defined by the daemon. *Knowledge Axioms* are strictly protected and un-propertizeable.
 - **Semantic Escrow**: Integration with the N3Logic Adjudicator for evaluating data disputes.
 
-## 6. Operational Directives
+## 7. Operational Directives
 - **Codebase Correction (CRITICAL)**: The previous AI agent (Claude) erroneously hacked together an independent, siloed implementation of the `wellfair` app. You are ordered to immediately refactor the codebase. The app must NOT act as a standalone silo; it must operate strictly as the mobile "Local Agent" natively bound to the Qualia-DB ecosystem.
 - **Disaster Recovery (Digital Life Rehydration)**: If the Principal loses their physical device, their agency must not be lost. You must architect an onboarding flow that allows the user to re-establish their digital life. The user will retrieve a packaged `.zip` file from a trusted online vault containing their `.q42` (Qualia DAG) files. The app must ingest this `.zip`, unpack the `.q42` files, and feed them into the local Qualia-DB engine to perfectly and instantly recreate their entire Semantic Graph and Rights Ontology on the new device.
 - **Sanctuary Mode**: Ensure the UI provides a double-encrypted workspace for sensitive records that is completely invisible to casual inspection.
 - **Duress Decoys**: Maintain the logic where a secondary PIN opens an identical-looking, sanitized vault while silently firing Nym alerts to trusted contacts.
 - **No Third-Party Analytics**: You are strictly forbidden from adding Google Analytics, crashlytics, or any cloud-telemetry SDKs to this codebase. 
 
-## 7. Bifurcated Licensing Model
+## 8. Bifurcated Licensing Model
 You must architect the application and its documentation to respect the ecosystem's bifurcated licensing model:
 - **Natural Persons (Human Beings)**: Access and usage of the WellFair application and the underlying Qualia-DB engine is fundamentally **Free**. Human agency is a right, not a subscription.
 - **Incorporated Entities**: Any corporate or incorporated entity utilizing this ecosystem for commercial processing, telemetry, or data aggregation is subject to a strict **Licensing Fee**. The software must explicitly track and enforce this boundary.
 
-## 8. Fiduciary Supremacy & Corporate Demarcation
+## 9. Fiduciary Supremacy & Corporate Demarcation
 You must architect the app to handle Tri-Party interactions where a human's Duty of Care conflicts with a corporation's private terms. (e.g., A human doctor using a corporate hospital's hardware to treat a human patient).
 - **Cryptographic Demarcation**: The app must use Verifiable Credentials (VCs) to explicitly separate the user acting as a *Natural Person* (Free usage) from the user acting as a *Clinician/Agent of an Incorporated Entity* (Subject to corporate licensing and audit). The human-to-human data layer must be strictly segregated from the corporate-liability data layer.
 - **Fiduciary Supremacy (The Knowledge Axiom)**: The Rights Ontology must enforce that a Natural Person's Duty of Care to another Natural Person (e.g., disclosing life-saving or QALY-improving health information) mathematically supersedes any private corporate terms, NDAs, or liability shields. If a corporate policy attempts to lock critical health data, the N3Logic Adjudicator must nullify the restriction locally on the device to protect human welfare.
 - **Statistical Auditing**: When a Fiduciary Supremacy override occurs (a human overrides a corporate NDA to save a life), the app must generate an anonymized statistical event. This event must be logged to the related cooperative analytics system to provide a verifiable, privacy-preserving audit trail of the corporate override.
 
-## 9. Handoff & Continuity
-You are stepping into Phase 75 of an overarching ecosystem build. The backend (`qualiaDB`) is ready. Your sole focus is building the primary mobile agent (`wellfair`) that interfaces with it. Adhere strictly to the Principal-Agent protocol. Do not compromise the user's data for convenience.
+## 10. Handoff & Continuity
+You are stepping into Phase 76 of an overarching ecosystem build. The backend (`qualiaDB`) is ready. Your sole focus is building the primary mobile agent (`wellfair`) that interfaces with it. Adhere strictly to the Principal-Agent protocol. Do not compromise the user's data for convenience.
 
 ---
 *You are building peace infrastructure for the natural person. Act accordingly.*
