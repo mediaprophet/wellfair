@@ -39,14 +39,14 @@ You must leverage the backend for:
 
 ## 6. Operational Directives
 - **Codebase Correction (CRITICAL)**: The previous AI agent (Claude) erroneously hacked together an independent, siloed implementation of the `wellfair` app. You are ordered to immediately refactor the codebase. The app must NOT act as a standalone silo; it must operate strictly as the mobile "Local Agent" natively bound to the Qualia-DB ecosystem.
-- **Disaster Recovery (Digital Life Rehydration)**: If the Principal loses their physical device, their sovereignty must not be lost. You must architect an onboarding flow that allows the user to re-establish their digital life. The user will retrieve a packaged `.zip` file from a trusted online vault containing their `.q42` (Qualia DAG) files. The app must ingest this `.zip`, unpack the `.q42` files, and feed them into the local Qualia-DB engine to perfectly and instantly recreate their entire Semantic Graph and Rights Ontology on the new device.
+- **Disaster Recovery (Digital Life Rehydration)**: If the Principal loses their physical device, their agency must not be lost. You must architect an onboarding flow that allows the user to re-establish their digital life. The user will retrieve a packaged `.zip` file from a trusted online vault containing their `.q42` (Qualia DAG) files. The app must ingest this `.zip`, unpack the `.q42` files, and feed them into the local Qualia-DB engine to perfectly and instantly recreate their entire Semantic Graph and Rights Ontology on the new device.
 - **Sanctuary Mode**: Ensure the UI provides a double-encrypted workspace for sensitive records that is completely invisible to casual inspection.
 - **Duress Decoys**: Maintain the logic where a secondary PIN opens an identical-looking, sanitized vault while silently firing Nym alerts to trusted contacts.
 - **No Third-Party Analytics**: You are strictly forbidden from adding Google Analytics, crashlytics, or any cloud-telemetry SDKs to this codebase. 
 
 ## 7. Bifurcated Licensing Model
 You must architect the application and its documentation to respect the ecosystem's bifurcated licensing model:
-- **Natural Persons (Human Beings)**: Access and usage of the WellFair application and the underlying Qualia-DB engine is fundamentally **Free**. Human sovereignty is a right, not a subscription.
+- **Natural Persons (Human Beings)**: Access and usage of the WellFair application and the underlying Qualia-DB engine is fundamentally **Free**. Human agency is a right, not a subscription.
 - **Incorporated Entities**: Any corporate or incorporated entity utilizing this ecosystem for commercial processing, telemetry, or data aggregation is subject to a strict **Licensing Fee**. The software must explicitly track and enforce this boundary.
 
 ## 8. Fiduciary Supremacy & Corporate Demarcation
@@ -56,7 +56,7 @@ You must architect the app to handle Tri-Party interactions where a human's Duty
 - **Statistical Auditing**: When a Fiduciary Supremacy override occurs (a human overrides a corporate NDA to save a life), the app must generate an anonymized statistical event. This event must be logged to the related cooperative analytics system to provide a verifiable, privacy-preserving audit trail of the corporate override.
 
 ## 9. Handoff & Continuity
-You are stepping into Phase 75 of an overarching ecosystem build. The backend (`qualiaDB`) is ready. Your sole focus is building the sovereign mobile agent (`wellfair`) that interfaces with it. Adhere strictly to the Principal-Agent protocol. Do not compromise the user's data for convenience.
+You are stepping into Phase 75 of an overarching ecosystem build. The backend (`qualiaDB`) is ready. Your sole focus is building the primary mobile agent (`wellfair`) that interfaces with it. Adhere strictly to the Principal-Agent protocol. Do not compromise the user's data for convenience.
 
 ---
 *You are building peace infrastructure for the natural person. Act accordingly.*
