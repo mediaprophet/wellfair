@@ -28,10 +28,14 @@ const _ST_TXLOG      = 'wf-txlog';         // local transaction log (never trans
 const _ST_BIOMETRICS = 'wf-biometrics';    // weight, sleep, heart-rate, steps records
 // QualiaDB — Persistent Lexicon dictionary (added in v10)
 const _ST_LEXICON    = 'wf-lexicon';       // string <-> u64 mappings
+// CP — Cooperative Projects (added in v11)
+const _ST_PROJECTS      = 'wf-projects';      // cooperative project records
+const _ST_CONTRIBUTIONS = 'wf-contributions'; // contribution log (Merkle chain)
+const _ST_OBLIGATIONS   = 'wf-obligations';   // per-project µ-unit balances
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 10);
+    const rq = indexedDB.open(_DB_NAME, 11);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -64,6 +68,10 @@ function _openDB() {
         const ls = db.createObjectStore(_ST_LEXICON, { keyPath: 'id' }); // id is the string
         ls.createIndex('by_uid', 'uid', { unique: true }); // uid is the u64 string representation
       }
+      // v11 — Cooperative Projects
+      if (!db.objectStoreNames.contains(_ST_PROJECTS))      db.createObjectStore(_ST_PROJECTS,      { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_CONTRIBUTIONS)) db.createObjectStore(_ST_CONTRIBUTIONS, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(_ST_OBLIGATIONS))   db.createObjectStore(_ST_OBLIGATIONS,   { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);

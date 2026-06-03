@@ -388,6 +388,54 @@
       text-align:center; font-size:.8rem; color:var(--muted);
     }
 
+    /* ── Projects sheet ─────────────────────────────────────────────────── */
+    #projects-sheet {
+      position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
+      display:none; align-items:flex-end; justify-content:center;
+    }
+    .proj-body {
+      background:var(--surface); border:1px solid var(--border); border-radius:16px 16px 0 0;
+      width:100%; max-width:480px; max-height:90vh; display:flex; flex-direction:column;
+    }
+    .proj-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.75rem 1rem .5rem; border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    .proj-header h3 { font-size:.95rem; font-weight:700; margin:0; }
+    .proj-scroll  { overflow-y:auto; flex:1; padding:.75rem 1rem 2.5rem; }
+    .proj-card {
+      padding:.6rem .75rem; border:1px solid var(--border); border-radius:10px;
+      margin-bottom:.45rem; background:rgba(255,255,255,.02);
+    }
+    .proj-card-name { font-size:.88rem; font-weight:600; }
+    .proj-card-meta { font-size:.75rem; color:var(--dim); margin-top:.15rem; }
+    .proj-card-mu   { font-size:.78rem; color:var(--accent); margin-top:.25rem; font-weight:600; }
+    .proj-card-actions { display:flex; gap:.4rem; margin-top:.5rem; }
+    .proj-card-actions .btn { flex:1; font-size:.74rem; padding:.25rem .4rem; }
+    .proj-empty  { text-align:center; color:var(--dim); font-size:.82rem; padding:1.5rem 0; }
+    .proj-oblig-summary {
+      background:var(--bg); border:1px solid var(--border); border-radius:10px;
+      padding:.7rem .85rem; margin-bottom:.75rem;
+    }
+    .proj-oblig-title { font-size:.8rem; font-weight:600; margin-bottom:.4rem; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; }
+    .proj-oblig-row   { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:.2rem; }
+    .proj-oblig-val   { font-weight:700; color:var(--accent); }
+    .proj-log-form    { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:.75rem; }
+    .proj-log-form label { display:block; font-size:.76rem; color:var(--dim); margin-bottom:.35rem; }
+    .proj-log-form label span { display:block; margin-bottom:.18rem; }
+    .proj-log-input {
+      display:block; width:100%; background:var(--surface); border:1px solid var(--border);
+      color:var(--text); border-radius:5px; padding:.28rem .45rem; font-size:.82rem;
+      font-family:inherit; box-sizing:border-box;
+    }
+    .proj-log-input:focus { outline:none; border-color:var(--accent); }
+    .proj-history-item {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding:.3rem 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:.78rem;
+    }
+    .proj-history-item:last-child { border-bottom:none; }
+    .proj-history-hash { font-size:.62rem; color:var(--dim); font-family:monospace; margin-top:.1rem; word-break:break-all; }
+
     /* ── Diet log sheet ──────────────────────────────────────────────────── */
     #diet-sheet {
       position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:1000;
@@ -800,6 +848,8 @@
               onclick="openWallet()">💳 Wallet</button>
       <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
               onclick="openBiometrics()">📊 Biometrics</button>
+      <button class="btn btn-outline" style="font-size:.78rem;padding:.3rem .6rem;flex:1"
+              onclick="openProjectsSheet()">🤝 Projects</button>
     </div>
   </div>
 
@@ -833,6 +883,70 @@
     <ul id="wallet-txlist"></ul>
     <div class="wallet-onramp">
       Buy Bitcoin via exchange — <em>coming soon (HCW-3)</em>
+    </div>
+  </div>
+</div>
+
+<!-- Projects sheet — Cooperative Projects panel (CP1) -->
+<div id="projects-sheet" onclick="if(event.target===this)closeProjectsSheet()">
+  <div class="proj-body">
+    <div class="proj-header">
+      <h3>🤝 Cooperative Projects</h3>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        <button class="btn btn-primary"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="_projShowAddForm()">+ Add</button>
+        <button class="btn btn-outline"
+                style="width:auto;margin:0;font-size:.78rem;padding:.28rem .7rem"
+                onclick="closeProjectsSheet()">Close</button>
+      </div>
+    </div>
+
+    <!-- List view -->
+    <div id="proj-list-view" class="proj-scroll">
+      <!-- Obligation summary across all projects -->
+      <div class="proj-oblig-summary" id="proj-oblig-summary" style="display:none">
+        <div class="proj-oblig-title">My obligation summary</div>
+        <div class="proj-oblig-row">
+          <span>Total hours logged</span>
+          <span class="proj-oblig-val" id="proj-total-hours">0</span>
+        </div>
+        <div class="proj-oblig-row">
+          <span>Total µ-units earned</span>
+          <span class="proj-oblig-val" id="proj-total-mu">0</span>
+        </div>
+      </div>
+      <div id="proj-list"></div>
+    </div>
+
+    <!-- Add project form -->
+    <div id="proj-add-view" class="proj-scroll" style="display:none">
+      <span class="back-link" onclick="_projShowListView()">← Projects</span>
+      <p style="font-size:.88rem;font-weight:600;margin-bottom:.75rem">New project</p>
+      <div class="proj-log-form">
+        <label>
+          <span>Project name *</span>
+          <input type="text" id="proj-add-name" class="proj-log-input" placeholder="e.g. Community Health Network" />
+        </label>
+        <label style="margin-top:.45rem">
+          <span>Description</span>
+          <textarea id="proj-add-desc" class="proj-log-input" rows="2"
+                    placeholder="What does this project do?" style="resize:vertical"></textarea>
+        </label>
+        <label style="margin-top:.45rem">
+          <span>Rate (µ-units per hour)</span>
+          <input type="number" id="proj-add-rate" class="proj-log-input" value="1.0" min="0.1" step="0.1" />
+        </label>
+        <button class="btn btn-primary" style="margin-top:.75rem;font-size:.82rem"
+                onclick="_projSaveNew()">Create project</button>
+        <div id="proj-add-status" style="font-size:.75rem;color:var(--green);margin-top:.35rem;min-height:1rem"></div>
+      </div>
+    </div>
+
+    <!-- Project detail + contribution log view -->
+    <div id="proj-detail-view" class="proj-scroll" style="display:none">
+      <span class="back-link" onclick="_projShowListView()">← Projects</span>
+      <div id="proj-detail-content"></div>
     </div>
   </div>
 </div>
@@ -1674,6 +1788,7 @@
 <script src="js/vault-diet.js?v=7"></script>
 <script src="js/vault-diet-barcode.js?v=7"></script>
 <!-- WASM bridge — wellfare-core (lazy-loads pkg/wellfare_core.js if built) -->
+<script src="js/vault-projects.js?v=1"></script>
 <script src="js/vault-wasm.js?v=1"></script>
 <script src="js/vault-sentinel.js?v=1"></script>
 <!-- HCW-1 — Human-Centric Wallet -->
@@ -1726,7 +1841,7 @@ async function pinKey(k) {
     if (entered === VAULT_PIN) {
       document.getElementById('pin-hint').textContent = '✓ Verified';
       document.getElementById('pin-hint').style.color = 'var(--green)';
-      deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
+      deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); });
       setTimeout(openOwnerWorkspace, 400);
     } else {
       document.getElementById('pin-hint').textContent = 'Checking…';
@@ -1734,7 +1849,7 @@ async function pinKey(k) {
       if (isDuress) {
         document.getElementById('pin-hint').textContent = '✓ Verified';
         document.getElementById('pin-hint').style.color = 'var(--green)';
-        deriveVaultKey(entered, _MAIN_SALT).then(k => initDirectory(k));
+        deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); });
         setTimeout(openOwnerWorkspace, 400);
       } else {
         updatePinDots('error');
@@ -1776,10 +1891,12 @@ function lockVault() {
    'anon-notify-panel','model-prefs-panel','dir-panel','sanctuary-panel'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-  document.getElementById('dir-sheet').style.display   = 'none';
-  document.getElementById('queue-sheet').style.display = 'none';
-  document.getElementById('diet-sheet').style.display  = 'none';
+  document.getElementById('dir-sheet').style.display      = 'none';
+  document.getElementById('queue-sheet').style.display    = 'none';
+  document.getElementById('diet-sheet').style.display     = 'none';
+  document.getElementById('projects-sheet').style.display = 'none';
   initDirectory(null);
+  initProjects(null, null);
   duressModeActive = false;
   document.body.classList.remove('sanctuary-active');
   sanctuaryKey    = null;
@@ -2655,6 +2772,196 @@ function callOverlayUpdateTicker(text) {
   }, 200);
 }
 
+// ── Projects UI (CP1) ────────────────────────────────────────────────────────
+
+function openProjectsSheet() {
+  document.getElementById('projects-sheet').style.display = 'flex';
+  _projShowListView();
+  _projLoadList();
+}
+
+function closeProjectsSheet() {
+  document.getElementById('projects-sheet').style.display = 'none';
+}
+
+function _projHideAllViews() {
+  ['proj-list-view','proj-add-view','proj-detail-view'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+}
+
+function _projShowListView() {
+  _projHideAllViews();
+  document.getElementById('proj-list-view').style.display = 'block';
+}
+
+function _projShowAddForm() {
+  _projHideAllViews();
+  document.getElementById('proj-add-view').style.display = 'block';
+  document.getElementById('proj-add-name').value = '';
+  document.getElementById('proj-add-desc').value = '';
+  document.getElementById('proj-add-rate').value = '1.0';
+  document.getElementById('proj-add-status').textContent = '';
+}
+
+function _projShowDetail() {
+  _projHideAllViews();
+  document.getElementById('proj-detail-view').style.display = 'block';
+}
+
+async function _projLoadList() {
+  const listEl = document.getElementById('proj-list');
+  const summaryEl = document.getElementById('proj-oblig-summary');
+  if (!window.vaultProjects) {
+    listEl.innerHTML = '<p class="proj-empty">Projects module not loaded.</p>';
+    return;
+  }
+  try {
+    const [projects, obligations] = await Promise.all([
+      window.vaultProjects.getAllProjects(),
+      window.vaultProjects.getAllObligations(),
+    ]);
+
+    // Obligation summary
+    if (obligations.length > 0) {
+      const totalHours = obligations.reduce((s, o) => s + (o.totalHours || 0), 0);
+      const totalMu    = obligations.reduce((s, o) => s + (o.muUnits  || 0), 0);
+      document.getElementById('proj-total-hours').textContent = totalHours.toFixed(2);
+      document.getElementById('proj-total-mu').textContent    = totalMu.toLocaleString();
+      summaryEl.style.display = 'block';
+    } else {
+      summaryEl.style.display = 'none';
+    }
+
+    if (!projects.length) {
+      listEl.innerHTML = '<p class="proj-empty">No projects yet — tap + Add to create one.</p>';
+      return;
+    }
+
+    const obMap = Object.fromEntries(obligations.map(o => [o.projectId, o]));
+    listEl.innerHTML = projects.map(p => {
+      const ob = obMap[p.id] || { totalHours: 0, muUnits: 0 };
+      return `<div class="proj-card">
+        <div class="proj-card-name">${_projEsc(p.name)}</div>
+        ${p.description ? `<div class="proj-card-meta">${_projEsc(p.description)}</div>` : ''}
+        <div class="proj-card-meta">Rate: ${p.ratePerHour} µ/hr · Joined: ${p.joined ? new Date(p.joinedAt).toLocaleDateString() : 'No'}</div>
+        <div class="proj-card-mu">${ob.muUnits.toLocaleString()} µ-units (${ob.totalHours.toFixed(2)} hrs)</div>
+        <div class="proj-card-actions">
+          <button class="btn btn-primary" onclick="_projOpenDetail('${p.id}')">Log Work</button>
+          <button class="btn btn-outline" onclick="_projOpenDetail('${p.id}', true)">History</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (e.name === 'OperationError') {
+      listEl.innerHTML = '<p class="proj-empty">No projects yet — tap + Add to create one.</p>';
+    } else {
+      listEl.innerHTML = `<p class="proj-empty" style="color:var(--red)">Error: ${e.message}</p>`;
+    }
+  }
+}
+
+async function _projSaveNew() {
+  const name = document.getElementById('proj-add-name').value.trim();
+  const desc = document.getElementById('proj-add-desc').value.trim();
+  const rate = parseFloat(document.getElementById('proj-add-rate').value) || 1.0;
+  const statusEl = document.getElementById('proj-add-status');
+  if (!name) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Name is required.'; return; }
+  try {
+    await window.vaultProjects.addProject(name, desc, rate);
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = '✓ Project created';
+    setTimeout(() => { _projShowListView(); _projLoadList(); }, 700);
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+let _projCurrentId = null;
+
+async function _projOpenDetail(projectId, historyOnly) {
+  _projCurrentId = projectId;
+  _projShowDetail();
+  const el = document.getElementById('proj-detail-content');
+  el.innerHTML = '<p style="color:var(--dim);font-size:.8rem">Loading…</p>';
+  try {
+    const [proj, contribs, bal] = await Promise.all([
+      window.vaultProjects.getProject(projectId),
+      window.vaultProjects.getContributions(projectId),
+      window.vaultProjects.getObligationBalance(projectId),
+    ]);
+    if (!proj) { el.innerHTML = '<p class="proj-empty">Project not found.</p>'; return; }
+
+    const historyHtml = contribs.length === 0
+      ? '<p class="proj-empty" style="padding:.5rem 0">No contributions logged yet.</p>'
+      : contribs.slice().reverse().map(c => `
+          <div class="proj-history-item">
+            <div style="flex:1;min-width:0">
+              <div>${_projEsc(c.description || '—')}</div>
+              <div class="proj-history-hash">${c.merkleHash.slice(0,32)}…</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;padding-left:.5rem">
+              <div style="font-weight:600">${c.hours}h</div>
+              <div style="font-size:.7rem;color:var(--dim)">${new Date(c.timestamp).toLocaleDateString()}</div>
+            </div>
+          </div>`).join('');
+
+    el.innerHTML = `
+      <div style="margin-bottom:.75rem">
+        <div style="font-size:.95rem;font-weight:700;margin-bottom:.2rem">${_projEsc(proj.name)}</div>
+        ${proj.description ? `<div style="font-size:.8rem;color:var(--dim);margin-bottom:.5rem">${_projEsc(proj.description)}</div>` : ''}
+        <div class="proj-oblig-summary" style="margin-bottom:.75rem">
+          <div class="proj-oblig-title">Obligation balance</div>
+          <div class="proj-oblig-row"><span>Hours logged</span><span class="proj-oblig-val">${bal.totalHours.toFixed(2)}</span></div>
+          <div class="proj-oblig-row"><span>µ-units earned</span><span class="proj-oblig-val">${bal.muUnits.toLocaleString()}</span></div>
+          <div class="proj-oblig-row"><span>Rate</span><span style="font-size:.78rem;color:var(--dim)">${proj.ratePerHour} µ/hr</span></div>
+        </div>
+      </div>
+      ${historyOnly ? '' : `
+      <div class="proj-log-form" style="margin-bottom:.75rem">
+        <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem">Log contribution</p>
+        <label>
+          <span>Hours *</span>
+          <input type="number" id="proj-log-hours" class="proj-log-input" min="0.25" step="0.25" placeholder="e.g. 2" />
+        </label>
+        <label style="margin-top:.4rem">
+          <span>Description</span>
+          <input type="text" id="proj-log-desc" class="proj-log-input" placeholder="What did you work on?" />
+        </label>
+        <button class="btn btn-primary" style="margin-top:.6rem;font-size:.82rem"
+                onclick="_projSubmitWork('${projectId}')">Commit work</button>
+        <div id="proj-log-status" style="font-size:.75rem;margin-top:.35rem;min-height:1rem"></div>
+      </div>`}
+      <p style="font-size:.8rem;font-weight:600;margin:0 0 .4rem;color:var(--dim)">Contribution history (${contribs.length})</p>
+      <div>${historyHtml}</div>`;
+  } catch(e) {
+    el.innerHTML = `<p class="proj-empty" style="color:var(--red)">Error: ${e.message}</p>`;
+  }
+}
+
+async function _projSubmitWork(projectId) {
+  const hours   = parseFloat(document.getElementById('proj-log-hours')?.value);
+  const desc    = document.getElementById('proj-log-desc')?.value.trim() || '';
+  const statusEl = document.getElementById('proj-log-status');
+  if (!statusEl) return;
+  if (!(hours > 0)) { statusEl.style.color='var(--red)'; statusEl.textContent='Hours must be a positive number.'; return; }
+  try {
+    statusEl.style.color='var(--dim)'; statusEl.textContent='Signing…';
+    await window.vaultProjects.logContribution(projectId, hours, desc);
+    statusEl.style.color='var(--green)'; statusEl.textContent='✓ Contribution committed to Merkle chain';
+    document.getElementById('proj-log-hours').value = '';
+    document.getElementById('proj-log-desc').value  = '';
+    setTimeout(() => _projOpenDetail(projectId), 600);
+  } catch(e) {
+    statusEl.style.color='var(--red)'; statusEl.textContent='Error: ' + e.message;
+  }
+}
+
+function _projEsc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Biometrics UI (WASM bridge) ───────────────────────────────────────────────
 
 function openBiometrics() {
@@ -3016,7 +3323,7 @@ function _dlEsc(s) {
     document.getElementById('demo-banner').style.display = 'block';
     // Generate a one-time throwaway AES key so Directory/Scheduler/etc. don't throw
     crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt'])
-      .then(k => { initDirectory(k); startScheduler(); startGate(); });
+      .then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); startScheduler(); startGate(); });
     openOwnerWorkspace();
     return;
   }

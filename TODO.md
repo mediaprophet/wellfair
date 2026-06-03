@@ -84,15 +84,15 @@ WellFair phone vault should be a Tauri v2 native app. vault.html WebView is pres
 
 New panel in vault.html + `vault-projects.js` module.
 
-- [ ] **CP1. `vault-projects.js`** — project discovery/browse UI, join project, my-contributions view, obligation dashboard (µ-units earned/outstanding).
-- [ ] **CP2. Contribution commit** — "Log Work" sheet: hours + description → Author-Scoped Merkle Signature: `sign(sha256(prev_hash ‖ hours ‖ description ‖ timestamp))` using existing Ed25519 key. Written to `wf-contributions` IDB.
-- [ ] **CP3. µ-unit calculation** — hours × agreed project rate → µ-units balance. Per-project rate stored in `wf-projects`; falls back to cooperative global rate.
+- [x] **CP1. `vault-projects.js`** — project browse/create UI, log-work form, obligation dashboard (µ-units earned/outstanding). Sheet wired into vault.html nav. IDB v11. Turtle RDF export feeds WasmHealthStore SPARQL.
+- [x] **CP2. Contribution commit** — "Log Work" sheet: hours + description → Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})`. Written to `wf-contributions` IDB. Merkle chain (prevHash links) verified working.
+- [x] **CP3. µ-unit calculation** — hours × project rate × 1000 → µ-units balance. Per-project rate in `wf-projects`; defaults to 1.0. Balance persisted in `wf-obligations` IDB.
 - [ ] **CP4. `vault-p2p-sync.js`** — three-tier P2P sync:
   - Tier 1: Nym (`vault-nym.js`) — obligation commits, maximum anonymity ("Sanctuary Mode")
   - Tier 2: Gun+WebRTC (already wired) — project state sync
   - Tier 3: Git-compatible N-Quads ledger export (`.nq`) via qualiaDB `export-solid`
   - CRDT merge: sum-based for obligation µ-units; last-write-wins for project metadata
-- [ ] **CP5. IDB v11 stores** — add: `wf-projects`, `wf-contributions`, `wf-obligations`.
+- [x] **CP5. IDB v11 stores** — added: `wf-projects`, `wf-contributions`, `wf-obligations`.
 - [ ] **CP6. Project directory feed** — fetch/cache project list from cooperative node (via Nym Tier 1 or Gun Tier 2). Cache in `wf-projects` for offline use.
 
 ---

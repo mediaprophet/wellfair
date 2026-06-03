@@ -1,7 +1,7 @@
 # WellFair — Current Handover
 > **Living document — update this at the end of every session.**  
 > Last updated: 2026-06-04  
-> Updated by: sessions 2 + 3 (restructure + CI fixes + W2–W7 Rust engine)
+> Updated by: sessions 2 + 3 (restructure + CI fixes + W2–W7 Rust engine) + session 4 (CP1–CP3, CP5)
 
 ---
 
@@ -112,6 +112,11 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 - Package manager (OPFS-based, prolog-wasm + llm-mediapipe)
 - Device bridge (File System Access API)
 - app.html Streamlit analytics dashboard
+- **CP1** — `docs/js/vault-projects.js` created; "🤝 Projects" nav button + bottom-sheet in vault.html; IDB v11 with `wf-projects`, `wf-contributions`, `wf-obligations`
+- **CP2** — Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})` in `logContribution()`; chain integrity verified
+- **CP3** — µ-unit balance: `totalHours × ratePerHour × 1000`; stored in `wf-obligations`; per-project and global summary in UI
+- **CP5** — IDB v11 stores added (wf-projects, wf-contributions, wf-obligations); all encrypted via AES-GCM `_sEnc/_sDec`; dual-write to QualiaStore via existing `_dbPut` hook
+- **vault-wasm.js** — `exportVaultToTurtle()` now includes cooperative project/contribution/obligation RDF (22+ triples per session); SPARQL-queryable via `WasmHealthStore`
 
 ---
 
@@ -121,6 +126,8 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 |---|---|
 | All M tasks (Tauri mobile) | qualia-desktop Tauri v1→v2 migration (M1) |
 | W6 (validate_health_quin Sentinel) | qualia-core-db Sentinel VM — deferred (wgpu dep) |
+| CP4 P2P sync (Tier 2 Gun) | Gun/WebRTC available; Tier 1 (Nym) blocked on A3 |
+| CP6 Project directory feed | needs Nym activation (A3) or Gun signalling node |
 | W8 (dual-target Cargo) | M2 Tauri app crate doesn't exist yet |
 | W10 (compile_query_to_json) | qualia-core-db optional feature needs validation |
 | CP4 P2P sync (Tier 1) | Nym activation (A3) |
@@ -144,7 +151,7 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | v8 | wf-wallet, wf-txlog | HCW-1 |
 | v9 | wf-biometrics | WASM bridge |
 | v10 | wf-lexicon | qualiaDB Lexicon |
-| **v11 (planned)** | wf-projects, wf-contributions, wf-obligations | CP epic |
+| **v11** | wf-projects, wf-contributions, wf-obligations | CP1/CP5 |
 | **v12 (planned)** | wf-credentials, wf-pfm-config, wf-ledger | CV + PFM epics |
 
 ---
@@ -258,14 +265,13 @@ The obligation model: contributor hours → µ-units → obligation cost. Three 
 
 ## What to do next
 
-**Recommended: CP1 — Cooperative Projects panel** (highest-impact user-visible feature, no Rust needed).
+**CP1–CP3, CP5 are complete.** Remaining CP tasks:
 
-Steps:
-1. Create `docs/js/vault-projects.js` — project list, join flow, contribution log, obligation dashboard
-2. Add IDB v11 in `vault-idb.js` — stores: `wf-projects`, `wf-contributions`, `wf-obligations`
-3. Wire panel into `vault.html` — new "Projects" nav section
-4. See TODO.md section CP for full task breakdown (CP1–CP6)
+- **CP4** — `vault-p2p-sync.js` three-tier sync (Tier 1: Nym [blocked on A3]; Tier 2: Gun+WebRTC [available now]; Tier 3: N-Quads `.nq` export)
+- **CP6** — Project directory feed (fetch/cache from cooperative node via Nym or Gun)
 
-Read first: `TODO.md` section CP · `instructions/HANDOVER_CURRENT.md` § "Cooperative projects"
+**Recommended next: OC1** — Ontology Converter panel in `app.html`. Unblocked by W4 (WasmHealthStore live). File picker (`.ttl`, `.nt`, `.jsonld`, `.csv`) → N-Quads via WASM. Show: quads written, compression ratio, parse time.
 
-**Alternative: OC1** — Ontology Converter panel in `app.html`. Now unblocked by W4 (WasmHealthStore live). File picker → Turtle/JSON-LD → N-Quads conversion via WASM. See TODO.md section OC.
+**Alternative: DIR1** — Unified contact graph in `vault-directory.js`. Add `wf:coContributor` relationship type so project contributors resolve to contacts.
+
+Read first: `TODO.md` sections CP, OC, DIR.

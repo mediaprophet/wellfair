@@ -141,22 +141,25 @@ async function exportBiometricsToTurtle() {
 }
 
 /**
- * Export all vault health data (meds + diet + biometrics) as a single Turtle document.
+ * Export all vault health data (meds + diet + biometrics + cooperative projects) as a single Turtle document.
  * @returns {Promise<string|null>}
  */
 async function exportVaultToTurtle() {
+    const projectsTurtle = window.vaultProjects
+        ? await window.vaultProjects.exportProjectsToTurtle().catch(() => null)
+        : null;
     const [meds, diet, bio] = await Promise.all([
         exportMedsToTurtle(),
         exportDietToTurtle(),
         exportBiometricsToTurtle(),
     ]);
-    if (!meds && !diet && !bio) return null;
+    if (!meds && !diet && !bio && !projectsTurtle) return null;
     // Merge: strip duplicate prefix blocks, concatenate bodies
     const stripPrefixes = s => s ? s.replace(/^@prefix[^\n]*\n/gm, '') : '';
-    const wasm = await _load();
-    const prefixBlock = meds || diet || bio || '';
-    const prefixLines = prefixBlock.match(/^@prefix[^\n]*\n/gm)?.join('') ?? '';
-    return prefixLines + '\n' + stripPrefixes(meds) + stripPrefixes(diet) + stripPrefixes(bio);
+    const first = meds || diet || bio || projectsTurtle || '';
+    const prefixLines = first.match(/^@prefix[^\n]*\n/gm)?.join('') ?? '';
+    return prefixLines + '\n' +
+        stripPrefixes(meds) + stripPrefixes(diet) + stripPrefixes(bio) + stripPrefixes(projectsTurtle);
 }
 
 // ── SPARQL ────────────────────────────────────────────────────────────────────
