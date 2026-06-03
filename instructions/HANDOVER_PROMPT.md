@@ -17,38 +17,38 @@ Do NOT start writing code until you have read all three. They are short and cont
 
 LAST SESSION (2026-06-04 — session 3):
 - Completed W2/W3/W4/W5/W7 in wellfare-core (commit b1814e9, pushed)
-- W7: oxigraph added to Cargo.toml; qualia-core-db moved to optional "qualia" feature
-- W2/W3: QualiaStore now stores real Vec<[u64;5]> quints; insert/query all functional
-- W4: store.rs (HealthStore + oxigraph); WasmHealthStore wasm export; SPARQL SELECT/ASK/CONSTRUCT
-- W5: shapes.rs (6 SPARQL ASK health constraints); validate_health_turtle() wasm export
-- WASM rebuilt: docs/pkg/ now 3.3 MB (up from 282 KB — oxigraph adds ~3 MB)
-- All 5 commits now pushed to origin feature/qualia-db-integration (5 ahead of master)
-- Working tree: clean
+- W7: oxigraph 0.4 added to Cargo.toml; qualia-core-db moved to optional "qualia" Cargo feature
+  (qualia-core-db depends on wgpu — too heavy for default WASM binary; enable with --features qualia)
+- W2/W3: QualiaStore: functional Vec<[u64;5]> store; insert_quin/query_subject/predicate/context all work;
+  wasm-bindgen auto-converts u64 ↔ BigInt — matches vault-wasm.js Lexicon/JSONtoQuinSerializer
+- W4: store.rs (HealthStore + oxigraph::Store); WasmHealthStore WASM export (new/load_turtle/query);
+  SPARQL SELECT/ASK/CONSTRUCT verified in .d.ts
+- W5: shapes.rs (6 SPARQL ASK constraints: sleep efficiency/duration, heart rate, weight, body fat, steps);
+  validate_health_turtle() returns {"valid":bool,"checked":6,"violations":[...]}
+- WASM rebuilt: docs/pkg/ now 3.3 MB (up from 282 KB; oxigraph adds ~3 MB; wasm-opt applied)
+- 6 commits total on feature/qualia-db-integration, all pushed; working tree clean
 
 ---
 
 START HERE (next session):
 1. Read the three documents above
-2. Choose next task from TODO.md:
-   - **CP1** (Cooperative Projects panel) — vault-projects.js + IDB v11 wf-projects/wf-contributions/wf-obligations
-     This is the highest-impact user-visible feature. Requires no Rust work.
-   - **W8** (dual-target Cargo.toml) — add native (non-wasm) target for Tauri; or
-   - **W9** (per-persona demo CSVs) — wire 7 distinct health datasets to app.js personas
-3. Note: CI will fail on the pages.yml stlite step until legacy_pwa/scripts/build_stlite.py
-   paths inside the script are correct. Check CI logs after the first push to master.
+2. Start **CP1** (recommended — highest-impact user-visible feature, no Rust needed):
+   - Create docs/js/vault-projects.js (project list, join flow, contribution log, obligation dashboard)
+   - Add IDB v11 in vault-idb.js (stores: wf-projects, wf-contributions, wf-obligations)
+   - Wire "Projects" panel into vault.html nav
+   - See TODO.md section CP for full task list (CP1–CP6)
+3. Alternative: OC1 (Ontology Converter in app.html) — now unblocked by W4; file picker → Turtle/JSON-LD → N-Quads via WasmHealthStore
 
 ---
 
 KEY FACTS:
 - Primary vault: docs/vault.html (phone-first PWA, currently working; Tauri app is the target)
 - Analytics dashboard: docs/app.html (Streamlit/stlite, 512KB — read in chunks with offset/limit)
-- Engine WASM: docs/pkg/wellfare_core_bg.wasm (282KB, v0.0.4-dev, already built and deployed)
-- Rust source: wellfare-core/ (repo root — Cargo.toml, src/wasm.rs, src/qualia_bindings.rs etc.)
-- QualiaStore.insert_quin() and query_subject() are stubs — they return mock values and do nothing
-- WasmHealthStore and validate_health_turtle() are missing from WASM exports (vault-wasm.js calls them)
-- qualiaDB external repo: https://github.com/mediaprophet/qualiaDB — Tauri v1.5 desktop, Kotlin/JNI Android, qualia-core-db engine
-- Active branch: feature/qualia-db-integration (5 commits ahead of master, pushed)
-- WASM at docs/pkg/: 3.3 MB (oxigraph included); new exports: WasmHealthStore, validate_health_turtle, QualiaStore (functional)
+- Engine WASM: docs/pkg/wellfare_core_bg.wasm (3.3 MB, v0.0.4-dev + oxigraph, built and deployed)
+- Rust source: wellfare-core/ (repo root — store.rs, shapes.rs, qualia_bindings.rs, wasm.rs etc.)
+- WASM exports (all verified in .d.ts): WasmHealthStore, validate_health_turtle, QualiaStore (all functional — not stubs)
+- qualiaDB external repo: https://github.com/mediaprophet/qualiaDB — Tauri v1.5 (needs v2 upgrade), Kotlin/JNI Android
+- Active branch: feature/qualia-db-integration (6 commits ahead of master, pushed)
 - Demo PIN: 1234 — use vault.html?demo for UI-only checks (no PIN required)
 - Dev server: python -m http.server 3000 --directory docs
 - Testing: always use mcp__Claude_in_Chrome__* tools — Claude app preview lacks WebCrypto

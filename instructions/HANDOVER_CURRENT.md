@@ -1,7 +1,7 @@
 # WellFair — Current Handover
 > **Living document — update this at the end of every session.**  
-> Last updated: 2026-06-03  
-> Updated by: architecture review session (qualiaDB integration + cooperative projects)
+> Last updated: 2026-06-04  
+> Updated by: sessions 2 + 3 (restructure + CI fixes + W2–W7 Rust engine)
 
 ---
 
@@ -32,14 +32,16 @@ WellFair is a privacy-first personal health vault. The phone is the authoritativ
 | **Privacy Vault** | `docs/vault.html` | PIN, sanctuary, Nym, meds, identity credentials, calls, cooperative projects, wallet |
 | **Analytics Dashboard** | `docs/app.html` | Streamlit-in-browser ("Holographic Engine") — persona demos, health visualisations, Prolog inference, LLM |
 
-Both share `docs/pkg/wellfare_core_bg.wasm` (282 KB, v0.0.4-dev).
+Both share `docs/pkg/wellfare_core_bg.wasm` (3.3 MB, v0.0.4-dev + oxigraph).
 
 ### Engine: wellfare-core
 
 - **Source**: `wellfare-core/` (Rust, cdylib, edition 2024) — at repo root
 - **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm` (3.3 MB with oxigraph; previously 282 KB without)
 - **CI builds it**: `.github/workflows/pages.yml` — `cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg`
-- **Depends on**: `qualia-core-db` via git (`https://github.com/mediaprophet/qualiaDB.git`)
+- **qualia-core-db** is now an **optional** Cargo feature (`--features qualia`); it uses `wgpu` which is heavy for WASM so it is excluded from the default build. Enable when implementing W10.
+- **New modules**: `store.rs` (HealthStore/oxigraph), `shapes.rs` (SPARQL ASK constraints), `qualia_bindings.rs` (functional QualiaStore)
+- **New WASM exports**: `WasmHealthStore` (new/load_turtle/query), `validate_health_turtle()`, `QualiaStore` (insert_quin/query_subject/query_predicate/query_context/len/clear)
 
 ### Engine: qualiaDB (external repo)
 
@@ -63,32 +65,20 @@ The browser PWA continues working as demo/fallback throughout the migration.
 
 ## Active branch
 
-`feature/qualia-db-integration`
+`feature/qualia-db-integration` — **6 commits ahead of master, all pushed to origin.**
 
-This branch has **no commits ahead of master**. All the integration work described here is in the working tree only (not committed). See section "Uncommitted working tree" below.
+| Commit | What |
+|---|---|
+| `70f5bb6` | Cleanup: legacy Python/Rust → `legacy_pwa/`; CI fix; `TODO.md`; instruction docs |
+| `dd9a5a3` | Integration: `vault-wasm.js` qualiaDB bridge, IDB v10, `vault-sentinel.js`, `CLAUDE.md` |
+| `20c5f80` | W1: `wellfare-core/` at repo root; CI path restored |
+| `2a6c00f` | Docs: handover prompt session 2 |
+| `b1814e9` | W2–W7: real QualiaStore, WasmHealthStore SPARQL, SHACL validation; WASM rebuilt |
+| `44df0ea` | Docs: handover prompt session 3 |
 
----
+**Working tree: clean** (only `32-02.url` untracked Windows shortcut — ignore).
 
-## Uncommitted working tree
-
-The following files are modified but not committed. **Do not commit blindly — fix the CI path (0.1) first.**
-
-**Modified (staged or unstaged):**
-- `CLAUDE.md` — needs update to reflect decisions from this session
-- `docs/vault.html` — qualiaDB integration + new panels
-- `docs/connector/index.html` — integration updates
-- `docs/js/vault-idb.js` — IDB v10 + dual-write scaffolding for QualiaStore
-- `docs/js/vault-scheduler.js` — updates
-- `docs/js/vault-wallet.js` — HCW-2 + Nym bandwidth
-- `docs/js/vault-wasm.js` — qualiaDB bridge (loads wellfare_core.js, Lexicon, JSONtoQuinSerializer)
-
-**Effectively deleted (moved to `legacy_pwa/`):**
-- `extensions/` (Python N3 reasoner, SHACL validator)
-- `src/` (Python PHR models)
-- `scripts/` (Python build/generate scripts)
-- `demo/` (persona JSON files)
-
-**Note:** The N3 reasoning rules (`adrenal_fatigue.n3`, `cardiovascular_risk.n3`, `sleep_debt.n3`, `trauma_cascade.n3`) were in `extensions/n3_reasoner/rules/` — they now live at `legacy_pwa/extensions/n3_reasoner/rules/`. Their logic is still needed; see TODO A6.
+**N3 rules note:** `adrenal_fatigue.n3`, `cardiovascular_risk.n3`, `sleep_debt.n3`, `trauma_cascade.n3` now live at `legacy_pwa/extensions/n3_reasoner/rules/`. Their logic is still needed; see TODO A6.
 
 ---
 
@@ -113,7 +103,12 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 - WA-1 through WA-7 (Webizen Agent: CV workers, audio DSP, telemetry)
 - HCW-1 and HCW-2 (wallet init + Nym bandwidth)
 - DL-1 (barcode diet log scanner)
-- wellfare-core WASM built and deployed
+- **W1** — wellfare-core at repo root; CI path correct
+- **W2/W3** — QualiaStore: functional Vec<[u64;5]> store; insert/query all working; BigInt-safe
+- **W4** — WasmHealthStore: oxigraph-backed; SPARQL SELECT/ASK/CONSTRUCT via load_turtle()/query()
+- **W5** — validate_health_turtle(): 6 SPARQL ASK health shape constraints; JSON report
+- **W7** — oxigraph added to Cargo.toml; qualia-core-db moved to optional `qualia` feature
+- wellfare-core WASM rebuilt to 3.3 MB; all exports verified in .d.ts
 - Package manager (OPFS-based, prolog-wasm + llm-mediapipe)
 - Device bridge (File System Access API)
 - app.html Streamlit analytics dashboard
@@ -125,14 +120,15 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | Item | Blocked by |
 |---|---|
 | All M tasks (Tauri mobile) | qualia-desktop Tauri v1→v2 migration (M1) |
-| W2–W6 (real QualiaStore) | W4 needs oxigraph in Cargo.toml (W7) |
+| W6 (validate_health_quin Sentinel) | qualia-core-db Sentinel VM — deferred (wgpu dep) |
+| W8 (dual-target Cargo) | M2 Tauri app crate doesn't exist yet |
+| W10 (compile_query_to_json) | qualia-core-db optional feature needs validation |
 | CP4 P2P sync (Tier 1) | Nym activation (A3) |
 | DA1–DA6 analytics | Phase 2 (directory + cooperative) must be stable first |
 | HCW-3+ wallet | Rust Tauri command architecture (decided: Rust, blocked by M4–M6) |
-| OC2 ontology ingestion | W4 WasmHealthStore + oxigraph (W7) |
+| OC2 ontology ingestion | ~~W4 WasmHealthStore + oxigraph~~ **UNBLOCKED** — W4 complete |
 
-**Cleared this session**: 0.1 CI path (fixed + committed), 0.2 working tree committed cleanly,
-0.3 CLAUDE.md updated, W1 wellfare-core moved to repo root.
+**Cleared sessions 2+3**: 0.1–0.3 CI/commit/CLAUDE.md, W1 crate location, W2–W5 and W7 Rust engine.
 
 ---
 
@@ -197,7 +193,7 @@ docs/
   package-download-ui.js  Package install overlay
   manifest.webmanifest    PWA manifest (needs start_url → vault.html, see P4)
   js/                     28 JS modules — see CLAUDE.md for full list
-  pkg/                    Built WASM: wellfare_core.js + wellfare_core_bg.wasm (282KB)
+  pkg/                    Built WASM: wellfare_core.js + wellfare_core_bg.wasm (3.3 MB)
   packages/               OPFS package manager (PackageManager, registry.json, capabilities.js)
   profiles/               access-profiles.ttl (SHACL), profiles.json
   pyodide/wellfair_demo.py Python analytics app (loaded by app.html stlite)
@@ -205,10 +201,12 @@ docs/
   models/                 .glb persona models (7 personas)
 
 wellfare-core/          Rust WASM crate source (THE primary Rust code)
-  Cargo.toml            v0.0.4-dev; depends on qualia-core-db via git
+  Cargo.toml            v0.0.4-dev; oxigraph 0.4 (default); qualia-core-db optional feature "qualia"
   src/
-    wasm.rs             All wasm_bindgen exports
-    qualia_bindings.rs  QualiaStore (STUB — needs W2/W3)
+    wasm.rs             All wasm_bindgen exports (includes WasmHealthStore, validate_health_turtle)
+    qualia_bindings.rs  QualiaStore — functional Vec<[u64;5]> store (W2/W3 complete)
+    store.rs            HealthStore backed by oxigraph (W4 complete)
+    shapes.rs           6 SPARQL ASK health constraints (W5 complete)
     rdf.rs              Turtle serializers (working)
     parser.rs           CSV parsers (working)
     models.rs           Rust data models
@@ -258,10 +256,16 @@ The obligation model: contributor hours → µ-units → obligation cost. Three 
 
 ---
 
-## What to do next (suggested first session after this handover)
+## What to do next
 
-1. Fix 0.1 (CI path) — 15 min
-2. Commit working tree cleanly as two commits (0.2) — 20 min
-3. Update CLAUDE.md (0.3) — 20 min
-4. Move wellfare-core to repo root (W1) and verify CI still builds — 30 min
-5. Then: either start W2–W7 (complete QualiaStore + SPARQL + SHACL) OR start CP1 (cooperative projects panel) depending on priority
+**Recommended: CP1 — Cooperative Projects panel** (highest-impact user-visible feature, no Rust needed).
+
+Steps:
+1. Create `docs/js/vault-projects.js` — project list, join flow, contribution log, obligation dashboard
+2. Add IDB v11 in `vault-idb.js` — stores: `wf-projects`, `wf-contributions`, `wf-obligations`
+3. Wire panel into `vault.html` — new "Projects" nav section
+4. See TODO.md section CP for full task breakdown (CP1–CP6)
+
+Read first: `TODO.md` section CP · `instructions/HANDOVER_CURRENT.md` § "Cooperative projects"
+
+**Alternative: OC1** — Ontology Converter panel in `app.html`. Now unblocked by W4 (WasmHealthStore live). File picker → Turtle/JSON-LD → N-Quads conversion via WASM. See TODO.md section OC.
