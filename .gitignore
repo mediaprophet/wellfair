@@ -23,6 +23,7 @@ legacy_pwa/wellfare-core/target/
 # OS metadata
 .DS_Store
 Thumbs.db
+*.url
 
 # Large 3rd-party 3D reference asset libraries (very large, not needed for core app)
 /ccf-3d-reference-object-library-main/

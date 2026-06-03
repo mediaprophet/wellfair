@@ -33,6 +33,33 @@ let _callRafId   = null;
 let _callFrameTs = 0;
 const _FRAME_MS  = 100; // ~10fps cap — matches MediaPipe throughput on mid-range hardware
 
+// PIA3 — session start timestamp for duration calculation
+let _callStartTs = 0;
+
+// ── PIA3: Protocol event provenance ───────────────────────────────────────────
+// Writes a wf:ProtocolEvent record to wf-events IDB (Q42 dual-write included
+// via the existing dual-write hook in vault-idb.js).  Never throws — provenance
+// failure must not break the call flow.
+
+async function _writeProtocolEvent(fields) {
+  try {
+    const record = {
+      id:                crypto.randomUUID(),
+      type:              'wf:ProtocolEvent',
+      protocolEventType: fields.protocolEventType,
+      sessionId:         fields.sessionId  || null,
+      participants:      fields.participants || null,
+      durationSeconds:   fields.durationSeconds != null ? fields.durationSeconds : null,
+      consentBasis:      fields.consentBasis || null,
+      timestamp:         new Date().toISOString(),
+      piaEvent:          true,
+    };
+    await _dbPut(_ST_EVENTS, record);
+  } catch (e) {
+    console.warn('[PIA3] _writeProtocolEvent failed:', e.message);
+  }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 // Initiate a call to a contact. Returns { sessionId, callLink }.
@@ -80,10 +107,16 @@ async function startCall(contactId) {
     try { _callPc.addIceCandidate(JSON.parse(raw)); } catch (_) {}
   });
 
+  _callStartTs = Date.now();
   const callLink = generateGuestLink(sessionId);
   if (typeof captureEvent === 'function') {
     captureEvent(sessionId, 'call.start', _callVaultDid(), {}).catch(() => {});
   }
+  _writeProtocolEvent({
+    protocolEventType: 'webrtc_session_start',
+    sessionId,
+    participants: JSON.stringify([_callVaultDid(), contactId].filter(Boolean)),
+  }).catch(() => {});
   _callNotifyUI({ event: 'call.started', sessionId, callLink });
   return { sessionId, callLink };
 }
@@ -176,6 +209,14 @@ async function endCall() {
     if (typeof captureEvent === 'function') {
       captureEvent(_callSessionId, 'call.end', _callVaultDid(), {}).catch(() => {});
     }
+    const durationSeconds = _callStartTs ? Math.round((Date.now() - _callStartTs) / 1000) : null;
+    _callStartTs = 0;
+    _writeProtocolEvent({
+      protocolEventType: 'webrtc_session_end',
+      sessionId:         _callSessionId,
+      participants:      JSON.stringify([_callVaultDid()].filter(Boolean)),
+      durationSeconds,
+    }).catch(() => {});
     _guestTokens.delete(_callSessionId);
     _callSessionId = null;
   }

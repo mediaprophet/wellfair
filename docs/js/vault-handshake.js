@@ -127,6 +127,12 @@ async function acceptHandshake(payloadB64, approved) {
     agreement['wf:initiatorSig'],
   );
 
+  // PIA4 — git-signed N-Quads bundle for legal-grade audit trail
+  const nqBundle = _agreementToNQuads(signed);
+  _sign(ourKeys.privateKey, new TextEncoder().encode(nqBundle))
+    .then(nqSig => _writeContractEvent(signed.uid, nqBundle, nqSig, ourKeys.did))
+    .catch(() => {});
+
   const blob = btoa(JSON.stringify({ type: 'wf:handshake_response', v: 1, agreement: signed }));
   return { blob, ourDid: ourKeys.did, agreement: signed };
 }
@@ -163,7 +169,57 @@ async function finaliseHandshake(blobB64) {
   );
 
   _pendingHandshakes.delete(uid);
+
+  // PIA4 — git-signed N-Quads bundle for legal-grade audit trail
+  const nqBundle = _agreementToNQuads(signed);
+  _sign(pending.privateKey, new TextEncoder().encode(nqBundle))
+    .then(nqSig => _writeContractEvent(uid, nqBundle, nqSig, pending.ourDid))
+    .catch(() => {});
+
   return { contact, agreement: signed };
+}
+
+// ── PIA4: Git-signed contract provenance ──────────────────────────────────────
+// On every fully countersigned agreement, generates an N-Quads bundle of the
+// contract quads, signs it with the local Ed25519 key, and writes a
+// git_commit_ref protocol event to wf-events IDB.
+
+function _agreementToNQuads(agr) {
+  const WF  = 'https://wellfare.social/ns/vault#';
+  const QP  = 'https://qualia.id/ns/';
+  const DCT = 'http://purl.org/dc/terms/';
+  const XSD = 'http://www.w3.org/2001/XMLSchema#';
+  const RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+  const subj = `<${agr.uid}>`;
+  const lines = [
+    `${subj} <${RDF}type> <${QP}Contract> .`,
+    `${subj} <${RDF}type> <${WF}UsageAgreement> .`,
+  ];
+  if (agr['wf:initiator'])      lines.push(`${subj} <${WF}initiator> "${agr['wf:initiator']}" .`);
+  if (agr['wf:counterparty'])   lines.push(`${subj} <${WF}counterparty> "${agr['wf:counterparty']}" .`);
+  if (agr['wf:peerDid'])        lines.push(`${subj} <${WF}peerDid> "${agr['wf:peerDid']}" .`);
+  if (agr['wf:initiatorSig'])   lines.push(`${subj} <${WF}agreementSig> "${agr['wf:initiatorSig']}" .`);
+  if (agr['wf:counterpartySig']) lines.push(`${subj} <${WF}counterpartySig> "${agr['wf:counterpartySig']}" .`);
+  lines.push(`${subj} <${DCT}created> "${new Date().toISOString()}"^^<${XSD}dateTime> .`);
+  return lines.join('\n');
+}
+
+async function _writeContractEvent(uid, nqBundle, nqSig, authorDid) {
+  try {
+    await _dbPut(_ST_EVENTS, {
+      id:                crypto.randomUUID(),
+      type:              'wf:ProtocolEvent',
+      protocolEventType: 'git_commit_ref',
+      agreementUid:      uid,
+      nqBundle,
+      nqSig,
+      authorDid:         authorDid || null,
+      timestamp:         new Date().toISOString(),
+      piaEvent:          true,
+    });
+  } catch (e) {
+    console.warn('[PIA4] _writeContractEvent failed:', e.message);
+  }
 }
 
 // ── Crypto helpers ────────────────────────────────────────────────────────────

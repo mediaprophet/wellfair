@@ -702,3 +702,452 @@ wf:CrisisSupportCallProfile
     sh:property [ sh:path wf:socialContext     ] ;
     sh:property [ sh:path wf:emergencyContacts ] ;
     sh:property [ sh:path wf:mentalHealth      ] .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PIA1 — Cooperative Projects: qp: Vocabulary & SHACL Shapes
+#
+# qp: prefix → https://qualia.id/ns/ (same namespace as qualia: in
+# qualiaDB/docs/manuals/qualia_shapes.ttl; qp: is the WellFair convention).
+# Spec: https://github.com/mediaprophet/qualiaDB/blob/main/docs/protocol-integration-architecture.md
+#
+# wf: ↔ qp: alignment — entities are dual-typed in vault-projects.js so that
+# SPARQL queries over WasmHealthStore can use either vocabulary:
+#
+#   wf:CooperativeProject  ↔  qp:Workspace
+#   wf:ContributionRecord  ↔  qp:ProvenanceCommit  (Merkle chain entry)
+#   wf:ObligationBalance   ↔  qp:EffortObligation  (µ-unit balance)
+#   wf:UsageAgreement      ↔  qp:Contract
+#   wf:authorDid           ↔  qp:authorNym
+#   wf:prevHash            ↔  qp:antecedent
+#   wf:muUnits             ↔  qp:amount
+#   wf:agreementRef        ↔  qp:hasConsentRelation
+#   wf:coContributor (DIR1) ↔  qp:hasMember
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@prefix qp: <https://qualia.id/ns/> .
+
+
+# ── qp: Class vocabulary ──────────────────────────────────────────────────────
+
+qp:Workspace
+    a rdfs:Class ;
+    rdfs:subClassOf wf:CooperativeProject ;
+    rdfs:label   "Cooperative Workspace"@en ;
+    rdfs:comment "A shared cooperative project space. Dual-typed with wf:CooperativeProject in vault-projects.js Turtle export."@en .
+
+qp:EffortObligation
+    a rdfs:Class ;
+    rdfs:label   "Effort Obligation"@en ;
+    rdfs:comment "A contributor's current obligation balance in a cooperative project (µ-units). Dual-typed with wf:ObligationBalance."@en .
+
+qp:ProvenanceCommit
+    a rdfs:Class ;
+    rdfs:label   "Provenance Commit"@en ;
+    rdfs:comment "A cryptographically chained contribution record. Every commit links to its antecedent (no orphans). Dual-typed with wf:ContributionRecord."@en .
+
+qp:Contract
+    a rdfs:Class ;
+    rdfs:subClassOf wf:UsageAgreement ;
+    rdfs:label   "Cooperative Contract"@en ;
+    rdfs:comment "A signed cooperative agreement between two or more participant DIDs. Dual-typed with wf:UsageAgreement."@en .
+
+qp:VerifiableClaim
+    a rdfs:Class ;
+    rdfs:label   "Verifiable Claim"@en ;
+    rdfs:comment "A signed claim about contribution, equity eligibility, or audit state within a cooperative project."@en .
+
+qp:Slice
+    a rdfs:Class ;
+    rdfs:label   "Equity Slice"@en ;
+    rdfs:comment "A contributor's Dynamic Equity / Stewardship Share allocation expressed as qp:equityPercent (0–100 %). Planned store: wf-shares or extended wf-obligations (CP7)."@en .
+
+qp:TokenizedShare
+    a rdfs:Class ;
+    rdfs:subClassOf qp:Slice ;
+    rdfs:label   "Tokenized Share"@en ;
+    rdfs:comment "A qp:Slice that has been tokenized. Cash-out subject to qp:ProjectGovernance.allowsCashOut."@en .
+
+qp:ProjectGovernance
+    a rdfs:Class ;
+    rdfs:label   "Project Governance"@en ;
+    rdfs:comment "Governance rules for a cooperative project: decision model, cash-out eligibility, tokenization policy. Stored in wf-projects (CP8)."@en .
+
+
+# ── qp: Property vocabulary ───────────────────────────────────────────────────
+
+qp:hasMember
+    a rdf:Property ;
+    rdfs:domain qp:Workspace ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "has member (did:key IRI)"@en ;
+    rdfs:comment "Cooperative project participant DID. Aligns with wf:coContributor relationship type (DIR1)."@en .
+
+qp:antecedent
+    a rdf:Property ;
+    rdfs:domain qp:ProvenanceCommit ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "antecedent (Merkle link)"@en ;
+    rdfs:comment "Base64 SHA-256 hash of the previous commit in the Merkle chain. Aligns with wf:prevHash."@en .
+
+qp:authorNym
+    a rdf:Property ;
+    rdfs:domain qp:ProvenanceCommit ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "author Nym / did:key"@en ;
+    rdfs:comment "Identifier of the contributor who authored this commit. Aligns with wf:authorDid."@en .
+
+qp:amount
+    a rdf:Property ;
+    rdfs:domain qp:EffortObligation ;
+    rdfs:range  xsd:decimal ;
+    rdfs:label  "obligation amount (µ-units)"@en ;
+    rdfs:comment "Non-negative obligation value. Aligns with wf:muUnits."@en .
+
+qp:provenance
+    a rdf:Property ;
+    rdfs:domain qp:EffortObligation ;
+    rdfs:label  "provenance commit"@en ;
+    rdfs:comment "Reference to the qp:ProvenanceCommit that last updated this obligation balance."@en .
+
+qp:hasConsentRelation
+    a rdf:Property ;
+    rdfs:range  wf:UsageAgreement ;
+    rdfs:label  "has consent relation"@en ;
+    rdfs:comment "Links any entity to the wf:UsageAgreement (ODRL agreement) governing its outbound data flows. Aligns with wf:agreementRef. All cross-project data flows must carry this property (PIA8)."@en .
+
+qp:contributor
+    a rdf:Property ;
+    rdfs:domain qp:Slice ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "contributor did:key"@en .
+
+qp:equityPercent
+    a rdf:Property ;
+    rdfs:domain qp:Slice ;
+    rdfs:range  xsd:decimal ;
+    rdfs:label  "equity allocation (%)"@en ;
+    rdfs:comment "Percentage of project equity allocated to this contributor (0–100)."@en .
+
+qp:vestingStart
+    a rdf:Property ;
+    rdfs:domain qp:Slice ;
+    rdfs:range  xsd:dateTime ;
+    rdfs:label  "vesting start date"@en .
+
+qp:tokenized
+    a rdf:Property ;
+    rdfs:domain qp:Slice ;
+    rdfs:range  xsd:boolean ;
+    rdfs:label  "is tokenized"@en .
+
+qp:allowsCashOut
+    a rdf:Property ;
+    rdfs:domain qp:ProjectGovernance ;
+    rdfs:range  xsd:boolean ;
+    rdfs:label  "allows cash-out"@en ;
+    rdfs:comment "Whether this project permits converting µ-units / equity to Lightning payments via the HCW rail."@en .
+
+qp:decisionModel
+    a rdf:Property ;
+    rdfs:domain qp:ProjectGovernance ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "decision model"@en ;
+    rdfs:comment "One of: majority | consensus | steward | founder."@en .
+
+qp:tokenizationEnabled
+    a rdf:Property ;
+    rdfs:domain qp:ProjectGovernance ;
+    rdfs:range  xsd:boolean ;
+    rdfs:label  "tokenization enabled"@en .
+
+qp:cashOutThreshold
+    a rdf:Property ;
+    rdfs:domain qp:ProjectGovernance ;
+    rdfs:range  xsd:decimal ;
+    rdfs:label  "minimum µ-units for cash-out"@en ;
+    rdfs:comment "Minimum accumulated µ-units before a cash-out can be initiated."@en .
+
+qp:governedBy
+    a rdf:Property ;
+    rdfs:domain qp:Workspace ;
+    rdfs:range  qp:ProjectGovernance ;
+    rdfs:label  "governed by"@en .
+
+qp:party
+    a rdf:Property ;
+    rdfs:domain qp:Contract ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "contract party (did:key IRI)"@en ;
+    rdfs:comment "A participant DID that is a signatory of this contract. Minimum 2 per qp:Contract."@en .
+
+qp:claimType
+    a rdf:Property ;
+    rdfs:domain qp:VerifiableClaim ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "claim type"@en ;
+    rdfs:comment "One of: contribution | equity | eligibility | audit."@en .
+
+
+# ── SHACL NodeShapes for wf:/qp: cooperative entities ────────────────────────
+
+wf:CooperativeProjectShape
+    a sh:NodeShape ;
+    sh:targetClass wf:CooperativeProject ;
+    rdfs:label   "Cooperative Project shape"@en ;
+    rdfs:comment "Validates a wf-projects IDB record. Dual-typed as qp:Workspace in Turtle export."@en ;
+    sh:property [
+        sh:path     wf:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:ratePerHour ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:joinedAt ;
+        sh:datatype xsd:dateTime ;
+        sh:maxCount 1 ;
+    ] .
+
+wf:ContributionRecordShape
+    a sh:NodeShape ;
+    sh:targetClass wf:ContributionRecord ;
+    rdfs:label   "Contribution record shape"@en ;
+    rdfs:comment "Validates a wf-contributions IDB record. Dual-typed as qp:ProvenanceCommit in Turtle export."@en ;
+    sh:property [
+        sh:path     wf:project ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:hours ;
+        sh:datatype xsd:decimal ;
+        sh:minExclusive 0 ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:merkleHash ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:antecedent ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:authorNym ;
+        sh:datatype xsd:string ;
+        sh:maxCount 1 ;
+    ] .
+
+wf:ObligationBalanceShape
+    a sh:NodeShape ;
+    sh:targetClass wf:ObligationBalance ;
+    rdfs:label   "Obligation balance shape"@en ;
+    rdfs:comment "Validates a wf-obligations IDB record. Dual-typed as qp:EffortObligation in Turtle export."@en ;
+    sh:property [
+        sh:path     wf:totalHours ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:muUnits ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:amount ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxCount 1 ;
+    ] .
+
+qp:SliceShape
+    a sh:NodeShape ;
+    sh:targetClass qp:Slice ;
+    rdfs:label   "Equity Slice shape"@en ;
+    rdfs:comment "Validates a Dynamic Equity / Stewardship Share record (planned store: wf-shares or extended wf-obligations, CP7)."@en ;
+    sh:property [
+        sh:path     qp:contributor ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:equityPercent ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 100 ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:tokenized ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+    ] .
+
+qp:ProjectGovernanceShape
+    a sh:NodeShape ;
+    sh:targetClass qp:ProjectGovernance ;
+    rdfs:label   "Project Governance shape"@en ;
+    rdfs:comment "Validates a governance rules record stored in wf-projects (CP8)."@en ;
+    sh:property [
+        sh:path     qp:allowsCashOut ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:decisionModel ;
+        sh:datatype xsd:string ;
+        sh:in       ( "majority" "consensus" "steward" "founder" ) ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:tokenizationEnabled ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     qp:cashOutThreshold ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxCount 1 ;
+    ] .
+
+qp:ContractShape
+    a sh:NodeShape ;
+    sh:targetClass qp:Contract ;
+    rdfs:label   "Cooperative Contract shape"@en ;
+    rdfs:comment "Validates a qp:Contract (extends wf:UsageAgreementShape with multi-party constraints)."@en ;
+    sh:property [
+        sh:path     qp:party ;
+        sh:nodeKind sh:IRI ;
+        sh:minCount 2 ;
+        sh:message  "A cooperative contract must have at least two signing parties."@en ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementOdrl ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     wf:agreementSig ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] .
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PIA2 — Protocol Session Event Schema
+#
+# Every protocol-level event (WebRTC call, GUN sync, WebTorrent swarm, git commit)
+# produces a wf:ProtocolEvent record written to the wf-events IDB store and
+# dual-written as a Q42 quint via the existing dual-write hook in vault-idb.js.
+#
+# Event types (wf:protocolEventType values):
+#   "webrtc_session_start"  — call initiated; participants, consent basis recorded
+#   "webrtc_session_end"    — call ended; duration computed
+#   "gun_sync_checkpoint"   — GUN graph sync completed; entity count recorded
+#   "webtorrent_swarm_join" — joined a P2P swarm; infoHash, consent ref recorded
+#   "webtorrent_seed_start" — began seeding an asset; requires qp:hasConsentRelation
+#   "git_commit_ref"        — git-compatible signed commit object created (PIA10)
+#   "qp_boundary_conflict"  — project tried to schedule over personal priority time (PIA6)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Protocol event class & properties ────────────────────────────────────────
+
+wf:ProtocolEvent
+    a rdfs:Class ;
+    rdfs:label   "Protocol Event"@en ;
+    rdfs:comment "A provenance record for a protocol-level session or sync event. Written to wf-events IDB and dual-written as a Q42 quint."@en .
+
+wf:protocolEventType
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "protocol event type"@en ;
+    rdfs:comment "One of: webrtc_session_start | webrtc_session_end | gun_sync_checkpoint | webtorrent_swarm_join | webtorrent_seed_start | git_commit_ref | qp_boundary_conflict."@en .
+
+wf:sessionParticipants
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "session participants (did:key list, JSON)"@en .
+
+wf:sessionDurationSeconds
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:decimal ;
+    rdfs:label  "session duration (seconds)"@en .
+
+wf:consentBasis
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:anyURI ;
+    rdfs:label  "consent basis (agreement URI)"@en ;
+    rdfs:comment "Reference to the wf:UsageAgreement (qp:hasConsentRelation) that authorised this event."@en .
+
+wf:swarmInfoHash
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "WebTorrent swarm info-hash"@en .
+
+wf:entityCount
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:integer ;
+    rdfs:label  "entity count (e.g. GUN graph node count)"@en .
+
+wf:gitCommitHash
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "Ed25519-signed git commit hash"@en .
+
+wf:conflictWindow
+    a rdf:Property ;
+    rdfs:domain wf:ProtocolEvent ;
+    rdfs:range  xsd:string ;
+    rdfs:label  "conflict window (ISO 8601 interval)"@en ;
+    rdfs:comment "The personal-priority time window that a project attempted to schedule over (qp_boundary_conflict events)."@en .
+
+
+# ── SHACL shape for wf:ProtocolEvent ─────────────────────────────────────────
+
+wf:ProtocolEventShape
+    a sh:NodeShape ;
+    sh:targetClass wf:ProtocolEvent ;
+    rdfs:label   "Protocol Event shape"@en ;
+    rdfs:comment "Validates a protocol provenance record in wf-events IDB."@en ;
+    sh:property [
+        sh:path     wf:protocolEventType ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:in       ( "webrtc_session_start" "webrtc_session_end"
+                      "gun_sync_checkpoint"
+                      "webtorrent_swarm_join" "webtorrent_seed_start"
+                      "git_commit_ref"
+                      "qp_boundary_conflict" ) ;
+    ] ;
+    sh:property [
+        sh:path     wf:consentBasis ;
+        sh:maxCount 1 ;
+    ] ;
+    sh:property [
+        sh:path     dcterms:created ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .

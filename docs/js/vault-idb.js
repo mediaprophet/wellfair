@@ -32,10 +32,12 @@ const _ST_LEXICON    = 'wf-lexicon';       // string <-> u64 mappings
 const _ST_PROJECTS      = 'wf-projects';      // cooperative project records
 const _ST_CONTRIBUTIONS = 'wf-contributions'; // contribution log (Merkle chain)
 const _ST_OBLIGATIONS   = 'wf-obligations';   // per-project µ-unit balances
+// PIA6 — Personal Boundary Protection (added in v12)
+const _ST_CALENDAR      = 'wf-calendar';      // personal calendar events (personalPriority flag)
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 11);
+    const rq = indexedDB.open(_DB_NAME, 12);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -72,6 +74,11 @@ function _openDB() {
       if (!db.objectStoreNames.contains(_ST_PROJECTS))      db.createObjectStore(_ST_PROJECTS,      { keyPath: 'id' });
       if (!db.objectStoreNames.contains(_ST_CONTRIBUTIONS)) db.createObjectStore(_ST_CONTRIBUTIONS, { keyPath: 'id' });
       if (!db.objectStoreNames.contains(_ST_OBLIGATIONS))   db.createObjectStore(_ST_OBLIGATIONS,   { keyPath: 'id' });
+      // v12 — PIA6 Personal Boundary Protection
+      if (!db.objectStoreNames.contains(_ST_CALENDAR)) {
+        const cal = db.createObjectStore(_ST_CALENDAR, { keyPath: 'id' });
+        cal.createIndex('by_start', 'startIso', { unique: false });
+      }
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
@@ -79,18 +86,20 @@ function _openDB() {
 }
 
 async function _dbPut(store, record) {
-  if (window.vaultWasm && window.vaultWasm.getQualiaStore()) {
+  // CBOR-LD dual-write to QualiaStore.
+  // Records an existence triple for this record. Full semantic content is
+  // encoded separately per-module (e.g. exportProjectsToCborLdQuins) because
+  // _dbPut receives the AES-GCM encrypted form {id,iv,ct} — plaintext is gone.
+  // vault-cborld.js and QualiaStore must both be ready; failure is non-fatal.
+  if (window.vaultCborLd && window.vaultWasm?.getQualiaStore()) {
     const qStore = window.vaultWasm.getQualiaStore();
-    try {
-        const quins = await window.vaultWasm.JSONtoQuinSerializer.serialize(store, record);
-        for (const q of quins) {
-            qStore.insert_quin(q.s, q.p, q.o, q.c, q.m);
-        }
-        console.debug(`[QualiaDB] Inserted ${quins.length} Quins for record in ${store}`);
-    } catch (e) {
-        console.warn(`[QualiaDB] Serialization failed:`, e);
-    }
-    // DO NOT return early here yet; we still dual-write to IDB until QualiaDB deserializer is fully implemented.
+    window.vaultCborLd.encodeIrisToCbor(
+      `urn:wf:${store}:${record.id}`,
+      'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+      `https://wellfare.social/ns/vault#StoredRecord`,
+      `https://wellfare.social/ns/vault#store/${store}`,
+    ).then(bytes => qStore.insert_from_cbor_ld(bytes))
+     .catch(() => {});
   }
   const db = await _openDB();
   return new Promise((res, rej) => {

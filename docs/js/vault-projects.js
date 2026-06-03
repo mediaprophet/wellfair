@@ -88,11 +88,27 @@ async function _merkleHash(prevHash, hours, description, timestamp) {
   return toB64(new Uint8Array(digest));
 }
 
-async function logContribution(projectId, hours, description) {
+// options.force = true skips the boundary-conflict gate (user has already confirmed)
+async function logContribution(projectId, hours, description, options) {
   _requireKey();
   if (!projectId) throw new Error('[Projects] projectId required');
   if (!(hours > 0)) throw new Error('[Projects] hours must be a positive number');
   const timestamp  = new Date().toISOString();
+
+  // PIA6 — boundary conflict check (skip when vault-calendar not yet loaded)
+  if (!options?.force && window.vaultCalendar) {
+    const now      = new Date(timestamp);
+    const windowEnd = new Date(now.getTime() + hours * 3600000).toISOString();
+    const conflicts = await window.vaultCalendar.checkBoundaryConflict(timestamp, windowEnd);
+    if (conflicts.length > 0) {
+      const err = new Error('[Projects] Boundary conflict: project work overlaps personal-priority calendar events');
+      err.boundaryConflicts = conflicts;
+      await window.vaultCalendar.logBoundaryConflict(
+        `${timestamp}/${windowEnd}`, projectId, false,
+      ).catch(() => {});
+      throw err;
+    }
+  }
   // Get tail of the Merkle chain for this project
   const existing   = await getContributions(projectId);
   const prevHash   = existing.length > 0 ? existing[existing.length - 1].merkleHash : null;
@@ -153,6 +169,35 @@ async function getAllObligations() {
   return Promise.all(all.map(r => _decRecord(r)));
 }
 
+// ── CBOR-LD export (feeds QualiaStore quint engine via vault-cborld.js) ──────
+// Encodes all plaintext project/contribution/obligation records as CBOR-LD
+// quints and inserts them into the in-memory QualiaStore.
+// Call after vault unlock (alongside exportProjectsToTurtle → WasmHealthStore).
+// Returns { projects, contributions, obligations } counts inserted.
+
+async function exportProjectsToCborLdQuins() {
+  _requireKey();
+  if (!window.vaultCborLd || !window.vaultWasm?.getQualiaStore()) {
+    return { projects: 0, contributions: 0, obligations: 0 };
+  }
+  const [projects, contribsRaw, obligations] = await Promise.all([
+    getAllProjects(),
+    _dbGetAll(_ST_CONTRIBUTIONS).then(all => Promise.all(all.map(r => _decRecord(r)))),
+    getAllObligations(),
+  ]);
+  const counts = { projects: 0, contributions: 0, obligations: 0 };
+  for (const p of projects) {
+    counts.projects += await window.vaultCborLd.insertRecordToQualiaStore(_ST_PROJECTS, p);
+  }
+  for (const c of contribsRaw) {
+    counts.contributions += await window.vaultCborLd.insertRecordToQualiaStore(_ST_CONTRIBUTIONS, c);
+  }
+  for (const o of obligations) {
+    counts.obligations += await window.vaultCborLd.insertRecordToQualiaStore(_ST_OBLIGATIONS, o);
+  }
+  return counts;
+}
+
 // ── Turtle RDF export (feeds WasmHealthStore SPARQL via vault-wasm.js) ────────
 
 async function exportProjectsToTurtle() {
@@ -164,8 +209,9 @@ async function exportProjectsToTurtle() {
   ]);
 
   const lines = [
-    '@prefix wf: <https://wellfare.social/ns/vault#> .',
-    '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .',
+    '@prefix wf:      <https://wellfare.social/ns/vault#> .',
+    '@prefix qp:      <https://qualia.id/ns/> .',
+    '@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .',
     '@prefix dcterms: <http://purl.org/dc/terms/> .',
     '',
   ];
@@ -175,7 +221,7 @@ async function exportProjectsToTurtle() {
   const _curi = id => `<urn:wf:contribution:${id}>`;
 
   for (const p of projects) {
-    lines.push(`${_uri(p.id)} a wf:CooperativeProject ;`);
+    lines.push(`${_uri(p.id)} a wf:CooperativeProject, qp:Workspace ;`);
     lines.push(`  wf:name ${_esc(p.name)} ;`);
     lines.push(`  wf:description ${_esc(p.description)} ;`);
     lines.push(`  wf:ratePerHour "${p.ratePerHour}"^^xsd:decimal ;`);
@@ -186,22 +232,25 @@ async function exportProjectsToTurtle() {
   }
 
   for (const c of contribsRaw) {
-    lines.push(`${_curi(c.id)} a wf:ContributionRecord ;`);
+    lines.push(`${_curi(c.id)} a wf:ContributionRecord, qp:ProvenanceCommit ;`);
     lines.push(`  wf:project ${_uri(c.projectId)} ;`);
     lines.push(`  wf:hours "${c.hours}"^^xsd:decimal ;`);
     lines.push(`  wf:description ${_esc(c.description)} ;`);
     lines.push(`  wf:merkleHash "${c.merkleHash}" ;`);
     if (c.prevHash)  lines.push(`  wf:prevHash "${c.prevHash}" ;`);
+    if (c.prevHash)  lines.push(`  qp:antecedent "${c.prevHash}" ;`);
     if (c.authorDid) lines.push(`  wf:authorDid "${c.authorDid}" ;`);
+    if (c.authorDid) lines.push(`  qp:authorNym "${c.authorDid}" ;`);
     lines.push(`  dcterms:created "${c.timestamp}"^^xsd:dateTime .`);
     lines.push('');
   }
 
   for (const o of obligations) {
-    lines.push(`<urn:wf:obligation:${o.projectId}> a wf:ObligationBalance ;`);
+    lines.push(`<urn:wf:obligation:${o.projectId}> a wf:ObligationBalance, qp:EffortObligation ;`);
     lines.push(`  wf:project ${_uri(o.projectId)} ;`);
     lines.push(`  wf:totalHours "${o.totalHours}"^^xsd:decimal ;`);
     lines.push(`  wf:muUnits "${o.muUnits}"^^xsd:integer ;`);
+    lines.push(`  qp:amount "${o.muUnits}"^^xsd:decimal ;`);
     lines.push(`  dcterms:modified "${o.updatedAt}"^^xsd:dateTime .`);
     lines.push('');
   }
@@ -216,5 +265,9 @@ window.vaultProjects = {
   addProject, getProject, getAllProjects, updateProject,
   logContribution, getContributions,
   getObligationBalance, getAllObligations,
-  exportProjectsToTurtle,
+  exportProjectsToTurtle,       // → WasmHealthStore (oxigraph/SPARQL)
+  exportProjectsToCborLdQuins,  // → QualiaStore (quint engine / Sentinel)
+  // PIA6: force a contribution past a boundary conflict (call only after user opt-in)
+  logContributionForced: (projectId, hours, description) =>
+    logContribution(projectId, hours, description, { force: true }),
 };
