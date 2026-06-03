@@ -2,8 +2,7 @@
 20250221_SamsungHealth/
 data/samsung_export/
 NOTFORGIT
-# Instructions for the user to follow
-instructions/
+# (instructions/ directory is tracked — all .md docs committed)
 
 # Local Python Caching and Outputs
 output/
@@ -19,6 +18,7 @@ __pycache__/
 
 # Rust build output
 wellfare-core/target/
+legacy_pwa/wellfare-core/target/
 
 # OS metadata
 .DS_Store

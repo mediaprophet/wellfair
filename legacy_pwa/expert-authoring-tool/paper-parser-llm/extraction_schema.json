@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wellfair.app/schema/extraction/v1",
+  "title": "WellFair Knowledge Extraction Schema",
+  "description": "Output schema for the LLM paper-parser. One document per source study or legislative text.",
+  "type": "object",
+  "required": ["schema_version", "study_metadata", "logical_implications"],
+  "additionalProperties": false,
+
+  "properties": {
+
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version. Always '1.0' for this version."
+    },
+
+    "study_metadata": {
+      "type": "object",
+      "required": ["doi_or_url", "title", "domain"],
+      "additionalProperties": false,
+      "properties": {
+        "doi_or_url": {
+          "type": ["string", "null"],
+          "description": "DOI (preferred) or canonical URL of the source document."
+        },
+        "title": {
+          "type": "string",
+          "description": "Full title of the paper or legislative document."
+        },
+        "authors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Author list in 'Surname, Initials' format. May be empty for legislation."
+        },
+        "publication_year": {
+          "type": ["integer", "null"],
+          "description": "Year of publication or enactment."
+        },
+        "journal_or_source": {
+          "type": ["string", "null"],
+          "description": "Journal name, government body, or publishing organisation."
+        },
+        "domain": {
+          "type": "string",
+          "enum": ["biomedical", "psychiatric", "welfare", "legal", "environmental", "social"],
+          "description": "Broad domain of the source document."
+        },
+        "evidence_level": {
+          "type": ["string", "null"],
+          "enum": ["systematic_review", "rct", "cohort", "case_control", "expert_consensus", "guideline", "legislation", null],
+          "description": "Study design or evidence type."
+        },
+        "resolution_notes": {
+          "type": ["string", "null"],
+          "description": "Free-text notes about any unresolved URIs or ambiguities encountered during extraction."
+        }
+      }
+    },
+
+    "logical_implications": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Each element represents one directional implication extracted from the source.",
+      "items": {
+        "type": "object",
+        "required": ["implication_id", "condition_indicated", "affected_anatomical_structures"],
+        "additionalProperties": false,
+        "properties": {
+
+          "implication_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$",
+            "description": "Unique snake_case identifier within this document (e.g. 'dm_nephropathy_1'). Used as Prolog clause comment."
+          },
+
+          "condition_indicated": {
+            "type": "string",
+            "description": "Primary condition URI. Format: 'snomed:<id>', 'hp:<id>', or 'welfare:<term>'."
+          },
+
+          "condition_display": {
+            "type": ["string", "null"],
+            "description": "Human-readable label for the condition (for UI display)."
+          },
+
+          "biomarker_triggers": {
+            "type": "array",
+            "description": "Measurable thresholds that must be satisfied for this implication to fire. All triggers are ANDed together. If empty, the implication fires on condition alone.",
+            "items": {
+              "type": "object",
+              "required": ["prolog_param", "operator", "value"],
+              "additionalProperties": false,
+              "properties": {
+                "prolog_param": {
+                  "type": "string",
+                  "description": "Prolog parameter atom from biomarker-vocabulary.ttl (e.g. 'hba1c')."
+                },
+                "operator": {
+                  "type": "string",
+                  "enum": ["greater_than", "less_than", "greater_than_equal", "less_than_equal", "equals", "between"]
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Primary threshold value. For 'between', this is the lower bound."
+                },
+                "value_upper": {
+                  "type": ["number", "null"],
+                  "description": "Upper bound for 'between' operator only. Null for all other operators."
+                },
+                "unit": {
+                  "type": ["string", "null"],
+                  "description": "UCUM unit string (informational only; not used in Prolog logic)."
+                }
+              }
+            }
+          },
+
+          "affected_anatomical_structures": {
+            "type": "array",
+            "description": "FMA anatomical structure URIs implicated by this finding.",
+            "items": {
+              "type": "object",
+              "required": ["fma_uri", "severity_weight"],
+              "additionalProperties": false,
+              "properties": {
+                "fma_uri": {
+                  "type": "string",
+                  "description": "FMA term. Format: 'fma:<TermName>'. Use 'unresolved' if no FMA term found."
+                },
+                "severity_weight": {
+                  "type": "string",
+                  "enum": ["high", "medium", "low"]
+                },
+                "mechanism_summary": {
+                  "type": ["string", "null"],
+                  "description": "1–2 sentences in plain English explaining the biological mechanism. Shown to users in the Explainer sidebar."
+                },
+                "is_hierarchy_target": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Set true if this FMA URI is a parent class requiring hierarchy traversal (e.g. fma:Joint_structure for EDS). The SPARQL resolver will use rdfs:subClassOf* traversal instead of exact match."
+                }
+              }
+            }
+          },
+
+          "affected_entitlements": {
+            "type": "array",
+            "description": "For welfare/legal documents only. Entitlements or services triggered by this implication.",
+            "items": {
+              "type": "object",
+              "required": ["entitlement_uri", "entitlement_display"],
+              "additionalProperties": false,
+              "properties": {
+                "entitlement_uri": {
+                  "type": "string",
+                  "description": "URI for the entitlement. Format: 'welfare:<term>' or a legislative reference URI."
+                },
+                "entitlement_display": {
+                  "type": "string",
+                  "description": "Human-readable entitlement name."
+                },
+                "eligibility_notes": {
+                  "type": ["string", "null"],
+                  "description": "Additional eligibility conditions not captured by biomarker_triggers."
+                }
+              }
+            }
+          },
+
+          "comorbidity_modifiers": {
+            "type": "array",
+            "description": "Optional. Additional conditions that, if present alongside condition_indicated, escalate severity.",
+            "items": {
+              "type": "object",
+              "required": ["condition_uri", "escalates_to"],
+              "additionalProperties": false,
+              "properties": {
+                "condition_uri": {
+                  "type": "string",
+                  "description": "SNOMED or welfare URI of the co-occurring condition."
+                },
+                "escalates_to": {
+                  "type": "string",
+                  "enum": ["high", "medium", "low"],
+                  "description": "Severity escalation when this comorbidity is present."
+                },
+                "affected_uris": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Specific FMA URIs whose severity escalates. If empty, all URIs in this implication are affected."
+                }
+              }
+            }
+          },
+
+          "citation_fragment": {
+            "type": ["string", "null"],
+            "description": "Optional direct quote or paraphrase from the source that supports this implication. For expert review verification."
+          }
+        }
+      }
+    }
+  }
+}

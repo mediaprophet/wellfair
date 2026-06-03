@@ -26,12 +26,12 @@ jobs:
       - name: Build wellfare-core WASM
         run: |
           mkdir -p docs
-          cd wellfare-core
-          wasm-pack build --release --target web --out-dir ../docs/pkg
+          cd legacy_pwa/wellfare-core
+          wasm-pack build --release --target web --out-dir ../../docs/pkg
 
       - name: Build Stlite Demo
         run: |
-          python scripts/build_stlite.py
+          python legacy_pwa/scripts/build_stlite.py
           cp README.md docs/README.md || true
           cp COPYRIGHT.md docs/COPYRIGHT.md || true
 
