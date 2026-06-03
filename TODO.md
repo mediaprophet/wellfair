@@ -10,11 +10,11 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked
 
 ## 0 — Immediate (do before next commit)
 
-- [ ] **0.1 Fix CI path** — `pages.yml` does `cd wellfare-core` but source moved to `legacy_pwa/wellfare-core/`. Update workflow OR move crate back to root `wellfare-core/`.
-- [ ] **0.2 Commit working tree cleanly** — split into two logical commits:
-  - (a) cleanup: move Python src/extensions/scripts/demo → `legacy_pwa/` (staged deletions)
-  - (b) integration: modified vault.html, vault-idb.js, vault-scheduler.js, vault-wallet.js, vault-wasm.js, connector/index.html, CLAUDE.md
-- [ ] **0.3 Update CLAUDE.md** — reflect architecture pivot (Rust/Tauri), new two-app structure (vault.html + app.html), cooperative projects plan, and qualiaDB as primary engine.
+- [x] **0.1 Fix CI path** — updated pages.yml: legacy_pwa/wellfare-core/ path (then moved back to root with W1)
+- [x] **0.2 Commit working tree cleanly** — done as two commits:
+  - (a) `70f5bb6` cleanup: move Python src/extensions/scripts/demo → legacy_pwa/; fix CI; add TODO.md + instructions/
+  - (b) `dd9a5a3` integration: vault-wasm.js qualiaDB bridge, vault-idb.js v10, vault-sentinel.js, CLAUDE.md pivot
+- [x] **0.3 Update CLAUDE.md** — architecture pivot, two-product structure, cooperative/PFM/CV/DIR scope, milestone summary
 
 ---
 
@@ -22,7 +22,7 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked
 
 The Rust WASM crate. Source lives in `legacy_pwa/wellfare-core/`; built output in `docs/pkg/` (282KB `.wasm`, v0.0.4-dev).
 
-- [ ] **W1. Canonicalise crate location** — move from `legacy_pwa/wellfare-core/` to repo root `wellfare-core/` (or `crates/wellfare-core/`). Update `pages.yml` path.
+- [x] **W1. Canonicalise crate location** — moved from `legacy_pwa/wellfare-core/` to repo root `wellfare-core/`. Updated `pages.yml` path.
 - [ ] **W2. Implement `QualiaStore.insert_quin()` for real** — `qualia_bindings.rs` is a stub returning `true` without storing. Wire through to `qualia-core-db` engine.
 - [ ] **W3. Implement `QualiaStore.query_subject()` for real** — currently returns empty `Float64Array`. Should return matching Quins from the store.
 - [ ] **W4. Add `WasmHealthStore` with SPARQL** — vault-wasm.js calls `new wasm.WasmHealthStore()` → `.load_turtle()` → `.query()`. Add oxigraph-backed struct to `wasm.rs`:

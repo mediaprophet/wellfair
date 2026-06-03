@@ -36,10 +36,9 @@ Both share `docs/pkg/wellfare_core_bg.wasm` (282 KB, v0.0.4-dev).
 
 ### Engine: wellfare-core
 
-- **Source**: `legacy_pwa/wellfare-core/` (Rust, cdylib, edition 2024)
+- **Source**: `wellfare-core/` (Rust, cdylib, edition 2024) — at repo root
 - **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm`
 - **CI builds it**: `.github/workflows/pages.yml` — `cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg`
-- **⚠ CI is currently broken** because the source was moved to `legacy_pwa/wellfare-core/` in an uncommitted working-tree change. The workflow still does `cd wellfare-core` at the repo root. **Fix this before committing anything.**
 - **Depends on**: `qualia-core-db` via git (`https://github.com/mediaprophet/qualiaDB.git`)
 
 ### Engine: qualiaDB (external repo)
@@ -129,8 +128,11 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | W2–W6 (real QualiaStore) | W4 needs oxigraph in Cargo.toml (W7) |
 | CP4 P2P sync (Tier 1) | Nym activation (A3) |
 | DA1–DA6 analytics | Phase 2 (directory + cooperative) must be stable first |
-| HCW-3+ wallet | HCW architecture decision: Rust Tauri command vs JS (decided: Rust, blocked by M4–M6) |
+| HCW-3+ wallet | Rust Tauri command architecture (decided: Rust, blocked by M4–M6) |
 | OC2 ontology ingestion | W4 WasmHealthStore + oxigraph (W7) |
+
+**Cleared this session**: 0.1 CI path (fixed + committed), 0.2 working tree committed cleanly,
+0.3 CLAUDE.md updated, W1 wellfare-core moved to repo root.
 
 ---
 
@@ -202,15 +204,16 @@ docs/
   sample_data/            Synthetic CSV files (4 types)
   models/                 .glb persona models (7 personas)
 
+wellfare-core/          Rust WASM crate source (THE primary Rust code)
+  Cargo.toml            v0.0.4-dev; depends on qualia-core-db via git
+  src/
+    wasm.rs             All wasm_bindgen exports
+    qualia_bindings.rs  QualiaStore (STUB — needs W2/W3)
+    rdf.rs              Turtle serializers (working)
+    parser.rs           CSV parsers (working)
+    models.rs           Rust data models
+
 legacy_pwa/
-  wellfare-core/          Rust WASM crate source (THE primary Rust code)
-    Cargo.toml            v0.0.4-dev; depends on qualia-core-db via git
-    src/
-      wasm.rs             All wasm_bindgen exports
-      qualia_bindings.rs  QualiaStore (STUB — needs W2/W3)
-      rdf.rs              Turtle serializers (working)
-      parser.rs           CSV parsers (working)
-      models.rs           Rust data models
   extensions/n3_reasoner/rules/  Four N3 clinical rules (needed for A6)
   src/                    Python PHR models
   expert-authoring-tool/  Medical paper parser + Prolog rule compiler

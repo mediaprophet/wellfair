@@ -26,8 +26,8 @@ jobs:
       - name: Build wellfare-core WASM
         run: |
           mkdir -p docs
-          cd legacy_pwa/wellfare-core
-          wasm-pack build --release --target web --out-dir ../../docs/pkg
+          cd wellfare-core
+          wasm-pack build --release --target web --out-dir ../docs/pkg
 
       - name: Build Stlite Demo
         run: |

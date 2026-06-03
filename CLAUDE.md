@@ -142,7 +142,7 @@ docs/
     noise-xx.js                Noise_XX_25519_AESGCM_SHA256 (webconnect only)
     profiles.js                Profile loading, rendering, emergency pre-auth (webconnect only)
 
-legacy_pwa/wellfare-core/      Rust WASM crate source (THE primary Rust code — moves to root W1)
+wellfare-core/                 Rust WASM crate source (THE primary Rust code)
   Cargo.toml                   v0.0.4-dev; depends on qualia-core-db via git
   src/
     wasm.rs                    All wasm_bindgen exports
