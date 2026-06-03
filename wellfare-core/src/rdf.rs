@@ -175,6 +175,7 @@ pub fn sleep_to_turtle(records: &[SleepRecord]) -> String {
         out.push_str(&format!("    fhir:Observation.effectivePeriod.end \"{}\"^^xsd:dateTime ;\n", rec.end_datetime.to_rfc3339()));
         out.push_str(&format!("    fhir:Observation.valueQuantity \"PT{}M\"^^xsd:duration ;\n", rec.sleep_duration as u64));
         out.push_str("    qudt:unit qudt-unit:Minute ;\n");
+        out.push_str(&format!("    health:sleepHours {} ;\n", rec.sleep_duration / 60.0));
         out.push_str(&format!("    health:sleepEfficiency {} ;\n", rec.efficiency));
         out.push_str("    health:semanticReference fhir:Observation.valueQuantity .\n\n");
 

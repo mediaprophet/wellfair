@@ -139,12 +139,39 @@ pub fn vault_biometrics_to_turtle(json: &str) -> Result<String, JsValue> {
 }
 
 // ==========================================
-// SENTINEL OPCODES
+// N3 LOGIC RULE ENGINE  (A6)
 // ==========================================
 
-/// Placeholder for SentinelOpcode logic that replaces SHACL
+/// Evaluate all 7 N3 clinical rules against a Turtle document.
+///
+/// Returns a JSON array of triggered patterns:
+/// `[{"pattern":"ChronicSleepDebt","confidence":"high","routingLane":2,"n3Source":"sleep_debt.n3"},...]`
+///
+/// Empty array = no concerns found in the supplied health data.
+/// Routing lane 2 = BilateralMicroCommons (N3Logic implication rules requiring identity context).
+/// Routing lane 0 = PassthroughStandard (simple threshold flags).
 #[wasm_bindgen]
-pub fn validate_health_quin(_subject: u64) -> String {
-    // Logic will be evaluated natively in QualiaDB Core 1
-    r#"{"valid":true,"checked":1,"violations":[]}"#.to_string()
+pub fn evaluate_n3_rules(turtle: &str) -> String {
+    crate::n3_rules::evaluate_n3_rules_turtle(turtle)
+}
+
+// ==========================================
+// SENTINEL VM  (W6)
+// ==========================================
+
+/// Evaluate a named policy constraint against a single quint (s,p,o,c,m).
+///
+/// Supported constraint names:
+///   "cooperative_obligation" — PermissiveCommons work obligation gate (lane 1)
+///   "guardian_identity"      — BilateralMicroCommons guardian auth gate (lane 2)
+///   "commercial_block"       — BilateralMicroCommons anti-commercial gate (lane 2)
+///
+/// Returns JSON: `{"passed":bool,"routingLane":N}`
+#[wasm_bindgen]
+pub fn validate_health_quin(
+    constraint: &str,
+    s: u64, p: u64, o: u64, c: u64, m: u64,
+) -> String {
+    let (passed, lane) = crate::sentinel::evaluate_policy_constraint(constraint, s, p, o, c, m);
+    format!("{{\"passed\":{},\"routingLane\":{}}}", passed, lane)
 }

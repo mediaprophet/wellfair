@@ -3,6 +3,8 @@ pub mod parser;
 pub mod rdf;
 pub mod store;
 pub mod shapes;
+pub mod sentinel;
+pub mod n3_rules;
 pub mod qualia_bindings;
 #[cfg(target_arch = "wasm32")]
 pub mod wasm;

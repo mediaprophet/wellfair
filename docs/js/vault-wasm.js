@@ -337,6 +337,17 @@ class JSONtoQuinSerializer {
     }
 }
 
+// ── N3 Logic rules (delegates to vault-sentinel.js after WASM loads) ─────────
+
+/**
+ * Evaluate all 7 N3 clinical rules against the exported vault Turtle.
+ * Convenience wrapper — vault-sentinel.js has the full API.
+ * @returns {Promise<Array|null>}
+ */
+async function evaluateVaultN3Rules() {
+    return window.vaultSentinel?.evaluateVaultN3Rules() ?? null;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.vaultWasm = {
@@ -358,6 +369,8 @@ window.vaultWasm = {
     // SHACL
     validateHealthTurtle,
     validateVault,
+    // N3 Logic rules
+    evaluateVaultN3Rules,
     // Serialization
     JSONtoQuinSerializer,
 };
