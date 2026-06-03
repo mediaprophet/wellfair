@@ -15,27 +15,24 @@ Do NOT start writing code until you have read all three. They are short and cont
 
 ---
 
-LAST SESSION (2026-06-03):
-- Comprehensive architecture review across WellFair repo + qualiaDB repo + cooperative.html + Android app modules
-- Decided: primary vault pivots from browser PWA to Tauri v2 native app (iOS/Android); vault.html WebView is preserved as the UI shell
-- Decided: cooperative projects (obligation matrix, µ-units, Merkle commits, PFM, credential vault, Maslow VP, directory harmonization) are all in scope
-- Wrote TODO.md (master task list) and instructions/HANDOVER_CURRENT.md (living handover) — both are new and complete
-- Did NOT commit anything — working tree has staged deletions and modified JS files
+LAST SESSION (2026-06-03 — session 2):
+- Completed all handover start-up tasks: 0.1 CI fix, 0.2 two clean commits, 0.3 CLAUDE.md pivot, W1 wellfare-core to root
+- Three commits on feature/qualia-db-integration (3 ahead of master, not pushed):
+  - 70f5bb6: chore(restructure) — legacy Python/Rust → legacy_pwa/, CI fix, TODO.md, instructions/
+  - dd9a5a3: feat(qualiadb) — vault-wasm.js bridge, vault-idb.js v10, vault-sentinel.js, CLAUDE.md update
+  - 20c5f80: chore(W1) — wellfare-core moved to repo root, CI path restored
+- Working tree is clean (only untracked 32-02.url Windows shortcut, ignore it)
+- No CI verification done yet — requires pushing to GitHub for GitHub Actions to run
 
 ---
 
-CRITICAL BLOCKER — do this before any other work:
-The CI workflow (.github/workflows/pages.yml) does `cd wellfare-core` but the Rust crate source has been moved to `legacy_pwa/wellfare-core/` in an uncommitted working-tree change. The CI is currently broken. Fix this first (TODO item 0.1), then commit the working tree cleanly as two commits (TODO item 0.2).
-
----
-
-START HERE (first session after this handover):
+START HERE (next session):
 1. Read the three documents above
-2. Fix CI path (TODO 0.1) — 15 min
-3. Commit working tree cleanly as two commits (TODO 0.2) — 20 min
-4. Update CLAUDE.md to reflect the architecture pivot (TODO 0.3) — 20 min
-5. Move wellfare-core to repo root (TODO W1) and verify CI still builds — 30 min
-6. Then start TODO W2–W7 (complete QualiaStore + SPARQL + SHACL in wellfare-core) OR TODO CP1 (cooperative projects panel) — your call based on priority
+2. Choose: W2–W7 (implement real QualiaStore in wellfare-core) OR CP1 (Cooperative Projects panel in vault.html)
+   - W2–W7: start with W7 (add oxigraph to Cargo.toml) then W4 (WasmHealthStore), then W2/W3 (real insert/query)
+   - CP1: vault-projects.js new module, IDB v11 stores (wf-projects, wf-contributions, wf-obligations)
+3. Push branch to GitHub to trigger CI verification of the pages.yml build path
+   (run: git push -u origin feature/qualia-db-integration)
 
 ---
 
@@ -43,11 +40,11 @@ KEY FACTS:
 - Primary vault: docs/vault.html (phone-first PWA, currently working; Tauri app is the target)
 - Analytics dashboard: docs/app.html (Streamlit/stlite, 512KB — read in chunks with offset/limit)
 - Engine WASM: docs/pkg/wellfare_core_bg.wasm (282KB, v0.0.4-dev, already built and deployed)
-- Rust source: legacy_pwa/wellfare-core/ (Cargo.toml, src/wasm.rs, src/qualia_bindings.rs etc.)
+- Rust source: wellfare-core/ (repo root — Cargo.toml, src/wasm.rs, src/qualia_bindings.rs etc.)
 - QualiaStore.insert_quin() and query_subject() are stubs — they return mock values and do nothing
 - WasmHealthStore and validate_health_turtle() are missing from WASM exports (vault-wasm.js calls them)
 - qualiaDB external repo: https://github.com/mediaprophet/qualiaDB — Tauri v1.5 desktop, Kotlin/JNI Android, qualia-core-db engine
-- Active branch: feature/qualia-db-integration (no commits ahead of master — all work is in the working tree)
+- Active branch: feature/qualia-db-integration (3 commits ahead of master, not yet pushed)
 - Demo PIN: 1234 — use vault.html?demo for UI-only checks (no PIN required)
 - Dev server: python -m http.server 3000 --directory docs
 - Testing: always use mcp__Claude_in_Chrome__* tools — Claude app preview lacks WebCrypto
