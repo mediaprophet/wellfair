@@ -15,24 +15,27 @@ Do NOT start writing code until you have read all three. They are short and cont
 
 ---
 
-LAST SESSION (2026-06-03 — session 2):
-- Completed all handover start-up tasks: 0.1 CI fix, 0.2 two clean commits, 0.3 CLAUDE.md pivot, W1 wellfare-core to root
-- Three commits on feature/qualia-db-integration (3 ahead of master, not pushed):
-  - 70f5bb6: chore(restructure) — legacy Python/Rust → legacy_pwa/, CI fix, TODO.md, instructions/
-  - dd9a5a3: feat(qualiadb) — vault-wasm.js bridge, vault-idb.js v10, vault-sentinel.js, CLAUDE.md update
-  - 20c5f80: chore(W1) — wellfare-core moved to repo root, CI path restored
-- Working tree is clean (only untracked 32-02.url Windows shortcut, ignore it)
-- No CI verification done yet — requires pushing to GitHub for GitHub Actions to run
+LAST SESSION (2026-06-04 — session 3):
+- Completed W2/W3/W4/W5/W7 in wellfare-core (commit b1814e9, pushed)
+- W7: oxigraph added to Cargo.toml; qualia-core-db moved to optional "qualia" feature
+- W2/W3: QualiaStore now stores real Vec<[u64;5]> quints; insert/query all functional
+- W4: store.rs (HealthStore + oxigraph); WasmHealthStore wasm export; SPARQL SELECT/ASK/CONSTRUCT
+- W5: shapes.rs (6 SPARQL ASK health constraints); validate_health_turtle() wasm export
+- WASM rebuilt: docs/pkg/ now 3.3 MB (up from 282 KB — oxigraph adds ~3 MB)
+- All 5 commits now pushed to origin feature/qualia-db-integration (5 ahead of master)
+- Working tree: clean
 
 ---
 
 START HERE (next session):
 1. Read the three documents above
-2. Choose: W2–W7 (implement real QualiaStore in wellfare-core) OR CP1 (Cooperative Projects panel in vault.html)
-   - W2–W7: start with W7 (add oxigraph to Cargo.toml) then W4 (WasmHealthStore), then W2/W3 (real insert/query)
-   - CP1: vault-projects.js new module, IDB v11 stores (wf-projects, wf-contributions, wf-obligations)
-3. Push branch to GitHub to trigger CI verification of the pages.yml build path
-   (run: git push -u origin feature/qualia-db-integration)
+2. Choose next task from TODO.md:
+   - **CP1** (Cooperative Projects panel) — vault-projects.js + IDB v11 wf-projects/wf-contributions/wf-obligations
+     This is the highest-impact user-visible feature. Requires no Rust work.
+   - **W8** (dual-target Cargo.toml) — add native (non-wasm) target for Tauri; or
+   - **W9** (per-persona demo CSVs) — wire 7 distinct health datasets to app.js personas
+3. Note: CI will fail on the pages.yml stlite step until legacy_pwa/scripts/build_stlite.py
+   paths inside the script are correct. Check CI logs after the first push to master.
 
 ---
 
@@ -44,7 +47,8 @@ KEY FACTS:
 - QualiaStore.insert_quin() and query_subject() are stubs — they return mock values and do nothing
 - WasmHealthStore and validate_health_turtle() are missing from WASM exports (vault-wasm.js calls them)
 - qualiaDB external repo: https://github.com/mediaprophet/qualiaDB — Tauri v1.5 desktop, Kotlin/JNI Android, qualia-core-db engine
-- Active branch: feature/qualia-db-integration (3 commits ahead of master, not yet pushed)
+- Active branch: feature/qualia-db-integration (5 commits ahead of master, pushed)
+- WASM at docs/pkg/: 3.3 MB (oxigraph included); new exports: WasmHealthStore, validate_health_turtle, QualiaStore (functional)
 - Demo PIN: 1234 — use vault.html?demo for UI-only checks (no PIN required)
 - Dev server: python -m http.server 3000 --directory docs
 - Testing: always use mcp__Claude_in_Chrome__* tools — Claude app preview lacks WebCrypto
