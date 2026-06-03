@@ -76,6 +76,47 @@ pub fn steps_turtle_from_csv(content: &str) -> Result<String, JsValue> {
 // See qualia_bindings.rs for the QualiaStore implementation
 
 // ==========================================
+// SPARQL HEALTH STORE  (W4)
+// ==========================================
+
+/// In-memory RDF store exposed to JS.  Load Turtle, run SPARQL SELECT/ASK/CONSTRUCT.
+#[wasm_bindgen]
+pub struct WasmHealthStore {
+    inner: crate::store::HealthStore,
+}
+
+#[wasm_bindgen]
+impl WasmHealthStore {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Result<WasmHealthStore, JsValue> {
+        crate::store::HealthStore::new()
+            .map(|inner| WasmHealthStore { inner })
+            .map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Load a Turtle document into the store (appends — call on a fresh store to replace).
+    pub fn load_turtle(&mut self, turtle: &str) -> Result<(), JsValue> {
+        self.inner.load_turtle(turtle).map_err(|e| JsValue::from_str(&e))
+    }
+
+    /// Execute a SPARQL query; returns JSON SPARQL results string.
+    pub fn query(&self, sparql: &str) -> Result<String, JsValue> {
+        self.inner.query(sparql).map_err(|e| JsValue::from_str(&e))
+    }
+}
+
+// ==========================================
+// SHACL VALIDATION  (W5)
+// ==========================================
+
+/// Validate a Turtle document against built-in health shapes (SPARQL ASK constraints).
+/// Returns a JSON string: `{"valid":bool,"checked":N,"violations":[{"shape":"...","message":"..."}]}`
+#[wasm_bindgen]
+pub fn validate_health_turtle(turtle: &str) -> String {
+    crate::shapes::validate_turtle(turtle).to_json()
+}
+
+// ==========================================
 // VAULT DATA → TURTLE  (wf: namespace)
 // ==========================================
 
@@ -103,7 +144,7 @@ pub fn vault_biometrics_to_turtle(json: &str) -> Result<String, JsValue> {
 
 /// Placeholder for SentinelOpcode logic that replaces SHACL
 #[wasm_bindgen]
-pub fn validate_health_quin(subject: u64) -> String {
+pub fn validate_health_quin(_subject: u64) -> String {
     // Logic will be evaluated natively in QualiaDB Core 1
     r#"{"valid":true,"checked":1,"violations":[]}"#.to_string()
 }

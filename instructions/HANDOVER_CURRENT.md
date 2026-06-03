@@ -37,7 +37,7 @@ Both share `docs/pkg/wellfare_core_bg.wasm` (282 KB, v0.0.4-dev).
 ### Engine: wellfare-core
 
 - **Source**: `wellfare-core/` (Rust, cdylib, edition 2024) — at repo root
-- **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm`
+- **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm` (3.3 MB with oxigraph; previously 282 KB without)
 - **CI builds it**: `.github/workflows/pages.yml` — `cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg`
 - **Depends on**: `qualia-core-db` via git (`https://github.com/mediaprophet/qualiaDB.git`)
 

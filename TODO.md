@@ -23,15 +23,12 @@ Legend: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` blocked
 The Rust WASM crate. Source lives in `legacy_pwa/wellfare-core/`; built output in `docs/pkg/` (282KB `.wasm`, v0.0.4-dev).
 
 - [x] **W1. Canonicalise crate location** — moved from `legacy_pwa/wellfare-core/` to repo root `wellfare-core/`. Updated `pages.yml` path.
-- [ ] **W2. Implement `QualiaStore.insert_quin()` for real** — `qualia_bindings.rs` is a stub returning `true` without storing. Wire through to `qualia-core-db` engine.
-- [ ] **W3. Implement `QualiaStore.query_subject()` for real** — currently returns empty `Float64Array`. Should return matching Quins from the store.
-- [ ] **W4. Add `WasmHealthStore` with SPARQL** — vault-wasm.js calls `new wasm.WasmHealthStore()` → `.load_turtle()` → `.query()`. Add oxigraph-backed struct to `wasm.rs`:
-  ```rust
-  #[wasm_bindgen] pub struct WasmHealthStore { store: oxigraph::MemoryStore }
-  ```
-- [ ] **W5. Add `validate_health_turtle()` SHACL validation** — called in vault-wasm.js but absent from d.ts. Wire to SHACL-to-Sentinel compiler path from qualiaDB, or lightweight oxigraph validator.
+- [x] **W2. Implement `QualiaStore.insert_quin()` for real** — functional Vec<[u64;5]> in-memory store (qualia_bindings.rs). qualia-core-db wiring deferred to W10 (wgpu dep too heavy for WASM default).
+- [x] **W3. Implement `QualiaStore.query_subject()` for real** — returns flat Float64Array of matching quints; also added query_predicate() and query_context().
+- [x] **W4. Add `WasmHealthStore` with SPARQL** — store.rs (HealthStore backed by oxigraph); WasmHealthStore in wasm.rs with new()/load_turtle()/query(). SPARQL SELECT/ASK/CONSTRUCT all work.
+- [x] **W5. Add `validate_health_turtle()` SHACL validation** — shapes.rs with 6 SPARQL ASK constraints; validate_health_turtle() exported in wasm.rs. Returns JSON report.
 - [ ] **W6. Replace `validate_health_quin()` stub** — always returns `{"valid":true}`. Wire to real Sentinel VM constraint check via `qualia-core-db`.
-- [ ] **W7. Add oxigraph to Cargo.toml** — `oxigraph = { version = "0.4", features = ["js"] }`. Required for W4/W5. This is what `registry.json` claims is `bundled: true` for the `core:rdf`/`core:sparql` capabilities.
+- [x] **W7. Add oxigraph to Cargo.toml** — `oxigraph = { version = "0.4", default-features = false, features = ["js"] }`. qualia-core-db moved to optional feature `qualia` to avoid wgpu in WASM binary.
 - [ ] **W8. Dual-target Cargo.toml** — keep `[target.'cfg(target_arch = "wasm32")'.dependencies]` for wasm-bindgen; add native target section for Tauri/mobile that exposes plain Rust API without wasm-bindgen.
 - [ ] **W9. Wire per-persona CSVs in app.js** — all 7 demo personas (Michael, Elena, Rebecca, Margaret, Robert, Jordan, Synthetic) currently load the same four synthetic CSVs. Each needs distinct health data matching their profile narrative.
 - [ ] **W10. Add `compile_query_to_json` real implementation** — currently calls into qualia-core-db but the QualiaStore binding doesn't actually connect. Verify the N-Triples → Sentinel bytecode path works end-to-end.
