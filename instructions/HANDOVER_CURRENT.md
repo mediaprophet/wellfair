@@ -1,7 +1,7 @@
 # WellFair — Current Handover
 > **Living document — update this at the end of every session.**  
 > Last updated: 2026-06-04  
-> Updated by: sessions 2 + 3 (restructure + CI fixes + W2–W7 Rust engine) + session 4 (CP1–CP3, CP5)
+> Updated by: sessions 2–3 (W1–W7 Rust engine) + session 4 (CP1–CP3,CP5 + W6,A6)
 
 ---
 
@@ -116,7 +116,10 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 - **CP2** — Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})` in `logContribution()`; chain integrity verified
 - **CP3** — µ-unit balance: `totalHours × ratePerHour × 1000`; stored in `wf-obligations`; per-project and global summary in UI
 - **CP5** — IDB v11 stores added (wf-projects, wf-contributions, wf-obligations); all encrypted via AES-GCM `_sEnc/_sDec`; dual-write to QualiaStore via existing `_dbPut` hook
-- **vault-wasm.js** — `exportVaultToTurtle()` now includes cooperative project/contribution/obligation RDF (22+ triples per session); SPARQL-queryable via `WasmHealthStore`
+- **vault-wasm.js** — `exportVaultToTurtle()` includes cooperative project RDF; `evaluateVaultN3Rules()` convenience wrapper
+- **W6** — `sentinel.rs`: SentinelVM with extended opcodes (LessThan/GreaterThan/LoadFloat); `validate_health_quin(constraint,s,p,o,c,m)` evaluates 3 policy gates: `cooperative_obligation` (lane 1), `guardian_identity` (lane 2), `commercial_block` (lane 2). No wgpu dependency.
+- **A6** — `n3_rules.rs`: 7 clinical patterns from 4 N3 files translated to SPARQL-aggregation queries over oxigraph. `evaluate_n3_rules(turtle)` WASM export returns triggered patterns with routingLane. `rdf.rs` adds `health:sleepHours` numeric property to sleep Turtle.
+- **vault-sentinel.js** — real implementation: `SentinelCompiler.classify()`, `evaluatePolicyConstraint()`, `evaluateN3Rules()`, `evaluateVaultN3Rules()`
 
 ---
 
@@ -125,7 +128,7 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | Item | Blocked by |
 |---|---|
 | All M tasks (Tauri mobile) | qualia-desktop Tauri v1→v2 migration (M1) |
-| W6 (validate_health_quin Sentinel) | qualia-core-db Sentinel VM — deferred (wgpu dep) |
+| W10 (compile_query_to_json) | qualia-core-db optional feature `--features qualia` — needs validation |
 | CP4 P2P sync (Tier 2 Gun) | Gun/WebRTC available; Tier 1 (Nym) blocked on A3 |
 | CP6 Project directory feed | needs Nym activation (A3) or Gun signalling node |
 | W8 (dual-target Cargo) | M2 Tauri app crate doesn't exist yet |
@@ -265,13 +268,12 @@ The obligation model: contributor hours → µ-units → obligation cost. Three 
 
 ## What to do next
 
-**CP1–CP3, CP5 are complete.** Remaining CP tasks:
+**CP1–CP3, CP5 + W6 + A6 complete.** Key remaining:
 
-- **CP4** — `vault-p2p-sync.js` three-tier sync (Tier 1: Nym [blocked on A3]; Tier 2: Gun+WebRTC [available now]; Tier 3: N-Quads `.nq` export)
-- **CP6** — Project directory feed (fetch/cache from cooperative node via Nym or Gun)
+- **OC1** (recommended) — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Now fully unblocked. See TODO.md §OC.
+- **DIR1** — Unified contact graph: add `wf:coContributor` relationship type to `vault-directory.js`
+- **CP4** — `vault-p2p-sync.js` Tier 2 (Gun+WebRTC available now); Tier 1 Nym blocked on A3
+- **N3 UI** — surface `evaluateVaultN3Rules()` results in the vault (Health Insights panel or Biometrics sheet). Currently working but not displayed to user.
+- **W10** — wire `compile_query_to_json` from `qualia-core-db` (`--features qualia`) once WASM-safe path confirmed
 
-**Recommended next: OC1** — Ontology Converter panel in `app.html`. Unblocked by W4 (WasmHealthStore live). File picker (`.ttl`, `.nt`, `.jsonld`, `.csv`) → N-Quads via WASM. Show: quads written, compression ratio, parse time.
-
-**Alternative: DIR1** — Unified contact graph in `vault-directory.js`. Add `wf:coContributor` relationship type so project contributors resolve to contacts.
-
-Read first: `TODO.md` sections CP, OC, DIR.
+Read first: `TODO.md` sections OC, DIR, CP, W.

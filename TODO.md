@@ -27,7 +27,7 @@ The Rust WASM crate. Source lives in `legacy_pwa/wellfare-core/`; built output i
 - [x] **W3. Implement `QualiaStore.query_subject()` for real** — returns flat Float64Array of matching quints; also added query_predicate() and query_context().
 - [x] **W4. Add `WasmHealthStore` with SPARQL** — store.rs (HealthStore backed by oxigraph); WasmHealthStore in wasm.rs with new()/load_turtle()/query(). SPARQL SELECT/ASK/CONSTRUCT all work.
 - [x] **W5. Add `validate_health_turtle()` SHACL validation** — shapes.rs with 6 SPARQL ASK constraints; validate_health_turtle() exported in wasm.rs. Returns JSON report.
-- [ ] **W6. Replace `validate_health_quin()` stub** — always returns `{"valid":true}`. Wire to real Sentinel VM constraint check via `qualia-core-db`.
+- [x] **W6. Replace `validate_health_quin()` stub** — SentinelVM ported to wellfare-core/src/sentinel.rs (no wgpu); extended with LessThan/GreaterThan/LoadFloat opcodes; validate_health_quin(constraint, s,p,o,c,m) evaluates cooperative_obligation / guardian_identity / commercial_block policy gates.
 - [x] **W7. Add oxigraph to Cargo.toml** — `oxigraph = { version = "0.4", default-features = false, features = ["js"] }`. qualia-core-db moved to optional feature `qualia` to avoid wgpu in WASM binary.
 - [ ] **W8. Dual-target Cargo.toml** — keep `[target.'cfg(target_arch = "wasm32")'.dependencies]` for wasm-bindgen; add native target section for Tauri/mobile that exposes plain Rust API without wasm-bindgen.
 - [ ] **W9. Wire per-persona CSVs in app.js** — all 7 demo personas (Michael, Elena, Rebecca, Margaret, Robert, Jordan, Synthetic) currently load the same four synthetic CSVs. Each needs distinct health data matching their profile narrative.
@@ -74,7 +74,7 @@ WellFair phone vault should be a Tauri v2 native app. vault.html WebView is pres
 - [ ] **A3. Nym activation** — run `docs/nym-test.html` against sandbox testnet (`https://sandbox-nym-api1.nymtech.net/api`), confirm cold-start, set `NYM_SDK_URL` in `vault-nym.js`. On Tauri path: Rust config constant instead.
 - [ ] **A4. `nymAdapter.redeemBandwidth()`** — forward-declared in vault-wallet.js HCW-2 but not yet in vault-nym.js. Needs real zk-credential redemption once Nym SDK activated.
 - [ ] **A5. Demo connector auto-connect** — ~50 lines in `connector/index.html` to detect active Gun session and offer one-click connect (no manual QR scan). Dev/demo use.
-- [ ] **A6. Port N3 reasoning rules** — `legacy_pwa/extensions/n3_reasoner/rules/` has four rules (adrenal_fatigue, cardiovascular_risk, sleep_debt, trauma_cascade). Move to `wellfare-core/rules/` and compile via qualiaDB's SHACL-to-Sentinel compiler as part of build.
+- [x] **A6. Port N3 reasoning rules** — all 4 N3 files (adrenal_fatigue, cardiovascular_risk, sleep_debt, trauma_cascade) translated to SPARQL-aggregation queries in wellfare-core/src/n3_rules.rs. 7 clinical patterns: ChronicSleepDebt, TachycardiaFlag, DeconditioningRisk, AdrenalFatigueSuspected, TraumaCascadeActive, SystemicFrailty, LowActivityFlag. evaluate_n3_rules() WASM export. rdf.rs adds health:sleepHours to sleep Turtle. vault-sentinel.js wired to real WASM.
 - [ ] **A7. Real-device testing** — iOS Safari, Android Chrome, Firefox 130+. Matrix in `instructions/BROWSER_COMPAT.md`.
 - [ ] **A8. SURB stress test** — airplane-mode toggle while Nym active; verify 30s fragment expiry + replenish.
 
