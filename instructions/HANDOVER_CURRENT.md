@@ -1,7 +1,7 @@
 # WellFair — Current Handover
 > **Living document — update this at the end of every session.**  
 > Last updated: 2026-06-04  
-> Updated by: sessions 2–3 (W1–W7 Rust engine) + session 4 (CP1–CP3,CP5 + W6,A6) + session 5 (PIA planning)
+> Updated by: session 6 (CBOR5-9, OC1, CP4, CBOR7, PIA5, CP7)
 
 ---
 
@@ -23,7 +23,7 @@ WellFair is a privacy-first personal health vault. The phone is the authoritativ
 
 ---
 
-## Current architecture (as of 2026-06-03)
+## Current architecture (as of 2026-06-04)
 
 ### Two apps, one engine
 
@@ -37,48 +37,45 @@ Both share `docs/pkg/wellfare_core_bg.wasm` (3.3 MB, v0.0.4-dev + oxigraph).
 ### Engine: wellfare-core
 
 - **Source**: `wellfare-core/` (Rust, cdylib, edition 2024) — at repo root
-- **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm` (3.3 MB with oxigraph; previously 282 KB without)
+- **Built output**: `docs/pkg/wellfare_core.js` + `wellfare_core_bg.wasm` (3.3 MB with oxigraph)
 - **CI builds it**: `.github/workflows/pages.yml` — `cd wellfare-core && wasm-pack build --release --target web --out-dir ../docs/pkg`
-- **qualia-core-db** is now an **optional** Cargo feature (`--features qualia`); it uses `wgpu` which is heavy for WASM so it is excluded from the default build. Enable when implementing W10.
-- **New modules**: `store.rs` (HealthStore/oxigraph), `shapes.rs` (SPARQL ASK constraints), `qualia_bindings.rs` (functional QualiaStore)
-- **New WASM exports**: `WasmHealthStore` (new/load_turtle/query), `validate_health_turtle()`, `QualiaStore` (insert_quin/query_subject/query_predicate/query_context/len/clear)
+- **qualia-core-db** is now an **optional** Cargo feature (`--features qualia`); heavy for WASM, excluded from default build
+- **WASM exports**: `WasmHealthStore` (new/load_turtle/query), `validate_health_turtle()`, `QualiaStore` (insert_quin/query_subject/query_predicate/query_context/insert_from_cbor_ld/len/clear)
 
 ### Engine: qualiaDB (external repo)
 
 - Repo: `https://github.com/mediaprophet/qualiaDB`
 - v0.0.3; Rust workspace: `qualia-core-db`, `qualia-cli`, `qualia-desktop` (Tauri v1.5)
 - `qualia-desktop` is Tauri v1.5 — must upgrade to v2 before mobile targets work
-- `qualia-android` is Kotlin/Gradle + JNI — separate from Tauri, used as benchmark harness
-- Android app has extensive modules: projects, identity/credentials, PFM, wallet, social, ontology — see TODO.md sections CP/PFM/CV/DIR for what needs porting
 
-### Primary vault: Rust → Tauri v2 (decided this session)
+### Primary vault: Rust → Tauri v2 (decided 2026-06-03)
 
 The browser PWA (`vault.html`) is the current working implementation. The **target** is a Tauri v2 native app for iOS/Android where:
 - vault.html + CSS is the WebView UI (preserved)
 - All crypto, storage, and Nym operations move to Rust Tauri commands
-- qualiaDB .q42 replaces IndexedDB as the primary store
+- qualiaDB `.q42` replaces IndexedDB as the primary store
 - Nym Rust SDK replaces the WASM SDK (no SharedArrayBuffer headaches)
-
-The browser PWA continues working as demo/fallback throughout the migration.
 
 ---
 
 ## Active branch
 
-`feature/qualia-db-integration` — **6 commits ahead of master, all pushed to origin.**
+`feature/qualia-db-integration` — **9 commits ahead of master, all pushed to origin.**
 
 | Commit | What |
 |---|---|
 | `70f5bb6` | Cleanup: legacy Python/Rust → `legacy_pwa/`; CI fix; `TODO.md`; instruction docs |
 | `dd9a5a3` | Integration: `vault-wasm.js` qualiaDB bridge, IDB v10, `vault-sentinel.js`, `CLAUDE.md` |
 | `20c5f80` | W1: `wellfare-core/` at repo root; CI path restored |
-| `2a6c00f` | Docs: handover prompt session 2 |
 | `b1814e9` | W2–W7: real QualiaStore, WasmHealthStore SPARQL, SHACL validation; WASM rebuilt |
-| `44df0ea` | Docs: handover prompt session 3 |
+| `bfe151e` | W6, A6: SentinelVM policy gates + N3Logic clinical rules |
+| `b565f5a` | CP1–CP3, CP5: Cooperative Projects panel + qualiaDB integration |
+| `4927ac2` | PIA1–4, PIA6, CBOR1–4: protocol integration + CBOR-LD native QualiaStore format |
+| `0b08620` | CBOR5-6, OC1: CBOR-LD exports for all vault modules + Sentinel Lexicon + Ontology Converter |
+| `67f034a` | CP4, CBOR7: four-tier P2P sync layer + CBOR-LD wire format |
+| `247da0e` | PIA5, CP7: equity share sync + Dynamic Equity Shares panel |
 
 **Working tree: clean** (only `32-02.url` untracked Windows shortcut — ignore).
-
-**N3 rules note:** `adrenal_fatigue.n3`, `cardiovascular_risk.n3`, `sleep_debt.n3`, `trauma_cascade.n3` now live at `legacy_pwa/extensions/n3_reasoner/rules/`. Their logic is still needed; see TODO A6.
 
 ---
 
@@ -88,50 +85,43 @@ All decisions from `CLAUDE.md` still apply, plus:
 
 1. **Rust-first for mobile** — primary vault is a Tauri v2 app; browser PWA is demo/fallback
 2. **Two-app structure** — `vault.html` (privacy vault) and `app.html` (analytics) are separate products sharing the engine
-3. **wellfare-core is the bridge crate** — it wraps qualia-core-db with health-specific WASM bindings and will have a native (non-WASM) target for Tauri
+3. **wellfare-core is the bridge crate** — wraps qualia-core-db with health-specific WASM bindings; will have a native (non-WASM) target for Tauri
 4. **Directory harmonization** — Verified Directory (`vault-directory.js`), qualiaDB SocialBook, and Cooperative Projects contributor list all resolve to the same `wf-contacts`/`wf-relationships` graph
 5. **Lightning is the unified payment rail** — HCW welfare payments, cooperative obligation micropayments, and DA research bounties all use the same LDK node via Nym SOCKS5 proxy
-6. **cooperative.html model adopted** — obligation matrix, Author-Scoped Merkle Signatures, µ-units, three-tier P2P sync, and PFM eight-phase architecture are all in scope for WellFair
-7. **Protocol Integration Architecture adopted** — `qualiaDB/docs/protocol-integration-architecture.md` (v0.1, June 2026) is the canonical spec for how GUN, WebTorrent, WebRTC, Git+git-mark, and the Qualia Engine integrate as a trust layer for Cooperative Projects. Key additions to plan: `qp:` ontology namespace, Dynamic Equity / Stewardship Shares (`qp:Slice`), per-protocol Q42 provenance events, personal boundary protection (`PIA6`), WebTorrent Tier 4 sync (`PIA7`), `qp:hasConsentRelation` consent gates (`PIA8`), git-mark audit trail (`PIA10`). See `TODO.md §PIA` for full 11-task breakdown.
-8. **Personal boundary protection is non-negotiable** — project obligations must never auto-schedule over personal calendar entries (`wf:personalPriority`). Override attempts must be logged with Q42 provenance. This is architecturally equivalent to Sanctuary Mode for the cooperative layer.
+6. **cooperative.html model adopted** — obligation matrix, Author-Scoped Merkle Signatures, µ-units, four-tier P2P sync, and PFM eight-phase architecture are all in scope for WellFair
+7. **Protocol Integration Architecture adopted** — `qp:` namespace (`https://qualia.id/ns/`) for cooperative ontology; GUN/WebTorrent/WebRTC/git-mark as unified trust layer; see `TODO.md §PIA`
+8. **Personal boundary protection is non-negotiable** — project obligations must never auto-schedule over personal calendar entries (`wf:personalPriority`). Override attempts logged with Q42 provenance.
+9. **CBOR-LD is the native format for QualiaStore** — not JSON, not Turtle. `vault-cborld.js` is the browser-side Lexicon + encoder. Turtle/oxigraph remain valid for WasmHealthStore SPARQL analytics only.
+10. **Gun.eco for signalling only** — project P2P state uses `wf-v1-project` GUN namespace; health data and signals never share relay nodes
 
 ---
 
 ## What is complete
 
-See the "Completed" section at the bottom of `TODO.md` for the full list. Summary:
-- All vault milestones M1–M6 (pairing, crypto, session, Nym scaffolding, sanctuary, hardening)
-- All VC-7 through VC-15 (communications ecosystem: directory, handshake, gating, calls, scheduler, transcript, transcoding, package)
-- WA-1 through WA-7 (Webizen Agent: CV workers, audio DSP, telemetry)
-- HCW-1 and HCW-2 (wallet init + Nym bandwidth)
-- DL-1 (barcode diet log scanner)
-- **W1** — wellfare-core at repo root; CI path correct
-- **W2/W3** — QualiaStore: functional Vec<[u64;5]> store; insert/query all working; BigInt-safe
-- **W4** — WasmHealthStore: oxigraph-backed; SPARQL SELECT/ASK/CONSTRUCT via load_turtle()/query()
-- **W5** — validate_health_turtle(): 6 SPARQL ASK health shape constraints; JSON report
-- **W7** — oxigraph added to Cargo.toml; qualia-core-db moved to optional `qualia` feature
-- wellfare-core WASM rebuilt to 3.3 MB; all exports verified in .d.ts
-- Package manager (OPFS-based, prolog-wasm + llm-mediapipe)
-- Device bridge (File System Access API)
-- app.html Streamlit analytics dashboard
-- **CP1** — `docs/js/vault-projects.js` created; "🤝 Projects" nav button + bottom-sheet in vault.html; IDB v11 with `wf-projects`, `wf-contributions`, `wf-obligations`
-- **CP2** — Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})` in `logContribution()`; chain integrity verified
-- **CP3** — µ-unit balance: `totalHours × ratePerHour × 1000`; stored in `wf-obligations`; per-project and global summary in UI
-- **CP5** — IDB v11 stores added (wf-projects, wf-contributions, wf-obligations); all encrypted via AES-GCM `_sEnc/_sDec`; dual-write to QualiaStore via existing `_dbPut` hook
-- **vault-wasm.js** — `exportVaultToTurtle()` includes cooperative project RDF; `evaluateVaultN3Rules()` convenience wrapper
-- **W6** — `sentinel.rs`: SentinelVM with extended opcodes (LessThan/GreaterThan/LoadFloat); `validate_health_quin(constraint,s,p,o,c,m)` evaluates 3 policy gates: `cooperative_obligation` (lane 1), `guardian_identity` (lane 2), `commercial_block` (lane 2). No wgpu dependency.
-- **A6** — `n3_rules.rs`: 7 clinical patterns from 4 N3 files translated to SPARQL-aggregation queries over oxigraph. `evaluate_n3_rules(turtle)` WASM export returns triggered patterns with routingLane. `rdf.rs` adds `health:sleepHours` numeric property to sleep Turtle.
-- **vault-sentinel.js** — real implementation: `SentinelCompiler.classify()`, `evaluatePolicyConstraint()`, `evaluateN3Rules()`, `evaluateVaultN3Rules()`
-- **PIA1** — `qp:` namespace alignment: `https://qualia.id/ns/` prefix added to `access-profiles.ttl`; full vocabulary (Workspace, EffortObligation, ProvenanceCommit, Contract, Slice, TokenizedShare, ProjectGovernance + 14 properties); SHACL shapes for all; Turtle export in `vault-projects.js` dual-types all entities
-- **PIA2** — Protocol session event schema: `wf:ProtocolEvent` class + properties + SHACL shape in `access-profiles.ttl`; 7 event type values defined; `wf-events` IDB as target
-- **PIA3** — WebRTC session Q42 provenance: `_writeProtocolEvent()` in `vault-comms-call.js`; writes `webrtc_session_start`/`webrtc_session_end` on call start/end with participants + duration; `_callStartTs` tracks call duration
-- **PIA4** — Git-signed contract provenance: `_agreementToNQuads()` + `_writeContractEvent()` in `vault-handshake.js`; writes `git_commit_ref` event to `wf-events` on `finaliseHandshake()` and `acceptHandshake()`; bundle signed with local Ed25519 key
-- **PIA6** — Personal boundary protection: IDB bumped to v12; `wf-calendar` store added (indexed by `startIso`); `vault-calendar.js` created (CRUD + `checkBoundaryConflict()` + `logBoundaryConflict()` + Personal Priority toggle); `logContribution()` in `vault-projects.js` checks boundary before committing; `logContributionForced()` bypass for after user opt-in
-- **CBOR1–4** — CBOR-LD as native QualiaStore format:
-  - `vault-cborld.js` created: Lexicon (wf-lexicon IDB backed), `iriToId()`, `encodeIrisToCbor()`, `decodeCborToIds/Iris()`, `recordToCborLdQuins()`, `insertRecordToQualiaStore()`
-  - `qualia_bindings.rs` `QualiaStore` extended with `insert_from_cbor_ld(&[u8])` + private `parse_cbor_quin()` — WASM rebuild needed (CBOR9)
-  - `vault-idb.js` `_dbPut` dual-write fixed: removed broken `JSONtoQuinSerializer`; now emits a CBOR-LD existence triple per record
-  - `vault-projects.js` gains `exportProjectsToCborLdQuins()` — decrypts and bulk-inserts all project/contribution/obligation records into QualiaStore
+See `TODO.md` for the full checked list. Session 6 completions:
+
+- **CBOR5** — `exportToCborLdQuins()` added to `vault-meds-reminders.js`, `vault-directory.js`, `vault-wallet.js`, `vault-calendar.js`
+- **CBOR6** — `evaluatePolicyConstraintByIri()` in `vault-sentinel.js`: resolves IRI strings through Lexicon before Sentinel evaluation
+- **CBOR7** — CBOR-LD wire format for GUN Tier 2 in `vault-p2p-sync.js`: each push encodes quints + mini-lexicon; receiver decodes and merges
+- **CBOR9** — WASM rebuilt; `insert_from_cbor_ld` confirmed in `docs/pkg/wellfare_core.d.ts`; CI deployed
+- **OC1** — `docs/ontology-converter.html` (standalone page): file-drop + SPARQL CONSTRUCT + CSV parsers + SHACL validation + metrics + download
+- **CP4** — `docs/js/vault-p2p-sync.js` created: four-tier P2P sync (Nym Tier 1 / GUN+CBOR7 Tier 2 / N-Quads Tier 3 / WebTorrent stub Tier 4); CRDT merge for obligations and metadata; wired into vault.html unlock flow
+- **PIA5** — GUN Tier 2 sync for `qp:Slice` equity shares: CBOR-LD encoded per contributor slot; last-write-wins CRDT merge per `did`
+- **CP7** — Dynamic Equity Shares panel in `vault-projects.js` project detail view: contributor list, set-own-slice, governance toggles (cash-out / tokenized), sync button, download .nq ledger
+
+Also this session:
+- `vault-cborld.js`, `vault-calendar.js`, `vault-p2p-sync.js` wired into `vault.html` script load (were missing)
+- `initCalendar()` and `vaultP2pSync.init()` added to all three vault unlock paths (owner PIN, duress PIN, demo mode)
+- `vault-projects.js` hardened: `getAllProjects()`, `getAllObligations()`, `getContributions()` now use `Promise.allSettled` so stale ciphertext from a different demo key never aborts the list
+- `mergeObligationBalance(projectId, newMuUnits)` added to `vault-projects.js` public API for CRDT merge without synthetic contribution entries
+- IDB bumped to **v13** — `wf-shares` store added for equity allocations
+
+Earlier sessions (sessions 1–5):
+- All vault milestones M1–M6, VC-7–VC-15, WA-1–7, HCW-1/2, DL-1
+- W1–W7 (wellfare-core Rust engine: QualiaStore, WasmHealthStore SPARQL, SHACL, SentinelVM, N3Logic)
+- CP1–CP3, CP5 (Cooperative Projects panel, Merkle contributions, µ-units)
+- PIA1–4, PIA6 (qp: namespace, protocol event schema, WebRTC provenance, git-signed contracts, boundary protection)
+- CBOR1–4 (vault-cborld.js, insert_from_cbor_ld Rust, _dbPut fixed, projects CBOR export)
 
 ---
 
@@ -141,16 +131,11 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 |---|---|
 | All M tasks (Tauri mobile) | qualia-desktop Tauri v1→v2 migration (M1) |
 | W10 (compile_query_to_json) | qualia-core-db optional feature `--features qualia` — needs validation |
-| CP4 P2P sync (Tier 2 Gun) | Gun/WebRTC available; Tier 1 (Nym) blocked on A3 |
-| CP6 Project directory feed | needs Nym activation (A3) or Gun signalling node |
+| CP6 Project directory feed | Nym activation preferred; GUN path available as fallback |
 | W8 (dual-target Cargo) | M2 Tauri app crate doesn't exist yet |
-| W10 (compile_query_to_json) | qualia-core-db optional feature needs validation |
-| CP4 P2P sync (Tier 1) | Nym activation (A3) |
+| CBOR8 (WebTorrent packages) | PIA7 (vault-webtorrent.js) not yet built |
+| HCW-3+ wallet | Rust Tauri command architecture (blocked by M4–M6) |
 | DA1–DA6 analytics | Phase 2 (directory + cooperative) must be stable first |
-| HCW-3+ wallet | Rust Tauri command architecture (decided: Rust, blocked by M4–M6) |
-| OC2 ontology ingestion | ~~W4 WasmHealthStore + oxigraph~~ **UNBLOCKED** — W4 complete |
-
-**Cleared sessions 2+3**: 0.1–0.3 CI/commit/CLAUDE.md, W1 crate location, W2–W5 and W7 Rust engine.
 
 ---
 
@@ -166,38 +151,53 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | v8 | wf-wallet, wf-txlog | HCW-1 |
 | v9 | wf-biometrics | WASM bridge |
 | v10 | wf-lexicon | qualiaDB Lexicon |
-| **v11** | wf-projects, wf-contributions, wf-obligations | CP1/CP5 |
-| **v12** | wf-calendar | PIA6 Personal Boundary Protection |
-| **v13 (planned)** | wf-credentials, wf-pfm-config, wf-ledger | CV + PFM epics |
+| v11 | wf-projects, wf-contributions, wf-obligations | CP1/CP5 |
+| v12 | wf-calendar | PIA6 Personal Boundary Protection |
+| **v13** | **wf-shares** | **CP7/PIA5 Equity Shares** |
+| **v14 (planned)** | wf-credentials, wf-pfm-config, wf-ledger | CV5 + PFM1 |
 
 ---
 
-## Module split for Tauri migration (M10)
+## Script load order in vault.html (as of session 6)
 
-When adapting `vault.html` JS modules for Tauri invoke():
+Critical: `vault-cborld.js` must load before `vault-projects.js`; `vault-p2p-sync.js` must load after `vault-projects.js` and `vault-wallet.js`.
 
-| Module | Keep in JS WebView | Move to Tauri command |
-|---|---|---|
-| vault-crypto.js | — | entirely |
-| vault-did.js | — | entirely |
-| vault-idb.js | — | entirely (→ vault_put/get) |
-| vault-nym.js | — | entirely |
-| vault-wasm.js | — | eliminated |
-| vault-sentinel.js | — | eliminated |
-| noise-xx.js | Gun/WebRTC signalling | Noise_XX crypto ops |
-| vault-sanctuary-pins.js | UI state machine | PIN verify/derive |
-| vault-sanctuary-evidence.js | VP assembly UI | OTS + Ed25519 signing |
-| vault-meds-reminders.js | UI rendering | IDB read via invoke() |
-| vault-directory.js | UI rendering | storage via invoke() |
-| vault-scheduler.js | UI rendering | job queue via invoke() |
-| vault-wallet.js | UI rendering | storage + Nym via invoke() |
-| vault-projects.js (new) | UI rendering | obligation accounting via invoke() |
-| vault-calendar.js (new) | UI rendering | calendar CRUD + boundary check via invoke() |
-| vault-cborld.js (new)   | Lexicon cache + encoding | eliminated (Rust handles CBOR-LD natively in Tauri) |
-| vault-credentials.js (new) | UI rendering | VC parse/VP gen via invoke() |
-| vault-pfm.js (new) | UI rendering | ledger CRUD via invoke() |
-| vault-mock.js | entirely (no change) | — |
-| profiles.js | entirely (no change) | — |
+```
+gun.js (CDN)
+vault-idb.js         — IDB v13, store constants, _dbPut dual-write
+vault-crypto.js      — AES-GCM, key derivation, toB64/fromB64
+vault-did.js         — did:key Ed25519 generation
+vault-nym.js         — nymAdapter, DMS, anonymous notify
+vault-mock.js        — mock data for demo mode
+vault-cborld.js      — Lexicon cache + CBOR-LD encoder/decoder  ← session 6
+vault-calendar.js    — personal calendar + boundary protection   ← session 6
+vault-directory.js   — Verified Directory (VC-7)
+vault-handshake.js   — Semantic Handshake (VC-8)
+vault-comms-gate.js  — Inbound Caller Gating (VC-9)
+vault-comms-call.js  — Call session (VC-10)
+vault-scheduler.js   — Background Job Scheduler (VC-12)
+vault-transcript.js  — Event log + transcript (VC-13)
+vault-package.js     — Content Package (VC-15)
+vault-sanctuary-*.js — PIN state machine + log + evidence
+vault-meds-*.js      — Medications panel
+vault-diet.js        — Diet / substance log
+vault-projects.js    — Cooperative Projects + equity CRUD  ← updated session 6
+vault-wasm.js        — wellfare-core WASM bridge
+vault-sentinel.js    — SentinelVM + policy gates
+vault-wallet.js      — HCW-1 Lightning wallet
+vault-p2p-sync.js    — Four-tier P2P sync                  ← session 6
+```
+
+Unlock init chain (called on every unlock path — owner PIN, duress PIN, demo mode):
+```javascript
+deriveVaultKey(entered, _MAIN_SALT).then(k => {
+  initDirectory(k);
+  initProjects(k, vaultDidKey?.did);
+  initCalendar(k);
+  window.vaultCborLd?.initCborLd();
+  window.vaultP2pSync?.init({ did: vaultDidKey?.did });
+});
+```
 
 ---
 
@@ -207,67 +207,63 @@ When adapting `vault.html` JS modules for Tauri invoke():
 docs/
   vault.html              Primary vault app (phone)
   app.html                Analytics/Streamlit dashboard (512KB — read in chunks)
-  app.js                  Analytics JS (wellfare_core + Pyodide + Chart.js)
+  ontology-converter.html Standalone ontology converter (OC1) ← new session 6
   connector/index.html    Desktop connector (stateless)
   webconnect.html         WebRTC pairing bridge
   join.html               Call join page (guests)
   pair.html               Legacy monolithic page (keep as fallback)
   sw.js                   Service Worker (COOP/COEP headers)
-  device-bridge.js        File System Access API for Samsung Health exports
-  device-ui.js            Device sources UI controller
-  package-download-ui.js  Package install overlay
-  manifest.webmanifest    PWA manifest (needs start_url → vault.html, see P4)
-  js/                     28 JS modules — see CLAUDE.md for full list
+  js/                     32 JS modules (vault-cborld.js, vault-calendar.js,
+                           vault-p2p-sync.js newly active in vault.html)
   pkg/                    Built WASM: wellfare_core.js + wellfare_core_bg.wasm (3.3 MB)
-  packages/               OPFS package manager (PackageManager, registry.json, capabilities.js)
-  profiles/               access-profiles.ttl (SHACL), profiles.json
-  pyodide/wellfair_demo.py Python analytics app (loaded by app.html stlite)
-  sample_data/            Synthetic CSV files (4 types)
-  models/                 .glb persona models (7 personas)
+  profiles/
+    access-profiles.ttl   SHACL shapes (wf: + qp: + wf:ProtocolEvent)
+    profiles.json         JS-loadable profile registry
 
-wellfare-core/          Rust WASM crate source (THE primary Rust code)
-  Cargo.toml            v0.0.4-dev; oxigraph 0.4 (default); qualia-core-db optional feature "qualia"
+wellfare-core/            Rust WASM crate source (THE primary Rust code)
+  Cargo.toml              v0.0.4-dev; oxigraph (default); qualia-core-db optional "qualia"
   src/
-    wasm.rs             All wasm_bindgen exports (includes WasmHealthStore, validate_health_turtle)
-    qualia_bindings.rs  QualiaStore — functional Vec<[u64;5]> store (W2/W3 complete)
-    store.rs            HealthStore backed by oxigraph (W4 complete)
-    shapes.rs           6 SPARQL ASK health constraints (W5 complete)
-    rdf.rs              Turtle serializers (working)
-    parser.rs           CSV parsers (working)
-    models.rs           Rust data models
-
-legacy_pwa/
-  extensions/n3_reasoner/rules/  Four N3 clinical rules (needed for A6)
-  src/                    Python PHR models
-  expert-authoring-tool/  Medical paper parser + Prolog rule compiler
-  user-runtime-lib/       Rule evaluation engine
+    wasm.rs               All wasm_bindgen exports
+    qualia_bindings.rs    QualiaStore + insert_from_cbor_ld
+    store.rs              WasmHealthStore (oxigraph SPARQL)
+    shapes.rs             SHACL validation (6 ASK constraints)
+    sentinel.rs           SentinelVM policy gates
+    n3_rules.rs           Clinical N3 pattern rules → SPARQL
+    rdf.rs                Turtle serialisers
+    parser.rs             CSV parsers
+    models.rs             Rust data models
 
 instructions/
   HANDOVER_CURRENT.md     THIS FILE
+  HANDOVER_PROMPT.md      Session-start prompt (copy into new session)
+  GROK_COLLABORATION.md   Tasks for Grok, reporting format ← new session 6
   COMMS_EPIC_PLAN.md      VC-7 through VC-15 implementation plan
   EPIC_PLAN_v0.0.7.md     WA + HCW epic plan
   ANALYTICS_EPIC_PLAN.md  DA/RC analytics epic plan
   BROWSER_COMPAT.md       Real-device test matrix
 
-TODO.md                   MASTER TODO (repo root) — update alongside this file
+TODO.md                   MASTER TODO — always update alongside this file
 CLAUDE.md                 Project orientation (mandatory reading every session)
-.github/workflows/pages.yml  CI — builds wellfare-core WASM + Stlite + deploys GitHub Pages
 ```
 
 ---
 
-## Cooperative projects: what was decided
+## What to do next
 
-The `cooperative.html` page and the Android app modules (`projects/`, `identity/`, `pfm/`, `wallet/`, `social/`, `ontology/`) define a complete system that needs to be integrated into WellFair:
+Recommended order (most value, fewest dependencies):
 
-- **Cooperative Projects panel** in vault.html (CP1–CP6)
-- **Personal Finance Management** module (PFM1–PFM9)
-- **Credential Vault** panel with Maslow VP selective disclosure (CV1–CV5)
-- **Directory harmonization** — Verified Directory + SocialBook + cooperative contributor list are one unified contact graph (DIR1–DIR4)
-- **Ontology Converter** in app.html analytics dashboard (OC1–OC3)
-- **Lightning** is the unified payment rail for welfare payments (HCW), obligation micropayments (cooperative), and research bounties (DA)
+1. **CP6** — Project directory feed: GUN read of cooperative node project listing → cache in `wf-projects`. Add "Discover projects" button to projects sheet header.
+2. **CP8** — Project Governance panel: `qp:ProjectGovernance` policies per project (already started as UI stubs in CP7 equity panel). Turtle export via `exportProjectsToTurtle()`.
+3. **PIA8** — Consent UI: `qp:hasConsentRelation` gate in `vault-p2p-sync.js` before any push. Brief dialog: purpose, time limit, what is shared. Consent revocable.
+4. **PIA7** — `vault-webtorrent.js`: WebTorrent Tier 4 implementation. Registers with `vaultP2pSync` as Tier 4 backend. Unblocks CBOR8.
+5. **PFM1** — `vault-pfm.js` + IDB v14: double-entry ledger store (`wf-ledger`, `wf-pfm-config`).
+6. **CV1** — `vault-credentials.js` + IDB v14: VC wallet, QR-scan ingest, `wf-credentials` store.
+7. **DIR1–DIR2** — Unified contact graph: `wf:coContributor` type + did:key → contact resolution.
+8. **R-CP1/R-CP2** — Rust `ObligationLedger` + Author-Scoped Merkle Signature in `wellfare-core/src/`.
 
-The obligation model: contributor hours → µ-units → obligation cost. Three fulfilment paths: Lightning micropayments, donations, sponsorship. All tracked via Author-Scoped Merkle Signatures (Ed25519-signed Merkle chain, like git commits).
+See `instructions/GROK_COLLABORATION.md` for tasks that can be delegated to Grok (Rust modules, SHACL shapes, PFM/CV skeletons).
+
+Read first for next session: `TODO.md` sections CP, PIA, PFM, CV, DIR.
 
 ---
 
@@ -277,25 +273,4 @@ The obligation model: contributor hours → µ-units → obligation cost. Three 
 - `vault.html?demo` — skips PIN, loads mock data (UI-only testing)
 - `vault.html` with PIN `1234` — full owner vault with real IDB persistence
 - Dev server: `python -m http.server 3000 --directory docs`
-- Testing: always use `mcp__Claude_in_Chrome__*` tools — Claude app preview lacks WebCrypto
-
----
-
-## What to do next
-
-**CP1–CP3, CP5 + W6 + A6 complete. PIA section added to plan (2026-06-04).** Key remaining:
-
-- **PIA1** (recommended next) — `qp:` namespace alignment. Map `qp:` cooperative ontology to `wf:` structures; add `qp:` prefix to `vault-projects.js` Turtle export; extend `access-profiles.ttl` SHACL shapes. Foundation all other PIA tasks depend on.
-- **OC1** — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Fully unblocked. See TODO.md §OC.
-- **PIA2** — Protocol session event schema (spec only, no code). Define Q42 quint structure for WebRTC/GUN/WebTorrent/git events in `wf-events`. Needed before PIA3/PIA5/PIA7 can be coded.
-- **DIR1** — Unified contact graph: add `wf:coContributor` relationship type to `vault-directory.js`
-- **CBOR9** (urgent before next WASM test) — rebuild: `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg`. Needed to deploy `insert_from_cbor_ld` to `docs/pkg/`.
-- **CBOR5** — add `exportToCborLdQuins()` to remaining vault modules (meds, directory, wallet, calendar).
-- **PIA8** — Consent UI for project data flows (`qp:hasConsentRelation` gate in vault-projects.js). Before CP4 sync is activated.
-- **CP7** — Dynamic Equity / Stewardship Shares panel in `vault-projects.js`. Depends on PIA1 (done) + PIA5.
-- **OC1** — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Fully unblocked.
-- **CP4** — `vault-p2p-sync.js` Tier 2 (Gun+WebRTC available now); Tier 1 Nym blocked on A3; Tier 4 WebTorrent (PIA7) planned
-- **N3 UI** — surface `evaluateVaultN3Rules()` results in the vault (Health Insights panel or Biometrics sheet). Currently working but not displayed to user.
-- **W10** — wire `compile_query_to_json` from `qualia-core-db` (`--features qualia`) once WASM-safe path confirmed
-
-Read first: `TODO.md` sections PIA, CP, OC, DIR, W.
+- Testing: **always** use `mcp__Claude_in_Chrome__*` tools — Claude app preview lacks WebCrypto, IDB writes, and Service Worker registration
