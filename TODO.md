@@ -89,7 +89,7 @@ New panel in vault.html + `vault-projects.js` module.
 - [x] **CP1. `vault-projects.js`** — project browse/create UI, log-work form, obligation dashboard (µ-units earned/outstanding). Sheet wired into vault.html nav. IDB v11. Turtle RDF export feeds WasmHealthStore SPARQL.
 - [x] **CP2. Contribution commit** — "Log Work" sheet: hours + description → Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})`. Written to `wf-contributions` IDB. Merkle chain (prevHash links) verified working.
 - [x] **CP3. µ-unit calculation** — hours × project rate × 1000 → µ-units balance. Per-project rate in `wf-projects`; defaults to 1.0. Balance persisted in `wf-obligations` IDB.
-- [ ] **CP4. `vault-p2p-sync.js`** — four-tier P2P sync:
+- [x] **CP4. `vault-p2p-sync.js`** — four-tier P2P sync:
   - Tier 1: Nym (`vault-nym.js`) — obligation commits, maximum anonymity ("Sanctuary Mode")
   - Tier 2: Gun+WebRTC (already wired) — project state sync + `qp:Slice` equity share state (see PIA5)
   - Tier 3: Git-compatible N-Quads ledger export (`.nq`) via qualiaDB `export-solid`
@@ -208,7 +208,7 @@ qualiaDB's `cbor_compiler.rs` is a Strict Binary Gatekeeper: it rejects `{` (JSO
 - [x] **CBOR4. `exportProjectsToCborLdQuins()`** — in `vault-projects.js`; decrypts all project/contribution/obligation records and bulk-inserts via `insertRecordToQualiaStore()`. Feeds the QualiaStore quint engine alongside `exportProjectsToTurtle()` → WasmHealthStore.
 - [x] **CBOR5. CBOR-LD export for other vault modules** — add `exportToCborLdQuins()` to: `vault-meds-reminders.js`, `vault-directory.js`, `vault-wallet.js`, `vault-calendar.js` (PIA6). Called at vault unlock alongside respective Turtle exports.
 - [x] **CBOR6. Sentinel constraint IDs via Lexicon** — `vault-sentinel.js`: before evaluating a policy constraint, resolve the constraint name IRI through `vaultCborLd.iriToId()` → use the u64 ID as the canonical constraint reference. Ensures Sentinel policy gates are Lexicon-addressable.
-- [ ] **CBOR7. CBOR-LD wire format for CP4 GUN sync** — when `vault-p2p-sync.js` (CP4) sends share/claim state over GUN Tier 2, serialise as CBOR-LD bytes. Peer decodes with `decodeCborToIds()` → `idToIri()` (Lexicon must be shared or scoped to the project namespace).
+- [x] **CBOR7. CBOR-LD wire format for CP4 GUN sync** — when `vault-p2p-sync.js` (CP4) sends share/claim state over GUN Tier 2, serialise as CBOR-LD bytes. Peer decodes with `decodeCborToIds()` → `idToIri()` (Lexicon must be shared or scoped to the project namespace).
 - [ ] **CBOR8. CBOR-LD packages for WebTorrent Tier 4** — PIA7: when seeding a claim bundle or ontology snapshot via WebTorrent, pack as a `.q42`-adjacent CBOR-LD file rather than Turtle. Decoded on receipt via `vault-cborld.js`.
 - [x] **CBOR9. Rebuild WASM binary** — done; insert_from_cbor_ld confirmed in docs/pkg/wellfare_core.d.ts — `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg` to include `insert_from_cbor_ld` in the deployed WASM. Until rebuilt, CBOR2 falls back gracefully (method absent → `vaultCborLd.insertRecordToQualiaStore` no-ops).
 

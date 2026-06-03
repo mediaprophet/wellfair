@@ -1788,11 +1788,15 @@
 <script src="js/vault-diet.js?v=7"></script>
 <script src="js/vault-diet-barcode.js?v=7"></script>
 <!-- WASM bridge — wellfare-core (lazy-loads pkg/wellfare_core.js if built) -->
-<script src="js/vault-projects.js?v=1"></script>
+<script src="js/vault-cborld.js?v=1"></script>
+<script src="js/vault-calendar.js?v=1"></script>
+<script src="js/vault-projects.js?v=2"></script>
 <script src="js/vault-wasm.js?v=2"></script>
 <script src="js/vault-sentinel.js?v=2"></script>
 <!-- HCW-1 — Human-Centric Wallet -->
 <script src="js/vault-wallet.js?v=2"></script>
+<!-- CP4 — four-tier P2P sync (Nym / GUN / N-Quads / WebTorrent) -->
+<script src="js/vault-p2p-sync.js?v=1"></script>
 <script>
 'use strict';
 
@@ -1841,7 +1845,7 @@ async function pinKey(k) {
     if (entered === VAULT_PIN) {
       document.getElementById('pin-hint').textContent = '✓ Verified';
       document.getElementById('pin-hint').style.color = 'var(--green)';
-      deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); });
+      deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); initCalendar(k); window.vaultCborLd?.initCborLd(); window.vaultP2pSync?.init({ did: vaultDidKey?.did }); });
       setTimeout(openOwnerWorkspace, 400);
     } else {
       document.getElementById('pin-hint').textContent = 'Checking…';
@@ -1849,7 +1853,7 @@ async function pinKey(k) {
       if (isDuress) {
         document.getElementById('pin-hint').textContent = '✓ Verified';
         document.getElementById('pin-hint').style.color = 'var(--green)';
-        deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); });
+        deriveVaultKey(entered, _MAIN_SALT).then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); initCalendar(k); window.vaultCborLd?.initCborLd(); window.vaultP2pSync?.init({ did: vaultDidKey?.did }); });
         setTimeout(openOwnerWorkspace, 400);
       } else {
         updatePinDots('error');
@@ -1897,6 +1901,7 @@ function lockVault() {
   document.getElementById('projects-sheet').style.display = 'none';
   initDirectory(null);
   initProjects(null, null);
+  initCalendar(null);
   duressModeActive = false;
   document.body.classList.remove('sanctuary-active');
   sanctuaryKey    = null;
@@ -3323,7 +3328,7 @@ function _dlEsc(s) {
     document.getElementById('demo-banner').style.display = 'block';
     // Generate a one-time throwaway AES key so Directory/Scheduler/etc. don't throw
     crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt'])
-      .then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); startScheduler(); startGate(); });
+      .then(k => { initDirectory(k); initProjects(k, vaultDidKey?.did); initCalendar(k); window.vaultCborLd?.initCborLd(); window.vaultP2pSync?.init({ did: vaultDidKey?.did }); startScheduler(); startGate(); });
     openOwnerWorkspace();
     return;
   }

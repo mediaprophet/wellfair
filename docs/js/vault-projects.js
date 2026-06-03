@@ -270,4 +270,26 @@ window.vaultProjects = {
   // PIA6: force a contribution past a boundary conflict (call only after user opt-in)
   logContributionForced: (projectId, hours, description) =>
     logContribution(projectId, hours, description, { force: true }),
+  // CP4 / P2P sync: directly set obligation balance to a higher remote value.
+  // Does NOT add a contribution entry — used only for CRDT merge.
+  mergeObligationBalance,
 };
+
+async function mergeObligationBalance(projectId, newMuUnits) {
+  _requireKey();
+  const stored = await _dbGet(_ST_OBLIGATIONS, projectId);
+  let bal;
+  if (stored) {
+    bal = await _decRecord(stored);
+  } else {
+    bal = { id: projectId, projectId, totalHours: 0, muUnits: 0, updatedAt: new Date().toISOString() };
+  }
+  if (newMuUnits <= bal.muUnits) return bal; // already at or above remote value
+  const proj     = await getProject(projectId).catch(() => null);
+  const rate     = proj?.ratePerHour ?? 1.0;
+  bal.muUnits    = newMuUnits;
+  bal.totalHours = Number((rate > 0 ? newMuUnits / (rate * 1000) : bal.totalHours).toFixed(2));
+  bal.updatedAt  = new Date().toISOString();
+  await _dbPut(_ST_OBLIGATIONS, await _encRecord(bal));
+  return bal;
+}
