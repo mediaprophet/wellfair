@@ -1,5 +1,5 @@
 # WellFair + qualiaDB — Master TODO
-> Last updated: 2026-06-03  
+> Last updated: 2026-06-04  
 > Branch: feature/qualia-db-integration  
 > Architecture decision: Rust-first, Tauri v2 for mobile; browser PWA kept as demo/fallback  
 > See `instructions/HANDOVER_CURRENT.md` for full project context
@@ -56,7 +56,9 @@ WellFair phone vault should be a Tauri v2 native app. vault.html WebView is pres
   - Sentinel: `sentinel_validate`, `sentinel_eval_n3`, `sentinel_compile_shacl`
   - Wallet: `wallet_balance`, `wallet_tx_log`, `wallet_nym_bandwidth`
   - Scheduler: `job_enqueue`, `job_list`, `job_cancel`
-  - Cooperative: `project_list`, `contribution_commit`, `obligation_balance`
+  - Cooperative: `project_list`, `contribution_commit`, `obligation_balance`, `equity_slice_get`, `project_governance_get`
+  - Calendar/boundary: `calendar_event_add`, `calendar_event_list`, `boundary_conflict_check`, `boundary_override_log`, `personal_priority_set`
+  - Protocol provenance: `provenance_record_write`, `provenance_record_list`, `git_sign_contract`
 - [ ] **M10. Adapt vault.html JS modules to Tauri invoke()** — see module split table in `instructions/HANDOVER_CURRENT.md`. UI/rendering stays JS; crypto/storage/Nym → Tauri commands.
 - [ ] **M11. Decide qualia-android fate** — keep as benchmark/test harness, or deprecate in favour of Tauri v2 Android build. Not mutually exclusive.
 
@@ -87,13 +89,50 @@ New panel in vault.html + `vault-projects.js` module.
 - [x] **CP1. `vault-projects.js`** — project browse/create UI, log-work form, obligation dashboard (µ-units earned/outstanding). Sheet wired into vault.html nav. IDB v11. Turtle RDF export feeds WasmHealthStore SPARQL.
 - [x] **CP2. Contribution commit** — "Log Work" sheet: hours + description → Author-Scoped Merkle Signature: `sha256(prevHashBytes ‖ JSON{hours,description,timestamp})`. Written to `wf-contributions` IDB. Merkle chain (prevHash links) verified working.
 - [x] **CP3. µ-unit calculation** — hours × project rate × 1000 → µ-units balance. Per-project rate in `wf-projects`; defaults to 1.0. Balance persisted in `wf-obligations` IDB.
-- [ ] **CP4. `vault-p2p-sync.js`** — three-tier P2P sync:
+- [ ] **CP4. `vault-p2p-sync.js`** — four-tier P2P sync:
   - Tier 1: Nym (`vault-nym.js`) — obligation commits, maximum anonymity ("Sanctuary Mode")
-  - Tier 2: Gun+WebRTC (already wired) — project state sync
+  - Tier 2: Gun+WebRTC (already wired) — project state sync + `qp:Slice` equity share state (see PIA5)
   - Tier 3: Git-compatible N-Quads ledger export (`.nq`) via qualiaDB `export-solid`
-  - CRDT merge: sum-based for obligation µ-units; last-write-wins for project metadata
+  - Tier 4: WebTorrent — large artifact distribution (ontology bundles, `.q42` datasets, claim packages) (see PIA7)
+  - CRDT merge: sum-based for obligation µ-units; last-write-wins for project metadata and equity shares
 - [x] **CP5. IDB v11 stores** — added: `wf-projects`, `wf-contributions`, `wf-obligations`.
 - [ ] **CP6. Project directory feed** — fetch/cache project list from cooperative node (via Nym Tier 1 or Gun Tier 2). Cache in `wf-projects` for offline use.
+- [ ] **CP7. Dynamic Equity / Stewardship Shares panel** — extend `vault-projects.js` to display per-project `qp:Slice` equity allocation (%), governance rules (`qp:ProjectGovernance.allowsCashOut` conditions), and tokenization status (`qp:TokenizedShare`). Data sourced from Tier 2/4 sync (PIA5). Cash-out route: PFM ledger → Lightning rail (HCW). IDB: extend `wf-obligations` with equity fields or add `wf-shares` sub-store.
+- [ ] **CP8. Project Governance panel** — UI in `vault-projects.js` for `qp:ProjectGovernance` policies per project: decision-making rules, cash-out eligibility conditions, tokenization opt-in/out. Governance records stored in `wf-projects` and exported as `qp:ProjectGovernance` Turtle triples in `exportVaultToTurtle()`.
+
+---
+
+## PIA — Protocol Integration Architecture
+
+Spec: `https://github.com/mediaprophet/qualiaDB/blob/main/docs/protocol-integration-architecture.md`  
+Integrates GUN · WebTorrent · WebRTC provenance · Git+git-mark · Qualia Engine as a unified trust layer for Cooperative Projects. Builds on CP1–CP8.
+
+### Phase 1 — Foundations
+
+- [x] **PIA1. `qp:` namespace alignment** — define canonical mapping from the `qp:` cooperative ontology (`qp:Contract`, `qp:VerifiableClaim`, `qp:Slice`, `qp:EffortObligation`, `qp:hasConsentRelation`, `qp:TokenizedShare`, `qp:ProjectGovernance`) to existing `wf:` structures and ODRL EdgeConstraints. Add `qp:` prefix declarations to `vault-projects.js` Turtle export. Update `docs/profiles/access-profiles.ttl` SHACL shapes with `qp:` class shapes (coordinates with DIR4).
+- [x] **PIA2. Protocol session event schema** — specify Q42 provenance entity structure for protocol events: WebRTC call session (start/end/participants), GUN sync checkpoint, WebTorrent swarm join/seed, git commit reference. Each maps to a `wf-events` IDB entry carrying a Q42 quint provenance record and a `qp:` class label.
+
+### Phase 2 — Protocol Wiring
+
+- [x] **PIA3. WebRTC session → Q42 provenance** — in `vault-comms-call.js`, on call-session start and end write a Q42 provenance record (PIA2 schema) to `wf-events`: participant did:keys, session duration, data-channel state, consent basis. Surfaces in vault transcript (VC-13).
+- [x] **PIA4. Git-signed contract provenance** — on cooperative agreement creation (`vault-handshake.js` / PFM5), generate a signed N-Quads bundle (`.nq`) of contract/claim quads, signed with vault Ed25519 key. Bundle stored in `wf-agreements`; downloadable from Credential Vault as a legal-grade audit artefact.
+- [ ] **PIA5. GUN Tier 2 sync for `qp:Slice` equity shares** — extend CP4 Tier 2 to include Dynamic Equity Share state (`qp:Slice` allocations, per-contributor equity %). CRDT merge strategy: last-write-wins per contributor slot, timestamped. Drives CP7 display.
+
+### Phase 3 — Full Integration & Boundary Protection
+
+- [x] **PIA6. Personal boundary protection** — life-event conflict detection between personal calendar and project obligations:
+  - New `wf-calendar` IDB store (v12 or v13) for personal appointments, family events, health needs, rest periods. Entries tagged `wf:personalPriority`.
+  - Before any project obligation is logged (CP1/CP7) or scheduler job created (VC-12), check for `wf-calendar` overlap. If conflict: surface dialog, require explicit opt-in. Opt-in event written to `wf-events` with Q42 provenance.
+  - Vault-wide "Personal Priority" toggle — suspends all project notifications and GUN-pushed updates while active.
+  - Any project-side override attempt (remote GUN push during Personal Priority) logged to `wf-events` as a `qp:BoundaryConflict` provenance record for accountability.
+- [ ] **PIA7. WebTorrent P2P asset distribution** — `vault-webtorrent.js`: P2P distribution of ontology bundles (`.ttl` snapshots), `.q42` datasets, claim packages. Registers as CP4 Tier 4. Each swarm join/seed event writes a PIA2 provenance record to `wf-events`. Consent-gated before seeding (PIA8).
+- [ ] **PIA8. Consent UI for project data flows** — explicit `qp:hasConsentRelation` gate in `vault-projects.js` before any project data leaves the vault (GUN sync, WebTorrent seed, claim share). UI captures: purpose, time-limit, what is shared (aggregated vs detailed). Consent is revocable; revocation suspends Tier 2/4 sync for that project. Integrates with existing `vault-handshake.js` ODRL agreement flow. Nym-routed where Nym is active.
+
+### Phase 4 — Advanced & Resilience
+
+- [ ] **PIA9. Hybrid connectivity** — `vault-p2p-sync.js` (CP4) unifies all four tiers with graceful fallback: Nym (Tier 1) → GUN+WebRTC (Tier 2) → N-Quads ledger (Tier 3) → WebTorrent (Tier 4). Offline-first guarantee: obligations, shares, claims, and personal calendar (PIA6) must all be viewable without any network connectivity.
+- [ ] **PIA10. git-mark signed audit trail** — legal-grade provenance for contracts: each contract state transition generates a git-compatible, Ed25519-signed commit object referencing the Q42 entity. Stored as `.nq` ledger. Viewable in vault transcript (VC-13). Designed for legal/regulatory contexts where court-admissible provenance is required.
+- [ ] **PIA11. Cross-project obligation propagation** — when obligations in Project A depend on shared resources with Project B (shared contributor DID, shared asset hash), propagate the dependency link with explicit `qp:hasConsentRelation` gates on both sides. Prevent silent obligation leakage across project boundaries.
 
 ---
 
@@ -136,12 +175,16 @@ Unify vault-directory.js Verified Directory with qualiaDB SocialBook + cooperati
   Add relationship type constants: `wf:coContributor`, `wf:guardian`, `wf:ward`, `wf:socialWorker`, `wf:legalAdvocate`.
 - [ ] **DIR2. Did:key → contact resolution** — when a cooperative project lists a contributor did:key, check `wf-contacts` for a match and display their human name/avatar. Link project contributor list to contact graph.
 - [ ] **DIR3. Single-action project join** — joining a cooperative project creates: (a) ODRL agreement VP (PFM5), (b) contact entry for project node (DIR1), (c) Tier 2/3 sync connection. One UI action drives all three.
-- [ ] **DIR4. SHACL shapes for cooperative vocabulary** — extend `docs/profiles/access-profiles.ttl`:
+- [ ] **DIR4. SHACL shapes for cooperative and protocol vocabulary** — extend `docs/profiles/access-profiles.ttl`:
   - `wf:ContributionRecord` shape
   - `wf:ObligationBalance` shape
   - `wf:VerifiableCredential` shape
   - `wf:GuardianRelationship` shape
   - `wf:CooperativeProject` shape
+  - `qp:Contract` shape (coordinates with PIA1)
+  - `qp:EffortObligation` shape
+  - `qp:Slice` / `qp:TokenizedShare` shape
+  - `qp:hasConsentRelation` property constraint
 
 ---
 
@@ -152,6 +195,22 @@ Browser equivalent of the Android `OntologyConverter.kt` + `OntologyScreen.kt`.
 - [ ] **OC1. Ontology converter panel in app.html** — file picker (`.ttl`, `.nt`, `.jsonld`, `.json`, `.csv`) → N-Quads (`.nq`) or `.q42` via wellfare-core WASM. Show: quads written, compression ratio, parse time, output size. Matches Android OntologyScreen metrics.
 - [ ] **OC2. Ontology ingestion to QualiaStore** — when a `.ttl`/`.q42` file is loaded, import into live `QualiaStore` to enrich SPARQL queries and LLM context. Depends on W4 (`WasmHealthStore`) being live.
 - [ ] **OC3. Cooperative ontology bundles** — pre-package as `.q42` files, downloadable via OPFS package manager: `wf:` shapes, UDHR-as-RDF, ODRL EdgeConstraints, FOAF. Persist in OPFS; enrich all SPARQL/N3 queries.
+
+---
+
+## CBOR — CBOR-LD as native serialisation format
+
+qualiaDB's `cbor_compiler.rs` is a Strict Binary Gatekeeper: it rejects `{` (JSON), `<` (RDF/XML), and `@` (Turtle) at the first byte. The native format is a CBOR array of Lexicon-compressed u64 IDs. The `wf-lexicon` IDB store (v10) holds the string→u64 mapping. Turtle/SPARQL remains valid for `WasmHealthStore` (oxigraph analytics queries) — CBOR-LD applies to `QualiaStore` (quint engine) and Sentinel.
+
+- [x] **CBOR1. `vault-cborld.js`** — Lexicon-backed CBOR-LD encoder/decoder. `initCborLd()` warms cache from wf-lexicon IDB. `iriToId()` auto-assigns u64 IDs. `encodeIrisToCbor(s,p,o,c)` → Uint8Array. `decodeCborToIds/Iris()`. `recordToCborLdQuins(store, plainRecord)` → Array<Uint8Array>. `insertRecordToQualiaStore()` convenience wrapper.
+- [x] **CBOR2. `QualiaStore.insert_from_cbor_ld(&[u8])`** — new method in `wellfare-core/src/qualia_bindings.rs`. Parses CBOR array of 4–5 u64 integers (replicates cbor_compiler.rs logic inline). Returns bool.
+- [x] **CBOR3. Fix `_dbPut` dual-write** — remove broken `JSONtoQuinSerializer`; replace with CBOR-LD existence triple (`urn:wf:<store>:<id>`, `rdf:type`, `wf:StoredRecord`, `wf:store/<store>`). Full semantic content encoded per-module.
+- [x] **CBOR4. `exportProjectsToCborLdQuins()`** — in `vault-projects.js`; decrypts all project/contribution/obligation records and bulk-inserts via `insertRecordToQualiaStore()`. Feeds the QualiaStore quint engine alongside `exportProjectsToTurtle()` → WasmHealthStore.
+- [ ] **CBOR5. CBOR-LD export for other vault modules** — add `exportToCborLdQuins()` to: `vault-meds-reminders.js`, `vault-directory.js`, `vault-wallet.js`, `vault-calendar.js` (PIA6). Called at vault unlock alongside respective Turtle exports.
+- [ ] **CBOR6. Sentinel constraint IDs via Lexicon** — `vault-sentinel.js`: before evaluating a policy constraint, resolve the constraint name IRI through `vaultCborLd.iriToId()` → use the u64 ID as the canonical constraint reference. Ensures Sentinel policy gates are Lexicon-addressable.
+- [ ] **CBOR7. CBOR-LD wire format for CP4 GUN sync** — when `vault-p2p-sync.js` (CP4) sends share/claim state over GUN Tier 2, serialise as CBOR-LD bytes. Peer decodes with `decodeCborToIds()` → `idToIri()` (Lexicon must be shared or scoped to the project namespace).
+- [ ] **CBOR8. CBOR-LD packages for WebTorrent Tier 4** — PIA7: when seeding a claim bundle or ontology snapshot via WebTorrent, pack as a `.q42`-adjacent CBOR-LD file rather than Turtle. Decoded on receipt via `vault-cborld.js`.
+- [ ] **CBOR9. Rebuild WASM binary** — `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg` to include `insert_from_cbor_ld` in the deployed WASM. Until rebuilt, CBOR2 falls back gracefully (method absent → `vaultCborLd.insertRecordToQualiaStore` no-ops).
 
 ---
 

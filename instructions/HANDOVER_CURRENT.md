@@ -1,7 +1,7 @@
 # WellFair — Current Handover
 > **Living document — update this at the end of every session.**  
 > Last updated: 2026-06-04  
-> Updated by: sessions 2–3 (W1–W7 Rust engine) + session 4 (CP1–CP3,CP5 + W6,A6)
+> Updated by: sessions 2–3 (W1–W7 Rust engine) + session 4 (CP1–CP3,CP5 + W6,A6) + session 5 (PIA planning)
 
 ---
 
@@ -92,6 +92,8 @@ All decisions from `CLAUDE.md` still apply, plus:
 4. **Directory harmonization** — Verified Directory (`vault-directory.js`), qualiaDB SocialBook, and Cooperative Projects contributor list all resolve to the same `wf-contacts`/`wf-relationships` graph
 5. **Lightning is the unified payment rail** — HCW welfare payments, cooperative obligation micropayments, and DA research bounties all use the same LDK node via Nym SOCKS5 proxy
 6. **cooperative.html model adopted** — obligation matrix, Author-Scoped Merkle Signatures, µ-units, three-tier P2P sync, and PFM eight-phase architecture are all in scope for WellFair
+7. **Protocol Integration Architecture adopted** — `qualiaDB/docs/protocol-integration-architecture.md` (v0.1, June 2026) is the canonical spec for how GUN, WebTorrent, WebRTC, Git+git-mark, and the Qualia Engine integrate as a trust layer for Cooperative Projects. Key additions to plan: `qp:` ontology namespace, Dynamic Equity / Stewardship Shares (`qp:Slice`), per-protocol Q42 provenance events, personal boundary protection (`PIA6`), WebTorrent Tier 4 sync (`PIA7`), `qp:hasConsentRelation` consent gates (`PIA8`), git-mark audit trail (`PIA10`). See `TODO.md §PIA` for full 11-task breakdown.
+8. **Personal boundary protection is non-negotiable** — project obligations must never auto-schedule over personal calendar entries (`wf:personalPriority`). Override attempts must be logged with Q42 provenance. This is architecturally equivalent to Sanctuary Mode for the cooperative layer.
 
 ---
 
@@ -120,6 +122,16 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 - **W6** — `sentinel.rs`: SentinelVM with extended opcodes (LessThan/GreaterThan/LoadFloat); `validate_health_quin(constraint,s,p,o,c,m)` evaluates 3 policy gates: `cooperative_obligation` (lane 1), `guardian_identity` (lane 2), `commercial_block` (lane 2). No wgpu dependency.
 - **A6** — `n3_rules.rs`: 7 clinical patterns from 4 N3 files translated to SPARQL-aggregation queries over oxigraph. `evaluate_n3_rules(turtle)` WASM export returns triggered patterns with routingLane. `rdf.rs` adds `health:sleepHours` numeric property to sleep Turtle.
 - **vault-sentinel.js** — real implementation: `SentinelCompiler.classify()`, `evaluatePolicyConstraint()`, `evaluateN3Rules()`, `evaluateVaultN3Rules()`
+- **PIA1** — `qp:` namespace alignment: `https://qualia.id/ns/` prefix added to `access-profiles.ttl`; full vocabulary (Workspace, EffortObligation, ProvenanceCommit, Contract, Slice, TokenizedShare, ProjectGovernance + 14 properties); SHACL shapes for all; Turtle export in `vault-projects.js` dual-types all entities
+- **PIA2** — Protocol session event schema: `wf:ProtocolEvent` class + properties + SHACL shape in `access-profiles.ttl`; 7 event type values defined; `wf-events` IDB as target
+- **PIA3** — WebRTC session Q42 provenance: `_writeProtocolEvent()` in `vault-comms-call.js`; writes `webrtc_session_start`/`webrtc_session_end` on call start/end with participants + duration; `_callStartTs` tracks call duration
+- **PIA4** — Git-signed contract provenance: `_agreementToNQuads()` + `_writeContractEvent()` in `vault-handshake.js`; writes `git_commit_ref` event to `wf-events` on `finaliseHandshake()` and `acceptHandshake()`; bundle signed with local Ed25519 key
+- **PIA6** — Personal boundary protection: IDB bumped to v12; `wf-calendar` store added (indexed by `startIso`); `vault-calendar.js` created (CRUD + `checkBoundaryConflict()` + `logBoundaryConflict()` + Personal Priority toggle); `logContribution()` in `vault-projects.js` checks boundary before committing; `logContributionForced()` bypass for after user opt-in
+- **CBOR1–4** — CBOR-LD as native QualiaStore format:
+  - `vault-cborld.js` created: Lexicon (wf-lexicon IDB backed), `iriToId()`, `encodeIrisToCbor()`, `decodeCborToIds/Iris()`, `recordToCborLdQuins()`, `insertRecordToQualiaStore()`
+  - `qualia_bindings.rs` `QualiaStore` extended with `insert_from_cbor_ld(&[u8])` + private `parse_cbor_quin()` — WASM rebuild needed (CBOR9)
+  - `vault-idb.js` `_dbPut` dual-write fixed: removed broken `JSONtoQuinSerializer`; now emits a CBOR-LD existence triple per record
+  - `vault-projects.js` gains `exportProjectsToCborLdQuins()` — decrypts and bulk-inserts all project/contribution/obligation records into QualiaStore
 
 ---
 
@@ -155,7 +167,8 @@ See the "Completed" section at the bottom of `TODO.md` for the full list. Summar
 | v9 | wf-biometrics | WASM bridge |
 | v10 | wf-lexicon | qualiaDB Lexicon |
 | **v11** | wf-projects, wf-contributions, wf-obligations | CP1/CP5 |
-| **v12 (planned)** | wf-credentials, wf-pfm-config, wf-ledger | CV + PFM epics |
+| **v12** | wf-calendar | PIA6 Personal Boundary Protection |
+| **v13 (planned)** | wf-credentials, wf-pfm-config, wf-ledger | CV + PFM epics |
 
 ---
 
@@ -179,6 +192,8 @@ When adapting `vault.html` JS modules for Tauri invoke():
 | vault-scheduler.js | UI rendering | job queue via invoke() |
 | vault-wallet.js | UI rendering | storage + Nym via invoke() |
 | vault-projects.js (new) | UI rendering | obligation accounting via invoke() |
+| vault-calendar.js (new) | UI rendering | calendar CRUD + boundary check via invoke() |
+| vault-cborld.js (new)   | Lexicon cache + encoding | eliminated (Rust handles CBOR-LD natively in Tauri) |
 | vault-credentials.js (new) | UI rendering | VC parse/VP gen via invoke() |
 | vault-pfm.js (new) | UI rendering | ledger CRUD via invoke() |
 | vault-mock.js | entirely (no change) | — |
@@ -268,12 +283,19 @@ The obligation model: contributor hours → µ-units → obligation cost. Three 
 
 ## What to do next
 
-**CP1–CP3, CP5 + W6 + A6 complete.** Key remaining:
+**CP1–CP3, CP5 + W6 + A6 complete. PIA section added to plan (2026-06-04).** Key remaining:
 
-- **OC1** (recommended) — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Now fully unblocked. See TODO.md §OC.
+- **PIA1** (recommended next) — `qp:` namespace alignment. Map `qp:` cooperative ontology to `wf:` structures; add `qp:` prefix to `vault-projects.js` Turtle export; extend `access-profiles.ttl` SHACL shapes. Foundation all other PIA tasks depend on.
+- **OC1** — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Fully unblocked. See TODO.md §OC.
+- **PIA2** — Protocol session event schema (spec only, no code). Define Q42 quint structure for WebRTC/GUN/WebTorrent/git events in `wf-events`. Needed before PIA3/PIA5/PIA7 can be coded.
 - **DIR1** — Unified contact graph: add `wf:coContributor` relationship type to `vault-directory.js`
-- **CP4** — `vault-p2p-sync.js` Tier 2 (Gun+WebRTC available now); Tier 1 Nym blocked on A3
+- **CBOR9** (urgent before next WASM test) — rebuild: `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg`. Needed to deploy `insert_from_cbor_ld` to `docs/pkg/`.
+- **CBOR5** — add `exportToCborLdQuins()` to remaining vault modules (meds, directory, wallet, calendar).
+- **PIA8** — Consent UI for project data flows (`qp:hasConsentRelation` gate in vault-projects.js). Before CP4 sync is activated.
+- **CP7** — Dynamic Equity / Stewardship Shares panel in `vault-projects.js`. Depends on PIA1 (done) + PIA5.
+- **OC1** — Ontology Converter panel in `app.html`. File picker → Turtle/JSON-LD → N-Quads via WasmHealthStore. Fully unblocked.
+- **CP4** — `vault-p2p-sync.js` Tier 2 (Gun+WebRTC available now); Tier 1 Nym blocked on A3; Tier 4 WebTorrent (PIA7) planned
 - **N3 UI** — surface `evaluateVaultN3Rules()` results in the vault (Health Insights panel or Biometrics sheet). Currently working but not displayed to user.
 - **W10** — wire `compile_query_to_json` from `qualia-core-db` (`--features qualia`) once WASM-safe path confirmed
 
-Read first: `TODO.md` sections OC, DIR, CP, W.
+Read first: `TODO.md` sections PIA, CP, OC, DIR, W.
