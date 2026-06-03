@@ -62,8 +62,9 @@ async function getProject(id) {
 
 async function getAllProjects() {
   _requireKey();
-  const all = await _dbGetAll(_ST_PROJECTS);
-  return Promise.all(all.map(r => _decRecord(r)));
+  const all     = await _dbGetAll(_ST_PROJECTS);
+  const results = await Promise.allSettled(all.map(r => _decRecord(r)));
+  return results.filter(r => r.status === 'fulfilled').map(r => r.value);
 }
 
 async function updateProject(id, patch) {
@@ -131,9 +132,11 @@ async function logContribution(projectId, hours, description, options) {
 async function getContributions(projectId) {
   _requireKey();
   const all       = await _dbGetAll(_ST_CONTRIBUTIONS);
-  const decrypted = await Promise.all(all.map(r => _decRecord(r)));
-  return decrypted
-    .filter(r => r.projectId === projectId)
+  // Use allSettled so a single stale ciphertext (e.g. wrong demo key) doesn't abort the whole list
+  const results   = await Promise.allSettled(all.map(r => _decRecord(r)));
+  return results
+    .filter(r => r.status === 'fulfilled' && r.value?.projectId === projectId)
+    .map(r => r.value)
     .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 }
 
@@ -165,8 +168,62 @@ async function getObligationBalance(projectId) {
 
 async function getAllObligations() {
   _requireKey();
-  const all = await _dbGetAll(_ST_OBLIGATIONS);
-  return Promise.all(all.map(r => _decRecord(r)));
+  const all     = await _dbGetAll(_ST_OBLIGATIONS);
+  const results = await Promise.allSettled(all.map(r => _decRecord(r)));
+  return results.filter(r => r.status === 'fulfilled').map(r => r.value);
+}
+
+// ── Equity shares (CP7 / qp:Slice) ────────────────────────────────────────────
+// Each project has one equity record:
+//   contributors: [{ did, pct, ts }]  — per-contributor slot; ts for CRDT merge
+//   governance:   { allowsCashOut, tokenized, cashOutCondition }
+//   updatedAt:    ISO timestamp of last local write
+//
+// CRDT rule: last-write-wins per contributor did (compare ts).
+// Stored AES-GCM encrypted; same key as other project records.
+
+async function setEquityShares(projectId, contributors, governance) {
+  _requireKey();
+  const record = {
+    id:           projectId,
+    projectId,
+    contributors: contributors || [],
+    governance:   governance  || { allowsCashOut: false, tokenized: false, cashOutCondition: '' },
+    updatedAt:    new Date().toISOString(),
+  };
+  await _dbPut(_ST_SHARES, await _encRecord(record));
+  return record;
+}
+
+async function getEquityShares(projectId) {
+  _requireKey();
+  const stored = await _dbGet(_ST_SHARES, projectId);
+  if (!stored) return null;
+  return _decRecord(stored).catch(() => null);
+}
+
+async function getAllShares() {
+  _requireKey();
+  const all = await _dbGetAll(_ST_SHARES);
+  const results = await Promise.allSettled(all.map(r => _decRecord(r)));
+  return results.filter(r => r.status === 'fulfilled').map(r => r.value);
+}
+
+// CRDT-compatible: update a single contributor slot (last-write-wins by ts).
+async function updateContributorSlot(projectId, did, pct) {
+  _requireKey();
+  const existing = (await getEquityShares(projectId)) ||
+    { id: projectId, projectId, contributors: [], governance: { allowsCashOut: false, tokenized: false, cashOutCondition: '' }, updatedAt: '' };
+  const ts  = new Date().toISOString();
+  const idx = existing.contributors.findIndex(c => c.did === did);
+  if (idx >= 0) {
+    existing.contributors[idx] = { did, pct, ts };
+  } else {
+    existing.contributors.push({ did, pct, ts });
+  }
+  existing.updatedAt = ts;
+  await _dbPut(_ST_SHARES, await _encRecord(existing));
+  return existing;
 }
 
 // ── CBOR-LD export (feeds QualiaStore quint engine via vault-cborld.js) ──────
@@ -273,6 +330,8 @@ window.vaultProjects = {
   // CP4 / P2P sync: directly set obligation balance to a higher remote value.
   // Does NOT add a contribution entry — used only for CRDT merge.
   mergeObligationBalance,
+  // CP7 / PIA5 — equity shares
+  setEquityShares, getEquityShares, getAllShares, updateContributorSlot,
 };
 
 async function mergeObligationBalance(projectId, newMuUnits) {

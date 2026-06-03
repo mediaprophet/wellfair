@@ -97,7 +97,7 @@ New panel in vault.html + `vault-projects.js` module.
   - CRDT merge: sum-based for obligation µ-units; last-write-wins for project metadata and equity shares
 - [x] **CP5. IDB v11 stores** — added: `wf-projects`, `wf-contributions`, `wf-obligations`.
 - [ ] **CP6. Project directory feed** — fetch/cache project list from cooperative node (via Nym Tier 1 or Gun Tier 2). Cache in `wf-projects` for offline use.
-- [ ] **CP7. Dynamic Equity / Stewardship Shares panel** — extend `vault-projects.js` to display per-project `qp:Slice` equity allocation (%), governance rules (`qp:ProjectGovernance.allowsCashOut` conditions), and tokenization status (`qp:TokenizedShare`). Data sourced from Tier 2/4 sync (PIA5). Cash-out route: PFM ledger → Lightning rail (HCW). IDB: extend `wf-obligations` with equity fields or add `wf-shares` sub-store.
+- [x] **CP7. Dynamic Equity / Stewardship Shares panel** — extend `vault-projects.js` to display per-project `qp:Slice` equity allocation (%), governance rules (`qp:ProjectGovernance.allowsCashOut` conditions), and tokenization status (`qp:TokenizedShare`). Data sourced from Tier 2/4 sync (PIA5). Cash-out route: PFM ledger → Lightning rail (HCW). IDB: extend `wf-obligations` with equity fields or add `wf-shares` sub-store.
 - [ ] **CP8. Project Governance panel** — UI in `vault-projects.js` for `qp:ProjectGovernance` policies per project: decision-making rules, cash-out eligibility conditions, tokenization opt-in/out. Governance records stored in `wf-projects` and exported as `qp:ProjectGovernance` Turtle triples in `exportVaultToTurtle()`.
 
 ---
@@ -116,7 +116,7 @@ Integrates GUN · WebTorrent · WebRTC provenance · Git+git-mark · Qualia Engi
 
 - [x] **PIA3. WebRTC session → Q42 provenance** — in `vault-comms-call.js`, on call-session start and end write a Q42 provenance record (PIA2 schema) to `wf-events`: participant did:keys, session duration, data-channel state, consent basis. Surfaces in vault transcript (VC-13).
 - [x] **PIA4. Git-signed contract provenance** — on cooperative agreement creation (`vault-handshake.js` / PFM5), generate a signed N-Quads bundle (`.nq`) of contract/claim quads, signed with vault Ed25519 key. Bundle stored in `wf-agreements`; downloadable from Credential Vault as a legal-grade audit artefact.
-- [ ] **PIA5. GUN Tier 2 sync for `qp:Slice` equity shares** — extend CP4 Tier 2 to include Dynamic Equity Share state (`qp:Slice` allocations, per-contributor equity %). CRDT merge strategy: last-write-wins per contributor slot, timestamped. Drives CP7 display.
+- [x] **PIA5. GUN Tier 2 sync for `qp:Slice` equity shares** — extend CP4 Tier 2 to include Dynamic Equity Share state (`qp:Slice` allocations, per-contributor equity %). CRDT merge strategy: last-write-wins per contributor slot, timestamped. Drives CP7 display.
 
 ### Phase 3 — Full Integration & Boundary Protection
 

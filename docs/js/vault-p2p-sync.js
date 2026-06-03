@@ -351,27 +351,105 @@ async function pullAll() {
   for (const id of _cfg.projectIds) await pullProject(id);
 }
 
-// ── PIA5 — qp:Slice equity shares (stub, extended by CP7) ────────────────────
+// ── PIA5 — qp:Slice equity shares (CBOR-LD + CRDT) ───────────────────────────
+// Wire format on GUN wf-v1-project/<projectId>:equity:
+//   v, ts, did, projectId — envelope
+//   lex          — JSON mini-lexicon (IRI → number)
+//   slots        — base64 of concatenated CBOR-LD quints (one set per contributor)
+//   governance   — JSON governance object {allowsCashOut, tokenized, ...}
+//
+// Encoding: each contributor slot { did, pct, ts } → 3 CBOR-LD quints:
+//   subject  = urn:wf:shares:<projectId>:<urlEncoded(did)>
+//   predicate ∈ {wf:did, wf:pct, wf:ts}
+//   context  = wf:store/wf-shares
 
 async function pushEquityShares(projectId, shares) {
   if (!_gun || _cfg?.sanctuaryMode) return;
+  const cbl    = window.vaultCborLd;
+  const quints = [];
+  if (cbl && shares?.contributors?.length) {
+    for (const c of shares.contributors) {
+      const subj = `urn:wf:shares:${projectId}:${encodeURIComponent(c.did)}`;
+      const qs   = await cbl.recordToCborLdQuins('wf-shares', {
+        id:  `${projectId}:${c.did}`,
+        did: c.did,
+        pct: String(c.pct),
+        ts:  c.ts,
+      });
+      quints.push(...qs);
+    }
+  }
+  const lex = quints.length ? _buildMiniLex(quints) : {};
   _gun.get(_GUN_NS).get(projectId + ':equity').put({
-    v: _SYNC_VER, ts: new Date().toISOString(),
-    did: _cfg?.did ?? '', projectId,
-    shares: JSON.stringify(shares ?? {}),
+    v:          _SYNC_VER,
+    ts:         new Date().toISOString(),
+    did:        _cfg?.did ?? '',
+    projectId,
+    lex:        JSON.stringify(lex),
+    slots:      quints.length ? _quintsToB64(quints) : '',
+    governance: JSON.stringify(shares?.governance ?? {}),
   });
 }
 
 async function pullEquityShares(projectId) {
   if (!_gun || _cfg?.sanctuaryMode) return null;
-  return new Promise(resolve => {
+  const data = await new Promise(resolve => {
     const t = setTimeout(() => resolve(null), 5000);
-    _gun.get(_GUN_NS).get(projectId + ':equity').once(data => {
+    _gun.get(_GUN_NS).get(projectId + ':equity').once(d => {
       clearTimeout(t);
-      if (!data || data.v !== _SYNC_VER) return resolve(null);
-      try { resolve(JSON.parse(data.shares)); } catch (_) { resolve(null); }
+      resolve(d?.v === _SYNC_VER ? d : null);
     });
   });
+  if (!data) return null;
+  const cbl = window.vaultCborLd;
+  if (!cbl) return null;
+  await _mergeMiniLex(JSON.parse(data.lex || '{}'));
+
+  // Decode CBOR-LD slots into contributor objects
+  const slotMap = {}; // "projId:did" → {did, pct, ts}
+  if (data.slots) {
+    for (const q of _b64ToQuints(data.slots)) {
+      try {
+        const iris = cbl.decodeCborToIris(q);
+        const key  = iris[1]?.replace('https://wellfare.social/ns/vault#', '');
+        const val  = iris[2]?.replace('urn:wf:lit:', '');
+        // subject: urn:wf:shares:<projectId>:<slotKey>
+        const subj = iris[0]?.replace('urn:wf:shares:', '');
+        if (!subj || !key || !val) continue;
+        slotMap[subj] = slotMap[subj] || {};
+        slotMap[subj][key] = val;
+      } catch (_) {}
+    }
+  }
+  const contributors = Object.values(slotMap)
+    .filter(s => s.did)
+    .map(s => ({ did: s.did, pct: parseFloat(s.pct) || 0, ts: s.ts || data.ts }));
+
+  const remote = {
+    contributors,
+    governance: (() => { try { return JSON.parse(data.governance || '{}'); } catch (_) { return {}; } })(),
+    ts: data.ts,
+  };
+  await _mergeEquityShares(projectId, remote);
+  return remote;
+}
+
+// CRDT merge: last-write-wins per contributor did.
+async function _mergeEquityShares(projectId, remote) {
+  const projects = window.vaultProjects;
+  if (!projects) return;
+  const local    = await projects.getEquityShares(projectId) ||
+    { contributors: [], governance: {}, updatedAt: '' };
+  const localMap = Object.fromEntries(local.contributors.map(c => [c.did, c]));
+  for (const rc of (remote.contributors || [])) {
+    const lc = localMap[rc.did];
+    if (!lc || (rc.ts && rc.ts > (lc.ts ?? ''))) localMap[rc.did] = rc;
+  }
+  // Merge governance: remote wins if its ts is newer than local updatedAt
+  const gov = (remote.ts && remote.ts > (local.updatedAt ?? ''))
+    ? { ...local.governance, ...remote.governance }
+    : local.governance;
+  await projects.setEquityShares(projectId, Object.values(localMap), gov);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

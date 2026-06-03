@@ -34,10 +34,12 @@ const _ST_CONTRIBUTIONS = 'wf-contributions'; // contribution log (Merkle chain)
 const _ST_OBLIGATIONS   = 'wf-obligations';   // per-project µ-unit balances
 // PIA6 — Personal Boundary Protection (added in v12)
 const _ST_CALENDAR      = 'wf-calendar';      // personal calendar events (personalPriority flag)
+// CP7 / PIA5 — Dynamic Equity Shares (added in v13)
+const _ST_SHARES        = 'wf-shares';         // per-project qp:Slice equity allocations
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 12);
+    const rq = indexedDB.open(_DB_NAME, 13);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -79,6 +81,9 @@ function _openDB() {
         const cal = db.createObjectStore(_ST_CALENDAR, { keyPath: 'id' });
         cal.createIndex('by_start', 'startIso', { unique: false });
       }
+      // v13 — CP7/PIA5 Dynamic Equity Shares
+      if (!db.objectStoreNames.contains(_ST_SHARES))
+        db.createObjectStore(_ST_SHARES, { keyPath: 'id' });
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);

@@ -435,6 +435,15 @@
     }
     .proj-history-item:last-child { border-bottom:none; }
     .proj-history-hash { font-size:.62rem; color:var(--dim); font-family:monospace; margin-top:.1rem; word-break:break-all; }
+    /* CP7 — equity shares panel */
+    .proj-equity-section { background:var(--bg); border-radius:10px; padding:.65rem .75rem; margin-bottom:.75rem; }
+    .proj-equity-title   { font-size:.8rem; font-weight:600; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.45rem; }
+    .proj-equity-row     { display:flex; justify-content:space-between; align-items:center; font-size:.8rem; margin-bottom:.22rem; }
+    .proj-equity-did     { font-size:.65rem; font-family:monospace; color:var(--dim); word-break:break-all; flex:1; margin-right:.5rem; }
+    .proj-equity-pct     { font-weight:700; color:var(--accent); flex-shrink:0; }
+    .proj-equity-total   { font-size:.76rem; color:var(--dim); margin-top:.3rem; border-top:1px solid var(--border); padding-top:.3rem; }
+    .proj-equity-govrow  { font-size:.76rem; color:var(--dim); display:flex; gap:.4rem; margin-top:.3rem; flex-wrap:wrap; }
+    .proj-equity-badge   { background:var(--border); border-radius:6px; padding:.12rem .4rem; font-size:.7rem; }
 
     /* ── Diet log sheet ──────────────────────────────────────────────────── */
     #diet-sheet {
@@ -2891,10 +2900,11 @@ async function _projOpenDetail(projectId, historyOnly) {
   const el = document.getElementById('proj-detail-content');
   el.innerHTML = '<p style="color:var(--dim);font-size:.8rem">Loading…</p>';
   try {
-    const [proj, contribs, bal] = await Promise.all([
+    const [proj, contribs, bal, shares] = await Promise.all([
       window.vaultProjects.getProject(projectId),
       window.vaultProjects.getContributions(projectId),
       window.vaultProjects.getObligationBalance(projectId),
+      window.vaultProjects.getEquityShares(projectId).catch(() => null),
     ]);
     if (!proj) { el.innerHTML = '<p class="proj-empty">Project not found.</p>'; return; }
 
@@ -2912,6 +2922,58 @@ async function _projOpenDetail(projectId, historyOnly) {
             </div>
           </div>`).join('');
 
+    // Build equity panel HTML
+    const myDid  = typeof vaultDidKey !== 'undefined' && vaultDidKey ? vaultDidKey.did : null;
+    const contribs2 = shares?.contributors || [];
+    const totalPct   = contribs2.reduce((s, c) => s + (c.pct || 0), 0);
+    const mySlot     = contribs2.find(c => c.did === myDid);
+    const govFlags   = shares?.governance || {};
+    const equityHtml = `
+      <div class="proj-equity-section">
+        <div class="proj-equity-title">⚖ Equity shares (qp:Slice)</div>
+        ${contribs2.length === 0
+          ? `<p style="font-size:.78rem;color:var(--dim);margin:.2rem 0 .4rem">No allocations recorded — set your slice below.</p>`
+          : contribs2.map(c => `
+            <div class="proj-equity-row">
+              <span class="proj-equity-did">${c.did === myDid ? '🔑 You' : _projEsc(c.did.slice(0, 28) + '…')}</span>
+              <span class="proj-equity-pct">${c.pct.toFixed(1)}%</span>
+            </div>`).join('')}
+        ${contribs2.length > 0
+          ? `<div class="proj-equity-total">Total: ${totalPct.toFixed(1)}%${totalPct > 100.05 ? ' ⚠ exceeds 100%' : totalPct < 99.95 && contribs2.length > 0 ? ' (unallocated: ' + (100 - totalPct).toFixed(1) + '%)' : ''}</div>`
+          : ''}
+        <div class="proj-equity-govrow">
+          <span class="proj-equity-badge">${govFlags.allowsCashOut ? '💰 Cash-out enabled' : 'Cash-out locked'}</span>
+          <span class="proj-equity-badge">${govFlags.tokenized ? '🪙 Tokenized' : 'Not tokenized'}</span>
+        </div>
+        <!-- Set own slice -->
+        <div style="margin-top:.55rem;display:flex;gap:.4rem;align-items:center">
+          <input type="number" id="proj-equity-pct-input" class="proj-log-input"
+                 value="${mySlot ? mySlot.pct : ''}"
+                 min="0" max="100" step="0.1" placeholder="My % (0–100)"
+                 style="flex:1;font-size:.78rem;padding:.3rem .5rem" />
+          <button class="btn btn-primary" style="flex-shrink:0;font-size:.76rem;padding:.3rem .65rem;margin:0"
+                  onclick="_projSaveEquitySlice('${projectId}')">Set slice</button>
+          <button class="btn btn-outline" style="flex-shrink:0;font-size:.76rem;padding:.3rem .65rem;margin:0"
+                  onclick="_projSyncEquity('${projectId}')">Sync</button>
+        </div>
+        <div id="proj-equity-status" style="font-size:.74rem;min-height:1rem;margin-top:.25rem"></div>
+        <!-- Governance toggles -->
+        <div style="margin-top:.45rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <label style="font-size:.76rem;display:flex;align-items:center;gap:.3rem;cursor:pointer">
+            <input type="checkbox" id="proj-gov-cashout" ${govFlags.allowsCashOut ? 'checked' : ''}
+                   onchange="_projSaveGovernance('${projectId}')"> Allow cash-out
+          </label>
+          <label style="font-size:.76rem;display:flex;align-items:center;gap:.3rem;cursor:pointer">
+            <input type="checkbox" id="proj-gov-tokenized" ${govFlags.tokenized ? 'checked' : ''}
+                   onchange="_projSaveGovernance('${projectId}')"> Tokenized (qp:TokenizedShare)
+          </label>
+        </div>
+        <div style="margin-top:.4rem">
+          <button class="btn btn-outline" style="font-size:.72rem;padding:.2rem .55rem;margin:0"
+                  onclick="window.vaultP2pSync?.downloadNQuads()">↓ Download ledger (.nq)</button>
+        </div>
+      </div>`;
+
     el.innerHTML = `
       <div style="margin-bottom:.75rem">
         <div style="font-size:.95rem;font-weight:700;margin-bottom:.2rem">${_projEsc(proj.name)}</div>
@@ -2922,6 +2984,7 @@ async function _projOpenDetail(projectId, historyOnly) {
           <div class="proj-oblig-row"><span>µ-units earned</span><span class="proj-oblig-val">${bal.muUnits.toLocaleString()}</span></div>
           <div class="proj-oblig-row"><span>Rate</span><span style="font-size:.78rem;color:var(--dim)">${proj.ratePerHour} µ/hr</span></div>
         </div>
+        ${equityHtml}
       </div>
       ${historyOnly ? '' : `
       <div class="proj-log-form" style="margin-bottom:.75rem">
@@ -2965,6 +3028,65 @@ async function _projSubmitWork(projectId) {
 
 function _projEsc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── CP7 equity handlers ───────────────────────────────────────────────────────
+
+async function _projSaveEquitySlice(projectId) {
+  const statusEl = document.getElementById('proj-equity-status');
+  const pctEl    = document.getElementById('proj-equity-pct-input');
+  const pct      = parseFloat(pctEl?.value);
+  if (isNaN(pct) || pct < 0 || pct > 100) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Enter a valid % (0–100)'; }
+    return;
+  }
+  const myDid = typeof vaultDidKey !== 'undefined' && vaultDidKey ? vaultDidKey.did : null;
+  if (!myDid) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Vault not unlocked'; }
+    return;
+  }
+  if (statusEl) { statusEl.style.color = 'var(--dim)'; statusEl.textContent = 'Saving…'; }
+  try {
+    const updated = await window.vaultProjects.updateContributorSlot(projectId, myDid, pct);
+    // Push to peers if sync is available
+    if (window.vaultP2pSync) await window.vaultP2pSync.pushEquityShares(projectId, updated).catch(() => {});
+    if (statusEl) { statusEl.style.color = 'var(--green)'; statusEl.textContent = `✓ Slice set to ${pct.toFixed(1)}%`; }
+    setTimeout(() => _projOpenDetail(projectId, true), 800);
+  } catch (e) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+}
+
+async function _projSyncEquity(projectId) {
+  const statusEl = document.getElementById('proj-equity-status');
+  if (statusEl) { statusEl.style.color = 'var(--dim)'; statusEl.textContent = 'Syncing…'; }
+  try {
+    const shares = await window.vaultProjects.getEquityShares(projectId);
+    if (shares && window.vaultP2pSync) {
+      await window.vaultP2pSync.pushEquityShares(projectId, shares).catch(() => {});
+      await window.vaultP2pSync.pullEquityShares(projectId).catch(() => {});
+    }
+    if (statusEl) { statusEl.style.color = 'var(--green)'; statusEl.textContent = '✓ Synced'; }
+    setTimeout(() => _projOpenDetail(projectId, true), 600);
+  } catch (e) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Sync failed: ' + e.message; }
+  }
+}
+
+async function _projSaveGovernance(projectId) {
+  const allowsCashOut = document.getElementById('proj-gov-cashout')?.checked ?? false;
+  const tokenized     = document.getElementById('proj-gov-tokenized')?.checked ?? false;
+  const statusEl      = document.getElementById('proj-equity-status');
+  try {
+    const shares = (await window.vaultProjects.getEquityShares(projectId)) ||
+      { contributors: [], governance: {} };
+    shares.governance = { ...shares.governance, allowsCashOut, tokenized };
+    await window.vaultProjects.setEquityShares(projectId, shares.contributors, shares.governance);
+    if (window.vaultP2pSync) await window.vaultP2pSync.pushEquityShares(projectId, shares).catch(() => {});
+    if (statusEl) { statusEl.style.color = 'var(--green)'; statusEl.textContent = '✓ Governance saved'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000); }
+  } catch (e) {
+    if (statusEl) { statusEl.style.color = 'var(--red)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
 }
 
 // ── Biometrics UI (WASM bridge) ───────────────────────────────────────────────
