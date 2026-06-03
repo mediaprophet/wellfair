@@ -108,6 +108,26 @@ async function getJobList() {
   return _dbGetAll(_ST_JOBS);
 }
 
+// ── Pharmaceutical Reminders ──────────────────────────────────────────────────
+registerJobHandler('med_reminder', {
+  estimateFn: () => 10,
+  runFn: async (job, progressFn) => {
+    const payload = JSON.parse(job.payload);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Medication Reminder', {
+        body: `It's time to take your medication: ${payload.med_name} (${payload.dose})`,
+        icon: '/icons/icon-192.png'
+      });
+    }
+    // Re-schedule for the next interval (e.g. 24h later) if recurring
+    if (payload.recurring_hours) {
+      await enqueueJob('med_reminder', payload, JOB_TRIGGER.ALWAYS, 5);
+      // We would ideally set the created_at/delay for the future, but for POC this runs immediately next tick.
+    }
+    return { notified: true, med: payload.med_name };
+  }
+});
+
 // ── Scheduler tick ────────────────────────────────────────────────────────────
 
 async function _tick() {

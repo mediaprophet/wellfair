@@ -9,6 +9,7 @@
 
 let _wasm = null;
 let _loadPromise = null;
+let _qualiaStore = null;
 
 async function _load() {
     if (_wasm) return _wasm;
@@ -19,6 +20,10 @@ async function _load() {
             const mod = await import('../pkg/wellfare_core.js');
             await mod.default();   // initialise WASM memory
             _wasm = mod;
+            if (mod.QualiaStore) {
+                _qualiaStore = new mod.QualiaStore();
+                console.info('[vault-wasm] QualiaDB OPFS store initialized');
+            }
             console.info('[vault-wasm] wellfare-core loaded');
         } catch (e) {
             console.warn('[vault-wasm] WASM pkg not available (run wasm-pack build to enable):', e.message);
@@ -205,11 +210,136 @@ async function validateVault() {
     return validateHealthTurtle(turtle);
 }
 
+// ── Persistent Lexicon & JSON ↔ Quin Serialization ─────────────────────────────
+
+/**
+ * Basic string hashing as fallback. In a real environment, this uses FarmHash/xxHash64.
+ * Generates a pseudo-60-bit integer (leaving top 4 bits free for datatypes).
+ */
+function _hashStringToBigInt(str) {
+    let h = 0n;
+    for (let i = 0; i < str.length; i++) {
+        h = (h * 31n + BigInt(str.charCodeAt(i))) % 1152921504606846975n; // 2^60 - 1
+    }
+    return h || 1n;
+}
+
+class Lexicon {
+    static async getId(str) {
+        if (!str) return 0n;
+        if (typeof str !== 'string') str = JSON.stringify(str);
+        
+        let record = await _dbGet(_ST_LEXICON, str);
+        if (record) {
+            return BigInt(record.uid);
+        }
+        
+        const uid = _hashStringToBigInt(str);
+        await _dbPut(_ST_LEXICON, { id: str, uid: uid.toString() });
+        return uid;
+    }
+
+    static async getString(uidBigInt) {
+        if (uidBigInt === 0n) return "";
+        const uidStr = uidBigInt.toString();
+        const db = await _openDB();
+        return new Promise((res, rej) => {
+            const tx = db.transaction(_ST_LEXICON, 'readonly');
+            const idx = tx.objectStore(_ST_LEXICON).index('by_uid');
+            const rq = idx.get(uidStr);
+            rq.onsuccess = ev => { db.close(); res(ev.target.result ? ev.target.result.id : null); };
+            rq.onerror   = ev => { db.close(); rej(ev.target.error); };
+        });
+    }
+}
+
+class JSONtoQuinSerializer {
+    // Top 4 bits prefixes for the 64-bit Object vector
+    static PREFIX_LEXICON = 0n << 60n; // 0x0
+    static PREFIX_INT     = 1n << 60n; // 0x1
+    static PREFIX_FLOAT   = 2n << 60n; // 0x2
+    static PREFIX_BOOL    = 3n << 60n; // 0x3
+    
+    // Mask to extract the 60-bit payload
+    static PAYLOAD_MASK   = 0x0FFFFFFFFFFFFFFFn;
+
+    static async serialize(storeName, record) {
+        const quins = [];
+        const subjectId = record.id ? String(record.id) : crypto.randomUUID();
+        const s = await Lexicon.getId(subjectId);
+        const c = await Lexicon.getId(storeName); // Context is the store name
+        const m = BigInt(Date.now()); // Metadata is the timestamp
+
+        for (const [key, value] of Object.entries(record)) {
+            if (key === 'id') continue;
+            
+            const p = await Lexicon.getId(key);
+            let o = 0n;
+            
+            if (typeof value === 'boolean') {
+                o = this.PREFIX_BOOL | (value ? 1n : 0n);
+            } else if (typeof value === 'number') {
+                if (Number.isInteger(value)) {
+                    // Truncate to 60 bits and apply Int prefix
+                    const v = BigInt(value) & this.PAYLOAD_MASK;
+                    o = this.PREFIX_INT | v;
+                } else {
+                    // Simple deterministic representation of float (x1000) for POC
+                    const v = BigInt(Math.floor(value * 1000)) & this.PAYLOAD_MASK;
+                    o = this.PREFIX_FLOAT | v;
+                }
+            } else {
+                const strVal = typeof value === 'string' ? value : JSON.stringify(value);
+                const uid = await Lexicon.getId(strVal);
+                o = this.PREFIX_LEXICON | uid;
+            }
+
+            quins.push({ s, p, o, c, m });
+        }
+        
+        return quins;
+    }
+    
+    static async deserialize(quins) {
+        if (!quins || quins.length === 0) return null;
+        
+        const subjectStr = await Lexicon.getString(quins[0].s);
+        const record = { id: subjectStr || quins[0].s.toString() };
+        
+        for (const q of quins) {
+            const propStr = await Lexicon.getString(q.p);
+            const key = propStr || q.p.toString();
+            
+            const prefix = q.o >> 60n;
+            const payload = q.o & this.PAYLOAD_MASK;
+            
+            if (prefix === 0n) {
+                // Lexicon string
+                record[key] = (await Lexicon.getString(payload)) || payload.toString();
+            } else if (prefix === 1n) {
+                // Integer
+                record[key] = Number(payload);
+            } else if (prefix === 2n) {
+                // Float (divided by 1000 from our POC packing)
+                record[key] = Number(payload) / 1000.0;
+            } else if (prefix === 3n) {
+                // Boolean
+                record[key] = payload === 1n;
+            } else {
+                // Fallback
+                record[key] = payload.toString();
+            }
+        }
+        return record;
+    }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.vaultWasm = {
     load:                    _load,
     isAvailable:             () => !!_wasm,
+    getQualiaStore:          () => _qualiaStore,
     // CSV import
     parseHealthCSV,
     csvToTurtle,
@@ -225,4 +355,6 @@ window.vaultWasm = {
     // SHACL
     validateHealthTurtle,
     validateVault,
+    // Serialization
+    JSONtoQuinSerializer,
 };

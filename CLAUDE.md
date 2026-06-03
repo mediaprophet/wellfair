@@ -25,153 +25,147 @@ DataChannel. Nothing is stored on the desktop — closing the tab destroys every
 5. Nym for anonymous routing (not real-time calls); WebRTC for all live sessions
 6. ODRL EdgeConstraints from `docs/profiles/access-profiles.ttl` govern receiver permissions
 7. "Identity credentials" is the canonical term for what specs call DIDs + VCs
+8. **Tauri v2 is the target mobile platform** — `vault.html` WebView is the UI shell; Rust
+   Tauri commands handle all crypto, storage, and Nym operations on device. Browser PWA
+   continues working as demo/fallback throughout the migration.
+9. **wellfare-core is the bridge crate** (`legacy_pwa/wellfare-core/`, will move to root per W1)
+   — wraps `qualia-core-db` (qualiaDB) with health-specific WASM bindings. Dual-target:
+   WASM for browser, native for Tauri. Current WASM is v0.0.4-dev, deployed to `docs/pkg/`.
+10. **qualiaDB** (`https://github.com/mediaprophet/qualiaDB`) is the primary storage engine
+    — `.q42` files replace IndexedDB once the Tauri migration is complete.
+11. **Two-product structure**: `vault.html` (Privacy Vault, phone) + `app.html` (Analytics
+    Dashboard, any browser) — both share the `docs/pkg/wellfare_core_bg.wasm` engine.
+12. **Lightning + Nym is the unified payment rail** — HCW welfare payments, cooperative
+    obligation micropayments (µ-units), and DA research bounties all use the same LDK node
+    routed via Nym SOCKS5 proxy.
+13. **Cooperative projects, PFM, Credential Vault, and Directory harmonization are in scope**
+    — see TODO.md sections CP, PFM, CV, DIR. The `cooperative.html` obligation model
+    (µ-units, Author-Scoped Merkle Signatures, three-tier P2P sync) is adopted for WellFair.
 
-## Current state (as of 2026-05-30) — branch release/v0.0.6
+## Current state (as of 2026-06-03) — branch feature/qualia-db-integration
 
-### Completed
-- **Milestone 1 (partial)** — WebRTC QR pairing, Gun signalling, DataChannel, 9 access profiles
-  (SHACL TTL + JSON), owner workspace (docs/drag-drop, notes, mental health, social context),
-  mock vault data, accessibility controls. *Polish deferred to Milestone 6.*
-- **Milestone 2 (complete)** — Full identity credentials + Noise_XX encrypted channel:
-  - Ed25519 `did:key` per session (both sides) via WebCrypto
-  - X25519 static keys for Noise_XX_25519_AESGCM_SHA256 handshake
-  - All DataChannel traffic AES-256-GCM encrypted after handshake
-  - Vault signs every response with Ed25519; desktop verifies before rendering
-  - Session keys are non-extractable CryptoKey objects; nulled on teardown
-- **Milestone 3 (complete)** — Ephemeral sharing flow polish:
-  - Session TTL (30 min, configurable) — vault overwrites Gun session node on expiry
-  - `beforeunload` / `pagehide` (BFCache eviction) / `visibilitychange` (2-min grace) on connector
-  - `FinalizationRegistry` in both files confirms session `CryptoKey` GC after teardown
-  - Emergency pre-auth UI on phone (owner mode) — pre-approve profiles before an incident
-  - Full ISO timestamp + accessor `did:key` in phone audit log for emergency sessions
-  - Legal Advocate section picker — shows only profile sections, all unchecked by default
-  - Connector sends its `did:key` in `hello` message so vault can record it in audit log
-- **Milestone 4 (scaffolded — one activation step remaining)** — Nym Mixnet Integration:
-  - `sw.js` injects `COOP: same-origin` + `COEP: require-corp` on all same-origin responses
-  - Both `pair.html` and `connector/index.html` register `/sw.js` at startup; CDN scripts
-    have `crossorigin="anonymous"` for COEP compatibility
-  - `docs/nym-test.html` — standalone SDK validation harness (run this first)
-  - `nymAdapter.send()` in `pair.html` — Gun `nym/` namespace adapter: routes vault outbound
-    via Nym instead of Gun relay nodes; fragments payloads > 28 KB (Sphinx limit)
-  - Fragment reassembly buffer keyed on `(msg_id, fragment_idx)`, 30 s expiry
-  - SURB pool: `surbBudget = 20`, 3 attached per message, replenish when < 5
-  - Dead Man's Switch UI (owner mode): configurable interval, two trustee Nym addresses,
-    check-in / test-fire; fires `dmsFire()` → `nymAdapter.send()` to trustees on miss
-  - Anonymous notification UI (owner mode): compose + send via Nym, no WebRTC
-  - **Remaining activation step**: run `docs/nym-test.html` against Nym Sandbox testnet,
-    confirm SDK loads and cold-start time, then set `NYM_SDK_URL` constant in `pair.html`.
-    Sandbox API: `https://sandbox-nym-api1.nymtech.net/api` — test tokens from Nym Discord.
-- **Milestone 5 (complete — core flow)** — Sanctuary Mode & Duress. All in `docs/pair.html`:
-  - `deriveVaultKey(pin, salt)` — PBKDF2-SHA256, 310 000 iterations; three independent keys:
-    sanctuary (`_SANC_SALT`), duress (`_DURS_SALT`), main-vault slot (`_MAIN_SALT`) reserved
-  - Sanctuary IndexedDB namespace: DB `wf-vault` v2, stores `wf-s` (entries) + `wf-sc` (config);
-    no string `"sanctuary"` in any store name or key; all entries AES-256-GCM encrypted
-  - DLT commitment anchor: `commitment = sha256(sha256(entry) ‖ nonce)` computed before IDB
-    write; nonce + commitment stored locally; commitment logged to console ready to publish
-  - Decoy vault: duress PIN at owner PIN step opens identical owner workspace, fires silent
-    Nym alert to configured contacts, suppresses `⚫ Sanctuary Mode` panel completely
-  - Sanctuary workspace (`step-sanctuary`): dark-theme UI via `body.sanctuary-active` CSS
-    variable override; first-use setup flow (sanctuary PIN → confirm → duress PIN → confirm);
-    Unvarnished Log (Veiled Assertions + Hypothesis Nodes); Contingency Protocols panel
-    (duress contact management, contacts encrypted under duress key)
-  - `pinKey()` now async; duress check via `_checkAndFireDuress()` before returning wrong-PIN
+### Architecture pivot (decided 2026-06-03)
 
-  Deferred to M6: Tripwire Dashboard, Synthesis Engine, Evidentiary Export / VP generation,
-  actual DLT write for commitment anchors.
+Primary vault target is a **Tauri v2 native app** (iOS/Android) with `vault.html` as the
+WebView UI shell and Rust Tauri commands for crypto/storage/Nym. Browser PWA continues working
+as demo/fallback. `qualiaDB` (`.q42` store) replaces IDB as primary storage once Tauri migration
+is complete. See `TODO.md` for the full task breakdown (sections W, M, CP, PFM, CV, DIR, DA).
 
-### Milestone 6 — Hardening & Cross-Browser  *(code-complete as of 2026-05-30)*
+### Code-complete features
 
-Completed: Gun write audit (clean), connector storage audit (clean), PWA manifest wired to
-`pair.html`, Wake Lock API, relay unreachable handling, Gun signalling cleanup post-handshake,
-Tripwire Dashboard, Synthesis Engine, Evidentiary Export (VP + commitment manifest download),
-browser compatibility guard (Ed25519 + X25519 WebCrypto feature detection on startup in both
-`pair.html` and `connector/index.html`), Bitcoin commitment anchoring via OpenTimestamps
-(feeless, anonymous — each commitment is one Merkle-tree leaf; `.ots` proof files downloadable;
-per-entry `pending` → `confirmed` state tracked in IDB; silent upgrade on sanctuary unlock).
+- **M1–M6**: WebRTC QR pairing · Noise_XX E2E (Ed25519/X25519 WebCrypto) · session TTL/BFCache
+  · Nym scaffolding (SURB pool, fragments, DMS, anon notify) · Sanctuary Mode + Duress (PBKDF2,
+  IDB namespace, decoy vault, Unvarnished Log) · hardening (Tripwire, Synthesis Engine,
+  Evidentiary Export + OTS Bitcoin anchoring, browser compat guard)
+- **VC-7 – VC-15**: Verified Directory · Semantic Handshake · Inbound Caller Gating ·
+  Hypermedia Voice/Video (vault↔vault + guest join.html) · Web Connector · Background Job
+  Scheduler · Event Log & Transcript (RDFa + Merkle chain) · Language Transcoding ·
+  Content Package (JSON-LD manifest + ODRL-permissioned zip + OTS anchor)
+- **WA-1 – WA-7**: AgentController · cv-emotion MediaPipe worker · audio DSP worker ·
+  IDB v7 telemetry · connector Live Indicators · transcript BiometricTelemetryLog
+- **HCW-1, HCW-2**: vault-wallet.js init · Nym bandwidth abstraction (ensureNymBandwidth)
+- **DL-1**: barcode diet-log scanner (BarcodeDetector + ZXing fallback + Open Food Facts)
+- **wellfare-core WASM v0.0.4-dev** built + deployed to `docs/pkg/` (282 KB)
+- **app.html** Streamlit analytics dashboard (512 KB — read in chunks with offset/limit)
+- **Package manager** (OPFS-based, handles oxigraph/prolog-wasm/llm-mediapipe installs)
+- **Device bridge** (File System Access API for Samsung Health `.zip` exports)
 
-Remaining (runtime/device — no code tasks): real-device testing (see
-`instructions/BROWSER_COMPAT.md`), SURB stress test, Nym Sandbox validation + `NYM_SDK_URL`
-activation in `pair.html`.
+### Remaining runtime-only tasks (no code needed)
 
-See `instructions/VAULT_CONNECTOR_NEXT_STEPS.md` for the v0.0.5 checklist.
-See `instructions/COMMS_EPIC_PLAN.md` for the v0.0.6 implementation plan (VC-7 through VC-15).
+- **Nym Sandbox validation**: run `docs/nym-test.html` against testnet; set `NYM_SDK_URL`
+  in `docs/js/vault-nym.js`. Sandbox API: `https://sandbox-nym-api1.nymtech.net/api`.
+- **Real-device testing**: iOS Safari, Android Chrome, Firefox 130+ — matrix in
+  `instructions/BROWSER_COMPAT.md`.
+- **SURB stress test**: airplane-mode toggle while Nym active; verify 30 s fragment expiry.
 
-### Carry-over from v0.0.5 (not yet done)
+### Planned epics (see TODO.md for tasks)
 
-**Needs code:**
-- **Medication Sprint 6 — diet log**: `wf-dl` IDB store exists but UI and capture logic not built.
-  Lives in `docs/js/vault-meds-manager.js` or a new `vault-diet.js`. Lower priority than comms epic;
-  pick up when a session has capacity.
-  **Review first:** https://github.com/ouisharelabs/food-dashboard — prior art for food taxonomy,
-  data models, and nutrient schema; may inform `wf-dl` record structure.
-- **Demo connector auto-connect**: `connector/index.html` should detect an active vault Gun session
-  and offer one-click connect (no manual QR scan) for dev/demo use. Small task, ~50 lines.
+| Section | Epic | Status |
+|---|---|---|
+| W | wellfare-core Rust crate — real QualiaStore, SPARQL, SHACL | Not started |
+| M | Tauri v2 mobile app | Blocked on qualia-desktop v1→v2 upgrade |
+| CP | Cooperative Projects panel (µ-units, Merkle signatures) | Not started |
+| PFM | Personal Finance Management (double-entry ledger, receipts, OFX export) | Not started |
+| CV | Credential Vault (VC wallet, Maslow VP, guardianship) | Not started |
+| DIR | Directory harmonization (Verified Directory + SocialBook + cooperative contacts) | Not started |
+| OC | Ontology Converter in app.html | Not started |
+| DA | Distributed Analytics & Research Commons | Not started |
+| HCW-3+ | Human-Centric Wallet (blind proxy, ZK credentials, LDK Lightning) | Blocked on Tauri |
 
-**Runtime / device only (no code):**
-- **Nym Sandbox validation**: run `docs/nym-test.html` against Nym Sandbox testnet; set
-  `NYM_SDK_URL` constant in `docs/js/vault-nym.js`. Sandbox API: `https://sandbox-nym-api1.nymtech.net/api`.
-- **Real-device testing**: iOS Safari, Android Chrome, Firefox 130+ — matrix in `instructions/BROWSER_COMPAT.md`.
-- **SURB stress test**: airplane-mode toggle while Nym client active; verify fragment expiry + replenish.
-
-### Milestone 7+ — Verifiable Communications Ecosystem *(v0.0.6-dev, in progress)*
-
-New epic. See `instructions/COMMS_EPIC_PLAN.md` for full spec and session-by-session plan.
-Short summary of what will be built:
-- **VC-7** Verified Directory (contact graph, SHACL, encrypted IDB)
-- **VC-8** Semantic Handshake (ODRL agreement, did:peer, Ed25519 signed)
-- **VC-9** Inbound Caller Gating (Nym+Gun dual transport, VC verification before ring)
-- **VC-10** Hypermedia Voice/Video (Topology A vault↔vault; Topology B guest link via join.html)
-- **VC-11** Web Connector (live data sharing during calls, signed VP receipts)
-- **VC-12** Background Job Scheduler (condition-triggered queue: idle/charging/desktop/manual)
-- **VC-13** Event Log & Transcript (HTML+RDFa, Merkle event chain, participant revision signing)
-- **VC-14** Language Transcoding (3-tier progressive STT+translation, provenance RDFa)
-- **VC-15** Content Package (JSON-LD manifest, ODRL-permissioned zip, OTS anchor)
+See `instructions/COMMS_EPIC_PLAN.md` · `instructions/ANALYTICS_EPIC_PLAN.md` ·
+`instructions/EPIC_PLAN_v0.0.7.md` for full specs.
 
 ## Key files
 
 ```
 docs/
-  vault.html             Daily-use vault (PIN → meds, sanctuary, DMS, anon notify)
-                         v0.0.6: + Directory, Calls, Queue panels
-  webconnect.html        WebRTC pairing bridge (QR scan → profile → consent → serving)
-  connector/index.html   Desktop connector (Noise initiator, Ed25519 verify)
-                         v0.0.6: + Calls nav section
-  join.html              NEW v0.0.6 — lightweight call join page (guest or vault user)
+  vault.html             Primary phone vault (PIN → meds, sanctuary, DMS, anon notify,
+                         Directory, Calls, Queue, Wallet, Analytics stub)
+  app.html               Analytics Dashboard — Streamlit/stlite (512 KB; read in chunks)
+  webconnect.html        WebRTC pairing bridge (phone side — QR → profile → consent → serve)
+  connector/index.html   Desktop connector (stateless — Noise initiator, Ed25519 verify)
+  join.html              Lightweight call join page (guest or vault user)
   pair.html              LEGACY — original monolithic page, kept as working fallback
   nym-test.html          Nym SDK validation harness — run before activating NYM_SDK_URL
+  sw.js                  Service Worker — injects COOP/COEP for Nym SharedArrayBuffer
+  device-bridge.js       File System Access API for Samsung Health exports
+  pkg/                   Built WASM: wellfare_core.js + wellfare_core_bg.wasm (282 KB)
+  profiles/
+    access-profiles.ttl  SHACL access profile shapes (canonical)
+    profiles.json        JS-loadable profile registry
   js/
-    vault-idb.js               IDB helpers + store constants (v4+ in v0.0.6)
+    vault-idb.js               IDB helpers + store constants (v10 = wf-lexicon)
     vault-crypto.js            Key derivation, AES-GCM, commitments, toB64/fromB64
     vault-did.js               did:key (Ed25519) generation
     vault-nym.js               Nym adapter, DMS, anonymous notification
-    vault-mock.js              VAULT mock data + SECTION_LABELS
-    vault-directory.js         NEW VC-7 — contact graph, FOAF-inspired, encrypted IDB
-    vault-handshake.js         NEW VC-8 — Semantic Handshake, ODRL agreement signing
-    vault-comms-gate.js        NEW VC-9 — inbound caller gating, Nym+Gun dual transport
-    vault-comms-call.js        NEW VC-10 — call session, WebRTC media, link gen, guest cred
-    vault-cv.js                NEW VC-10 — OpenCV placeholder (emotional recognition, pulse)
-    vault-scheduler.js         NEW VC-12 — background job queue engine
-    vault-transcript.js        NEW VC-13 — event log → HTML+RDFa transcript
-    vault-comms-transcode.js   NEW VC-14 — language transcoding, 3-tier progressive
-    vault-package.js           NEW VC-15 — content package + JSON-LD manifest
+    vault-wasm.js              qualiaDB WASM bridge (QualiaStore, Lexicon, SPARQL stub)
+    vault-sentinel.js          Sentinel VM stub (constraint evaluation)
+    vault-mock.js              Mock vault data + SECTION_LABELS
+    vault-directory.js         VC-7 — contact graph, FOAF-inspired, encrypted IDB
+    vault-handshake.js         VC-8 — Semantic Handshake, ODRL agreement signing
+    vault-comms-gate.js        VC-9 — inbound caller gating, Nym+Gun dual transport
+    vault-comms-call.js        VC-10 — call session, WebRTC media, link gen, guest cred
+    vault-cv.js                VC-10 — OpenCV placeholder (emotion recognition, pulse)
+    vault-scheduler.js         VC-12 — background job queue engine
+    vault-transcript.js        VC-13 — event log → HTML+RDFa transcript
+    vault-comms-transcode.js   VC-14 — language transcoding, 3-tier progressive
+    vault-package.js           VC-15 — content package + JSON-LD manifest
     vault-sanctuary-pins.js    PIN state machine, canary/setup, duress check, wake lock
     vault-sanctuary-log.js     Unvarnished Log, Tripwire Dashboard, Synthesis Engine
     vault-sanctuary-evidence.js  Evidentiary Export, VP generation, OpenTimestamps
     vault-meds-reminders.js    MedNotifier, today schedule, take/skip, reminder panel
     vault-meds-lod.js          SUBSTANCE_INTERACTIONS, RxNorm/Wikidata, interaction engine
     vault-meds-manager.js      Add/cease medication sheet
+    vault-wallet.js            HCW-1/2 — Lightning wallet init + Nym bandwidth
+    vault-analytics.js         DA-1/2 stub — StudyCredential parser, N3 evaluator, consent
+    vault-dp.js                DA-3 stub — Local Differential Privacy (Randomized Response)
     noise-xx.js                Noise_XX_25519_AESGCM_SHA256 (webconnect only)
     profiles.js                Profile loading, rendering, emergency pre-auth (webconnect only)
-  profiles/
-    access-profiles.ttl  SHACL access profile shapes (canonical); v0.0.6 adds Contact/Relationship shapes
-    profiles.json        JS-loadable profile registry
-  sw.js                  Service Worker — injects COOP/COEP for Nym SharedArrayBuffer
+
+legacy_pwa/wellfare-core/      Rust WASM crate source (THE primary Rust code — moves to root W1)
+  Cargo.toml                   v0.0.4-dev; depends on qualia-core-db via git
+  src/
+    wasm.rs                    All wasm_bindgen exports
+    qualia_bindings.rs         QualiaStore stub (needs W2/W3)
+    rdf.rs                     Turtle serialisers (working)
+    parser.rs                  CSV parsers (working)
+    models.rs                  Rust data models
+
+mobile/                        Android Kotlin/Gradle scaffold (Jetpack Compose + JNI)
+  app/src/main/java/com/example/wellfair/
+    QualiaCliService.kt        qualiaDB daemon service stub
+    NymMixnet.kt               Nym integration stub
 
 instructions/
-  COMMS_EPIC_PLAN.md              v0.0.6 implementation plan — VC-7 to VC-15, session breakdown
-  VAULT_CONNECTOR_NEXT_STEPS.md   v0.0.5 milestone checklist + architecture notes
-  sanctuaryMode.md                Sanctuary Mode full specification (Milestone 5)
-  BROWSER_COMPAT.md               Storage/Gun write audit results + real-device test matrix
+  HANDOVER_CURRENT.md          Living handover — update at end of every session
+  HANDOVER_PROMPT.md           Session start prompt — copy into any new session
+  ANALYTICS_EPIC_PLAN.md       DA/RC epic — distributed analytics + research creator
+  COMMS_EPIC_PLAN.md           VC-7 to VC-15 implementation plan
+  EPIC_PLAN_v0.0.7.md          WA + HCW epic plan
+  BROWSER_COMPAT.md            Real-device test matrix
+  VAULT_CONNECTOR_NEXT_STEPS.md  v0.0.5 milestone checklist
+
+TODO.md                        Master task list (W, M, A, CP, PFM, CV, DIR, OC, R-CP, P, DA)
 ```
 
 ## Dev server
@@ -205,6 +199,9 @@ Typical test flow:
 
 ## Related external repos
 
+- **mediaprophet/qualiaDB** — primary storage engine: `qualia-core-db` (Rust), `qualia-desktop`
+  (Tauri v1.5 → v2 upgrade needed), `qualia-android` (Kotlin/JNI benchmark harness)
 - **WebCivics/ontologies** (`2023` branch): `ttl/un/udhr.ttl`, `ttl/w3c/odrl.ttl` — rights instruments
 - **mediaprophet/Episteme**: `custom-addons/rights-ontology.ttl` — defines `webizen:EdgeConstraint` etc.
 - **Nym SDK**: `@nymproject/sdk-full-fat` — requires SharedArrayBuffer (COOP/COEP headers), cold start 3–8s
+  On Tauri path, the Nym Rust SDK replaces this entirely (no SharedArrayBuffer requirement).

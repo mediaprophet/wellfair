@@ -26,10 +26,12 @@ const _ST_WALLET     = 'wf-wallet';        // wallet provider metadata
 const _ST_TXLOG      = 'wf-txlog';         // local transaction log (never transmitted)
 // WASM bridge — biometric sensor data from Samsung Health CSV imports (added in v9)
 const _ST_BIOMETRICS = 'wf-biometrics';    // weight, sleep, heart-rate, steps records
+// QualiaDB — Persistent Lexicon dictionary (added in v10)
+const _ST_LEXICON    = 'wf-lexicon';       // string <-> u64 mappings
 
 function _openDB() {
   return new Promise((res, rej) => {
-    const rq = indexedDB.open(_DB_NAME, 9);
+    const rq = indexedDB.open(_DB_NAME, 10);
     rq.onupgradeneeded = ev => {
       const db = ev.target.result;
       if (!db.objectStoreNames.contains(_ST_LOG))        db.createObjectStore(_ST_LOG,        { keyPath: 'id' });
@@ -57,6 +59,11 @@ function _openDB() {
         bs.createIndex('by_type', 'type', { unique: false });
         bs.createIndex('by_date', 'date', { unique: false });
       }
+      // v10 — QualiaDB Lexicon
+      if (!db.objectStoreNames.contains(_ST_LEXICON)) {
+        const ls = db.createObjectStore(_ST_LEXICON, { keyPath: 'id' }); // id is the string
+        ls.createIndex('by_uid', 'uid', { unique: true }); // uid is the u64 string representation
+      }
     };
     rq.onsuccess = ev => res(ev.target.result);
     rq.onerror   = ev => rej(ev.target.error);
@@ -64,6 +71,19 @@ function _openDB() {
 }
 
 async function _dbPut(store, record) {
+  if (window.vaultWasm && window.vaultWasm.getQualiaStore()) {
+    const qStore = window.vaultWasm.getQualiaStore();
+    try {
+        const quins = await window.vaultWasm.JSONtoQuinSerializer.serialize(store, record);
+        for (const q of quins) {
+            qStore.insert_quin(q.s, q.p, q.o, q.c, q.m);
+        }
+        console.debug(`[QualiaDB] Inserted ${quins.length} Quins for record in ${store}`);
+    } catch (e) {
+        console.warn(`[QualiaDB] Serialization failed:`, e);
+    }
+    // DO NOT return early here yet; we still dual-write to IDB until QualiaDB deserializer is fully implemented.
+  }
   const db = await _openDB();
   return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');

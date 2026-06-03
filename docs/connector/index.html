@@ -1063,6 +1063,8 @@ function requestSection(section) {
   pendingReqs[id] = { section, timeout: t };
 }
 
+const _weblnResolvers = new Map();
+
 async function handleMessage(msg) {
   if (msg.type === 'agent.telemetry') { _connHandleTelemetry(msg); return; }
   if (['call_started','call_answered','call_ended','call_incoming'].includes(msg.type)) {
@@ -1072,6 +1074,16 @@ async function handleMessage(msg) {
     _connHandleDataResponse(msg); return;
   }
   if (msg.type === 'job_offload') { _connHandleJobOffload(msg); return; }
+  
+  if (msg.type === 'webln_response') {
+    const resolver = _weblnResolvers.get(msg.id);
+    if (resolver) {
+      resolver(msg.result);
+      _weblnResolvers.delete(msg.id);
+    }
+    return;
+  }
+
   if (msg.type === 'session_info') {
     if (msg.vault_did) {
       document.getElementById('vault-did').textContent = msg.vault_did;
@@ -1106,6 +1118,15 @@ async function handleMessage(msg) {
     }
 
     renderSection(section, msg.data);
+    
+    // POST live data to the Docking Station proxy for Streamlit
+    try {
+      fetch('http://localhost:8080', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_type: 'vault.sync', payload: { section, data: msg.data } })
+      }).catch(()=>{}); // ignore if Docking Station isn't running
+    } catch(e) {}
   }
 }
 
@@ -1138,6 +1159,15 @@ function teardown() {
   sessionNoiseKey = null;
   vaultPublicKey  = null;
   noiseReset();
+  
+  // Notify Docking Station of disconnect
+  try {
+    fetch('http://localhost:8080', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_type: 'vault.disconnect' })
+    }).catch(()=>{});
+  } catch(e) {}
 }
 
 function disconnect() {
@@ -1664,6 +1694,18 @@ async function _connHandleJobOffload(msg) {
     // Built-in handler stubs — expand as job types are registered
     if (job_type === 'transcript.generate' || job_type === 'transcript.annotate') {
       result = await _connRunTranscriptJob(job_type, parsedPayload, job_id);
+    } else if (job_type === 'sleep.analyze' || job_type === 'llm.extract' || job_type === 'n3.reason') {
+      // Forward to the local Python Docking Station RPC
+      try {
+        const resp = await fetch('http://localhost:8080', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job_type, payload: parsedPayload })
+        });
+        result = await resp.json();
+      } catch (e) {
+        result = { error: 'Failed to contact local Docking Station. Is src/docking_station.py running on port 8080?' };
+      }
     } else {
       // Unknown type — complete with empty result so vault doesn't hang
       result = { skipped: true, reason: 'No desktop handler for ' + job_type };
@@ -1860,6 +1902,36 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').cat
   }
 
   startSession();
+  // ── WebLN Proxy ─────────────────────────────────────────────────────────────
+  
+  window.webln = {
+    enable: async () => {
+      if (!sessionDidKey) throw new Error("Vault not connected");
+      return true;
+    },
+    sendPayment: async (invoice) => {
+      return new Promise((resolve, reject) => {
+        const id = crypto.randomUUID();
+        _weblnResolvers.set(id, resolve);
+        
+        secureSend({
+          type: 'webln_request',
+          id: id,
+          action: 'sendPayment',
+          args: [invoice]
+        });
+        
+        // Timeout after 60s
+        setTimeout(() => {
+          if (_weblnResolvers.has(id)) {
+            _weblnResolvers.delete(id);
+            reject(new Error("User rejected or request timed out"));
+          }
+        }, 60000);
+      });
+    }
+  };
+
 })();
 </script>
 </body>

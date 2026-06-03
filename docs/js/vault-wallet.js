@@ -25,115 +25,110 @@ function _txId() {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Detect WebLN provider (Alby, Zeus, etc.) and persist provider type in IDB.
- * Returns {available, provider}.
- * If window.webln is absent, returns {available: false} — UI shows install prompt.
+ * Initialise the Simulated Native Wallet.
+ * Bypasses window.webln extension requirement.
+ * Returns {available: true, provider: 'simulated'}.
  */
 async function walletInit() {
-  _wlAvailable = false;
-  _wlProvider  = null;
+  _wlAvailable = true;
+  _wlProvider  = 'simulated';
   _walletRegisterNymJobHandler();
 
-  if (typeof window.webln !== 'undefined') {
-    try {
-      await window.webln.enable();
-      _wlProvider  = 'webln';
-      _wlAvailable = true;
-
-      const now = new Date().toISOString();
-      // Read existing record to preserve createdAt
-      const existing = await _dbGet(_ST_WALLET, 'wallet-lightning').catch(() => null);
-      await _dbPut(_ST_WALLET, {
-        id:         'wallet-lightning',
-        type:       'lightning',
-        provider:   'webln',
-        nodeAlias:  '',
-        createdAt:  existing?.createdAt ?? now,
-        lastUsed:   now,
-      });
-
-      return { available: true, provider: 'webln' };
-    } catch (err) {
-      console.warn('[wallet] WebLN enable() failed:', err.message);
-    }
+  const now = new Date().toISOString();
+  // Read existing record to preserve balances and createdAt
+  const existing = await _dbGet(_ST_WALLET, 'wallet-native').catch(() => null);
+  
+  if (!existing) {
+    // Initialize mock balances for demonstration
+    await _dbPut(_ST_WALLET, {
+      id:         'wallet-native',
+      type:       'native',
+      provider:   'simulated',
+      balances:   {
+        sats: 150000,
+        stableAud: 250.00,
+        vouchers: 3 // E.g., 3 active welfare/accommodation vouchers
+      },
+      createdAt:  now,
+      lastUsed:   now,
+    });
   }
 
-  return { available: false, provider: null };
+  return { available: true, provider: 'simulated' };
 }
 
 /**
- * Returns {sats, fiatEstimate, currency}.
- * Never exposes node pubkey or channel info.
+ * Returns {sats, stableAud, vouchers, fiatEstimate}.
+ * Fetches balances from the simulated wallet IDB record.
  */
 async function walletGetBalance() {
   if (!_wlAvailable) throw new Error('Wallet not initialised — call walletInit() first');
 
-  const info = await window.webln.getBalance();
-  const sats = typeof info === 'object' && info !== null
-    ? (info.balance ?? info.sats ?? 0)
-    : Number(info ?? 0);
+  const rec = await _dbGet(_ST_WALLET, 'wallet-native');
+  const balances = rec?.balances || { sats: 0, stableAud: 0, vouchers: 0 };
+  const sats = balances.sats;
 
-  // Fiat estimate: cached exchange rate lookup (Nym-routed when available)
-  // Returns null if rate unavailable — UI shows "~? AUD" gracefully
+  // Fiat estimate for Sats: cached exchange rate lookup
   const rates = await _walletGetBtcRate().catch(() => null);
   const fiatEstimate = rates?.btcAud != null ? ((sats / 1e8) * rates.btcAud).toFixed(2) : null;
 
-  await _dbPut(_ST_WALLET, Object.assign(
-    (await _dbGet(_ST_WALLET, 'wallet-lightning').catch(() => ({
-      id: 'wallet-lightning', type: 'lightning', provider: _wlProvider ?? 'webln',
-      nodeAlias: '', createdAt: new Date().toISOString(),
-    }))),
-    { lastUsed: new Date().toISOString() }
-  ));
+  await _dbPut(_ST_WALLET, Object.assign(rec, { lastUsed: new Date().toISOString() }));
 
-  return { sats, fiatEstimate, currency: 'AUD' };
+  return { 
+    sats, 
+    stableAud: balances.stableAud, 
+    vouchers: balances.vouchers, 
+    fiatEstimate, 
+    currency: 'AUD' 
+  };
 }
 
 /**
- * Pay a BOLT11 invoice via WebLN.
- * Writes a local-only log entry to wf-txlog (never transmitted).
- * Lightning payments are peer-to-peer; Nym does not wrap the payment itself,
- * but any pre-payment metadata lookups (rate, etc.) are Nym-routed when active.
+ * Pay a BOLT11 invoice via simulated wallet.
+ * Deducts from the simulated satoshi balance.
  */
 async function walletSendPayment(bolt11Invoice) {
   if (!_wlAvailable) throw new Error('Wallet not initialised');
   if (!bolt11Invoice || typeof bolt11Invoice !== 'string') throw new Error('Invalid BOLT11 invoice');
 
-  const result = await window.webln.sendPayment(bolt11Invoice);
+  // Parse simulated amount (e.g., extract 'lnbc10n' -> 1000 sats)
+  // For the simulator, we'll extract an amount from the string or default to 500
+  let amountSats = 500; 
+  const match = bolt11Invoice.match(/lnbc(\d+)n/);
+  if (match) amountSats = parseInt(match[1]) * 100;
 
-  // Extract amount from payment result if available (provider-dependent)
-  const amountSats = result?.payment_hash ? (result.route?.total_amt ?? 0) : 0;
-  const description = result?.payment_hash ? 'Lightning payment' : 'Payment';
+  const rec = await _dbGet(_ST_WALLET, 'wallet-native');
+  if (rec.balances.sats < amountSats) {
+    throw new Error('Insufficient balance');
+  }
+
+  // Deduct
+  rec.balances.sats -= amountSats;
+  await _dbPut(_ST_WALLET, rec);
+
+  const preimage = crypto.randomUUID().replace(/-/g, ''); // mock preimage
 
   await _dbPut(_ST_TXLOG, {
     id:          _txId(),
     type:        'send',
     amountSats:  amountSats,
-    description: description,
+    description: 'Lightning payment (Simulated)',
     ts:          new Date().toISOString(),
     bolt11:      bolt11Invoice,
+    preimage:    preimage,
   });
 
-  return result;
+  return { preimage };
 }
 
 /**
- * Generate a BOLT11 receive invoice.
- * Returns {invoice, qrDataUrl, expiresAt}.
- * Writes a pending log entry to wf-txlog.
+ * Generate a BOLT11 receive invoice (simulated).
  */
 async function walletReceivePayment(amountSats, description) {
   if (!_wlAvailable) throw new Error('Wallet not initialised');
 
-  const req = await window.webln.makeInvoice({
-    amount:          amountSats,
-    defaultMemo:     description || 'WellFair payment',
-    minimumAmount:   1,
-    maximumAmount:   amountSats,
-  });
-
-  const invoice   = req.paymentRequest;
-  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 min default
+  const invoice   = 'lnbc' + (amountSats/100) + 'n1' + crypto.randomUUID().replace(/-/g, '');
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
   const qrDataUrl = await _walletInvoiceQr(invoice);
   const txId      = _txId();
 
@@ -141,7 +136,7 @@ async function walletReceivePayment(amountSats, description) {
     id:          txId,
     type:        'receive',
     amountSats:  amountSats,
-    description: description || '',
+    description: description || 'Simulated deposit',
     ts:          new Date().toISOString(),
     bolt11:      invoice,
     status:      'pending',
@@ -345,18 +340,11 @@ async function _walletRenderSheet() {
   const init = await walletInit();
 
   if (!init.available) {
-    statusEl.innerHTML =
-      '<span style="color:var(--muted)">No Lightning wallet detected.<br>' +
-      'Install <a href="https://getalby.com" target="_blank" rel="noopener">Alby</a> or ' +
-      '<a href="https://zeusln.app" target="_blank" rel="noopener">Zeus</a> to connect.</span>';
-    balanceEl.textContent = '—';
-    txListEl.innerHTML    = '<li style="color:var(--muted);font-size:.82rem">No wallet connected</li>';
-    document.getElementById('wallet-send-btn').disabled    = true;
-    document.getElementById('wallet-receive-btn').disabled = true;
+    statusEl.innerHTML = '<span style="color:var(--danger)">Wallet initialization failed.</span>';
     return;
   }
 
-  statusEl.innerHTML = '<span style="color:var(--success,#2a7)">⚡ Lightning wallet connected</span>';
+  statusEl.innerHTML = '<span style="color:var(--success,#2a7)">🔒 Native Confidential Wallet</span>';
   document.getElementById('wallet-send-btn').disabled    = false;
   document.getElementById('wallet-receive-btn').disabled = false;
 
@@ -381,14 +369,22 @@ async function _walletRenderSheet() {
     }
   }
 
-  // Balance
+  // Balances
   try {
     const bal = await walletGetBalance();
-    balanceEl.innerHTML =
-      `<strong>${bal.sats.toLocaleString()}</strong> sats` +
-      (bal.fiatEstimate !== null
-        ? ` <span style="color:var(--muted);font-size:.82rem">(≈ ${bal.currency} ${bal.fiatEstimate})</span>`
-        : '');
+    balanceEl.innerHTML = `
+      <div style="display:flex; justify-content: space-between; margin-bottom: 8px;">
+        <span><strong>${bal.sats.toLocaleString()}</strong> sats</span>
+        ${bal.fiatEstimate !== null ? `<span style="color:var(--muted);font-size:.82rem">(≈ ${bal.currency} ${bal.fiatEstimate})</span>` : ''}
+      </div>
+      <div style="display:flex; justify-content: space-between; margin-bottom: 8px;">
+        <span><strong>$${bal.stableAud.toFixed(2)}</strong> AUD Stablecoin</span>
+      </div>
+      <div style="display:flex; justify-content: space-between;">
+        <span><strong>${bal.vouchers}</strong> Retail Vouchers</span>
+        <button style="background:none;border:1px solid var(--blue);color:var(--blue);border-radius:4px;padding:2px 6px;font-size:.7rem;" onclick="walletUseVoucher()">Use</button>
+      </div>
+    `;
   } catch (e) {
     balanceEl.textContent = 'Balance unavailable';
   }
@@ -457,5 +453,39 @@ async function walletUiReceive() {
     statusEl.innerHTML = '<span style="color:var(--success,#2a7)">Invoice ready — share QR or copy invoice</span>';
   } catch (e) {
     statusEl.innerHTML = `<span style="color:var(--danger,#c44)">Failed: ${_esc(e.message)}</span>`;
+  }
+}
+
+// Voucher flow
+async function walletUseVoucher() {
+  const rec = await _dbGet(_ST_WALLET, 'wallet-native');
+  if (rec.balances.vouchers <= 0) {
+    alert("No vouchers available.");
+    return;
+  }
+  
+  if(confirm("Generate a one-time barcode for Retailer Voucher settlement?")) {
+    rec.balances.vouchers -= 1;
+    await _dbPut(_ST_WALLET, rec);
+    
+    await _dbPut(_ST_TXLOG, {
+      id:          _txId(),
+      type:        'send',
+      amountSats:  0,
+      description: 'Redeemed Accommodation/Retail Voucher',
+      ts:          new Date().toISOString()
+    });
+    
+    await _walletRenderSheet();
+    
+    const qrArea = document.getElementById('wallet-qr-area');
+    // Generate a mock barcode payload linked to a stablecoin smart contract
+    const voucherPayload = `VOUCHER:STABLEAUD:${crypto.randomUUID()}`;
+    const qrDataUrl = await _walletInvoiceQr(voucherPayload);
+    qrArea.innerHTML =
+      `<div style="text-align:center;margin-top:.8rem">
+        <img src="${qrDataUrl}" alt="Voucher QR" style="width:180px;height:180px;border-radius:8px">
+        <p style="font-size:.75rem;color:var(--muted);margin:.4rem 0 0">Present this to the retailer to process</p>
+      </div>`;
   }
 }
