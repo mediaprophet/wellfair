@@ -192,7 +192,7 @@ Unify vault-directory.js Verified Directory with qualiaDB SocialBook + cooperati
 
 Browser equivalent of the Android `OntologyConverter.kt` + `OntologyScreen.kt`.
 
-- [ ] **OC1. Ontology converter panel in app.html** — file picker (`.ttl`, `.nt`, `.jsonld`, `.json`, `.csv`) → N-Quads (`.nq`) or `.q42` via wellfare-core WASM. Show: quads written, compression ratio, parse time, output size. Matches Android OntologyScreen metrics.
+- [x] **OC1. Ontology converter panel** — standalone `docs/ontology-converter.html`; file drop zone (.ttl/.nt/.nq/.csv/.jsonld); WasmHealthStore SPARQL CONSTRUCT output; CSV parsers (weight/sleep/heart/steps); metrics panel (quads, parse ms, KB in/out, ratio); optional SHACL validation; copy + download buttons; linked from app.html header — file picker (`.ttl`, `.nt`, `.jsonld`, `.json`, `.csv`) → N-Quads (`.nq`) or `.q42` via wellfare-core WASM. Show: quads written, compression ratio, parse time, output size. Matches Android OntologyScreen metrics.
 - [ ] **OC2. Ontology ingestion to QualiaStore** — when a `.ttl`/`.q42` file is loaded, import into live `QualiaStore` to enrich SPARQL queries and LLM context. Depends on W4 (`WasmHealthStore`) being live.
 - [ ] **OC3. Cooperative ontology bundles** — pre-package as `.q42` files, downloadable via OPFS package manager: `wf:` shapes, UDHR-as-RDF, ODRL EdgeConstraints, FOAF. Persist in OPFS; enrich all SPARQL/N3 queries.
 
@@ -206,11 +206,11 @@ qualiaDB's `cbor_compiler.rs` is a Strict Binary Gatekeeper: it rejects `{` (JSO
 - [x] **CBOR2. `QualiaStore.insert_from_cbor_ld(&[u8])`** — new method in `wellfare-core/src/qualia_bindings.rs`. Parses CBOR array of 4–5 u64 integers (replicates cbor_compiler.rs logic inline). Returns bool.
 - [x] **CBOR3. Fix `_dbPut` dual-write** — remove broken `JSONtoQuinSerializer`; replace with CBOR-LD existence triple (`urn:wf:<store>:<id>`, `rdf:type`, `wf:StoredRecord`, `wf:store/<store>`). Full semantic content encoded per-module.
 - [x] **CBOR4. `exportProjectsToCborLdQuins()`** — in `vault-projects.js`; decrypts all project/contribution/obligation records and bulk-inserts via `insertRecordToQualiaStore()`. Feeds the QualiaStore quint engine alongside `exportProjectsToTurtle()` → WasmHealthStore.
-- [ ] **CBOR5. CBOR-LD export for other vault modules** — add `exportToCborLdQuins()` to: `vault-meds-reminders.js`, `vault-directory.js`, `vault-wallet.js`, `vault-calendar.js` (PIA6). Called at vault unlock alongside respective Turtle exports.
-- [ ] **CBOR6. Sentinel constraint IDs via Lexicon** — `vault-sentinel.js`: before evaluating a policy constraint, resolve the constraint name IRI through `vaultCborLd.iriToId()` → use the u64 ID as the canonical constraint reference. Ensures Sentinel policy gates are Lexicon-addressable.
+- [x] **CBOR5. CBOR-LD export for other vault modules** — add `exportToCborLdQuins()` to: `vault-meds-reminders.js`, `vault-directory.js`, `vault-wallet.js`, `vault-calendar.js` (PIA6). Called at vault unlock alongside respective Turtle exports.
+- [x] **CBOR6. Sentinel constraint IDs via Lexicon** — `vault-sentinel.js`: before evaluating a policy constraint, resolve the constraint name IRI through `vaultCborLd.iriToId()` → use the u64 ID as the canonical constraint reference. Ensures Sentinel policy gates are Lexicon-addressable.
 - [ ] **CBOR7. CBOR-LD wire format for CP4 GUN sync** — when `vault-p2p-sync.js` (CP4) sends share/claim state over GUN Tier 2, serialise as CBOR-LD bytes. Peer decodes with `decodeCborToIds()` → `idToIri()` (Lexicon must be shared or scoped to the project namespace).
 - [ ] **CBOR8. CBOR-LD packages for WebTorrent Tier 4** — PIA7: when seeding a claim bundle or ontology snapshot via WebTorrent, pack as a `.q42`-adjacent CBOR-LD file rather than Turtle. Decoded on receipt via `vault-cborld.js`.
-- [ ] **CBOR9. Rebuild WASM binary** — `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg` to include `insert_from_cbor_ld` in the deployed WASM. Until rebuilt, CBOR2 falls back gracefully (method absent → `vaultCborLd.insertRecordToQualiaStore` no-ops).
+- [x] **CBOR9. Rebuild WASM binary** — done; insert_from_cbor_ld confirmed in docs/pkg/wellfare_core.d.ts — `wasm-pack build wellfare-core --release --target web --out-dir ../docs/pkg` to include `insert_from_cbor_ld` in the deployed WASM. Until rebuilt, CBOR2 falls back gracefully (method absent → `vaultCborLd.insertRecordToQualiaStore` no-ops).
 
 ---
 

@@ -489,3 +489,32 @@ async function walletUseVoucher() {
       </div>`;
   }
 }
+
+// CBOR5 — CBOR-LD export: encode transaction log and wallet metadata into QualiaStore.
+// Wallet records are stored as plain JSON in wf-wallet / wf-txlog.
+// Sensitive fields (balances.lightning channel info, node pubkey) are stripped.
+// Returns total count of quints inserted.
+async function exportWalletToCborLdQuins() {
+  if (!window.vaultCborLd || !window.vaultWasm?.getQualiaStore()) return 0;
+  let count = 0;
+  try {
+    const txs = await walletGetTxLog(0); // 0 = no limit
+    for (const tx of txs) {
+      // tx: { id, type, amountSats, description, ts }
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_TXLOG, tx);
+    }
+    const walletRec = await _dbGet(_ST_WALLET, 'wallet-native').catch(() => null);
+    if (walletRec) {
+      // Only encode non-sensitive metadata
+      const safe = {
+        id:       walletRec.id,
+        provider: walletRec.provider || 'simulated',
+        lastUsed: walletRec.lastUsed || null,
+      };
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_WALLET, safe);
+    }
+  } catch (e) {
+    console.warn('[CBOR5/wallet] exportWalletToCborLdQuins failed:', e.message);
+  }
+  return count;
+}

@@ -100,13 +100,81 @@ async function evaluateVaultN3Rules() {
     return evaluateN3Rules(turtle);
 }
 
+// ── CBOR6: Lexicon-addressable constraint evaluation ──────────────────────────
+//
+// Maps canonical constraint IRI strings to the short names expected by the Rust
+// Sentinel VM (validate_health_quin).  All IRI strings are also registered in
+// the Lexicon (wf-lexicon IDB) so that every constraint reference is
+// Lexicon-addressable — a requirement of the CBOR-LD native format (cbor_compiler.rs).
+//
+// Usage:
+//   await evaluatePolicyConstraintByIri(
+//     'https://wellfare.social/ns/vault#cooperative_obligation',
+//     subjectIri, predicateIri, objectIri, contextIri, metadataFlags
+//   )
+
+const CONSTRAINT_IRI_MAP = {
+  'https://wellfare.social/ns/vault#cooperative_obligation': 'cooperative_obligation',
+  'https://wellfare.social/ns/vault#guardian_identity':      'guardian_identity',
+  'https://wellfare.social/ns/vault#commercial_block':       'commercial_block',
+};
+
+/**
+ * Evaluate a policy constraint identified by IRI.
+ *
+ * - Resolves constraintIri and all quint fields through the Lexicon (CBOR6).
+ * - Encodes the quint as CBOR-LD bytes (returned in result for audit / GUN sync).
+ * - Falls back to evaluatePolicyConstraint() for the actual Sentinel evaluation.
+ *
+ * @param {string} constraintIri   Canonical IRI of the constraint
+ * @param {string} sIri            Subject IRI
+ * @param {string} pIri            Predicate IRI
+ * @param {string} oIri            Object IRI
+ * @param {string} cIri            Context IRI
+ * @param {number} [mFlags=0]      Metadata bitmask
+ * @returns {Promise<{passed:boolean, routingLane:number, laneName:string,
+ *                    cborBytes:Uint8Array, constraintId:BigInt}|null>}
+ */
+async function evaluatePolicyConstraintByIri(constraintIri, sIri, pIri, oIri, cIri, mFlags = 0) {
+    const constraintName = CONSTRAINT_IRI_MAP[constraintIri];
+    if (!constraintName) {
+        console.warn('[Sentinel/CBOR6] Unknown constraint IRI:', constraintIri);
+        return null;
+    }
+
+    // Register / retrieve all IRIs in the Lexicon
+    let constraintId, s, p, o, c, cborBytes;
+    if (window.vaultCborLd) {
+        [constraintId, s, p, o, c] = await Promise.all([
+            window.vaultCborLd.iriToId(constraintIri),
+            window.vaultCborLd.iriToId(sIri),
+            window.vaultCborLd.iriToId(pIri),
+            window.vaultCborLd.iriToId(oIri),
+            window.vaultCborLd.iriToId(cIri),
+        ]);
+        const m = BigInt(mFlags);
+        cborBytes = window.vaultCborLd.encodeQuinToCbor(s, p, o, c, m);
+    } else {
+        // Graceful fallback — use dummy IDs if vault-cborld not loaded
+        [constraintId, s, p, o, c] = [0n, 0n, 0n, 0n, 0n];
+        cborBytes = new Uint8Array(0);
+    }
+
+    const result = await evaluatePolicyConstraint(constraintName, s, p, o, c, BigInt(mFlags));
+    if (!result) return null;
+
+    return { ...result, cborBytes, constraintId };
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.SentinelCompiler = SentinelCompiler;
 window.vaultSentinel = {
     LANE_NAMES,
-    classify:                  SentinelCompiler.classify.bind(SentinelCompiler),
-    evaluatePolicyConstraint,
+    CONSTRAINT_IRI_MAP,
+    classify:                           SentinelCompiler.classify.bind(SentinelCompiler),
+    evaluatePolicyConstraint,           // takes BigInt IDs directly
+    evaluatePolicyConstraintByIri,      // CBOR6: takes IRI strings, resolves via Lexicon
     evaluateN3Rules,
     evaluateVaultN3Rules,
 };

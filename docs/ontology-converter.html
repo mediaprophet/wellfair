@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WellFair — Ontology Converter</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --accent:  #58a6ff;
+      --green:   #3fb950;
+      --red:     #f85149;
+      --yellow:  #d29922;
+      --text:    #c9d1d9;
+      --muted:   #8b949e;
+      --radius:  8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 1.5rem;
+    }
+    header {
+      display: flex; align-items: center; gap: .75rem;
+      margin-bottom: 1.5rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header .badge {
+      font-size: .7rem; padding: .15rem .5rem;
+      border-radius: 999px; background: #21262d;
+      color: var(--muted); border: 1px solid var(--border);
+    }
+    a.back { color: var(--muted); text-decoration: none; font-size: .85rem; }
+    a.back:hover { color: var(--accent); }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Drop zone */
+    #drop-zone {
+      grid-column: 1 / -1;
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 2.5rem 1rem; text-align: center; cursor: pointer;
+      transition: border-color .2s, background .2s;
+      color: var(--muted); font-size: .9rem;
+    }
+    #drop-zone.over { border-color: var(--accent); background: #161b2255; }
+    #drop-zone .icon { font-size: 2rem; display: block; margin-bottom: .5rem; }
+    #drop-zone strong { color: var(--text); }
+    #file-input { display: none; }
+
+    /* Controls */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem;
+    }
+    .card h2 { font-size: .8rem; color: var(--muted); text-transform: uppercase;
+               letter-spacing: .06em; margin-bottom: .75rem; }
+    label { display: flex; align-items: center; gap: .5rem;
+            font-size: .85rem; margin-bottom: .5rem; cursor: pointer; }
+    select, input[type=checkbox] { accent-color: var(--accent); }
+    select {
+      background: #21262d; border: 1px solid var(--border); color: var(--text);
+      border-radius: 6px; padding: .35rem .6rem; font-size: .85rem; width: 100%;
+    }
+    button {
+      padding: .45rem 1rem; border-radius: 6px; font-size: .85rem; cursor: pointer;
+      border: 1px solid var(--border); transition: opacity .15s;
+    }
+    button:disabled { opacity: .4; cursor: default; }
+    #convert-btn {
+      background: var(--accent); color: #0d1117; border-color: var(--accent);
+      font-weight: 600; width: 100%;
+    }
+    #convert-btn:not(:disabled):hover { opacity: .85; }
+    .btn-row { display: flex; gap: .5rem; margin-top: .5rem; }
+    .btn-row button { flex: 1; background: #21262d; color: var(--text); }
+    .btn-row button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+    /* Metrics */
+    #metrics {
+      grid-column: 1 / -1;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem;
+    }
+    .metric {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: .6rem .75rem; text-align: center;
+    }
+    .metric .val { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .metric .lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase;
+                   letter-spacing: .05em; margin-top: .15rem; }
+
+    /* Output */
+    #output-wrap { grid-column: 1 / -1; }
+    #output-area {
+      width: 100%; height: 280px; resize: vertical;
+      background: #010409; border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); padding: .75rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .78rem;
+      line-height: 1.5;
+    }
+
+    /* SHACL report */
+    #shacl-wrap { grid-column: 1 / -1; }
+    #shacl-report { font-size: .82rem; }
+    .shacl-ok   { color: var(--green); }
+    .shacl-err  { color: var(--red); }
+    .shacl-item { padding: .25rem 0; border-bottom: 1px solid var(--border); }
+
+    /* Status */
+    #status {
+      grid-column: 1 / -1; font-size: .82rem;
+      padding: .4rem .75rem; border-radius: 6px;
+      background: #21262d; border: 1px solid var(--border);
+      display: none;
+    }
+    #status.ok   { border-color: var(--green); color: var(--green); }
+    #status.err  { border-color: var(--red);   color: var(--red); }
+    #status.info { border-color: var(--accent); color: var(--accent); }
+
+    /* File info */
+    #file-info { font-size: .8rem; color: var(--muted); margin-top: .5rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:1.4rem">🔬</span>
+  <h1>Ontology Converter</h1>
+  <span class="badge">OC1 · wellfare-core WASM</span>
+  <span style="flex:1"></span>
+  <a class="back" href="app.html">← Analytics</a>
+</header>
+
+<div class="grid">
+
+  <!-- Drop zone -->
+  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <span class="icon">📂</span>
+    <strong>Drop a file or click to browse</strong><br>
+    Accepts <code>.ttl</code> · <code>.nt</code> · <code>.nq</code> ·
+    <code>.csv</code> · <code>.jsonld</code>
+  </div>
+  <input type="file" id="file-input"
+         accept=".ttl,.nt,.nq,.n3,.csv,.jsonld,.json,text/turtle,text/plain">
+  <div id="file-info"></div>
+
+  <!-- Options -->
+  <div class="card">
+    <h2>Input options</h2>
+    <label>
+      Input format
+      <select id="input-format">
+        <option value="auto">Auto-detect</option>
+        <option value="turtle">Turtle (.ttl / .n3)</option>
+        <option value="ntriples">N-Triples (.nt)</option>
+        <option value="nquads">N-Quads (.nq)</option>
+        <option value="csv-weight">CSV — Weight</option>
+        <option value="csv-sleep">CSV — Sleep</option>
+        <option value="csv-heart">CSV — Heart Rate</option>
+        <option value="csv-steps">CSV — Steps</option>
+      </select>
+    </label>
+    <label>
+      <input type="checkbox" id="validate-shacl"> Run SHACL health validation
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>Output options</h2>
+    <label>
+      Output format
+      <select id="output-format">
+        <option value="turtle">Turtle / N-Quads (SPARQL CONSTRUCT)</option>
+        <option value="sparql">Custom SPARQL CONSTRUCT</option>
+      </select>
+    </label>
+    <div id="sparql-wrap" style="display:none;margin-top:.5rem">
+      <textarea id="sparql-query" style="width:100%;height:80px;
+        background:#010409;border:1px solid var(--border);color:var(--text);
+        border-radius:6px;padding:.5rem;font-family:monospace;font-size:.78rem"
+        placeholder="CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"></textarea>
+    </div>
+    <button id="convert-btn" disabled style="margin-top:.75rem">Convert</button>
+  </div>
+
+  <!-- Status bar -->
+  <div id="status"></div>
+
+  <!-- Metrics -->
+  <div id="metrics">
+    <div class="metric"><div class="val" id="m-quads">—</div><div class="lbl">Quads</div></div>
+    <div class="metric"><div class="val" id="m-parse">—</div><div class="lbl">Parse ms</div></div>
+    <div class="metric"><div class="val" id="m-input">—</div><div class="lbl">Input KB</div></div>
+    <div class="metric"><div class="val" id="m-output">—</div><div class="lbl">Output KB</div></div>
+    <div class="metric"><div class="val" id="m-ratio">—</div><div class="lbl">Ratio</div></div>
+  </div>
+
+  <!-- Output -->
+  <div id="output-wrap" class="card">
+    <h2>Output <span id="output-fmt-label" style="color:var(--accent)"></span></h2>
+    <textarea id="output-area" readonly placeholder="Converted output appears here…"></textarea>
+    <div class="btn-row">
+      <button id="download-btn" disabled>⬇ Download</button>
+      <button id="copy-btn" disabled>📋 Copy</button>
+    </div>
+  </div>
+
+  <!-- SHACL -->
+  <div id="shacl-wrap" class="card" style="display:none">
+    <h2>SHACL Validation Report</h2>
+    <div id="shacl-report"></div>
+  </div>
+
+</div>
+
+<!-- ── WASM + logic ──────────────────────────────────────────────────────────── -->
+<script type="module">
+import init, {
+  WasmHealthStore,
+  validate_health_turtle,
+  weight_turtle_from_csv,
+  sleep_turtle_from_csv,
+  heart_rate_turtle_from_csv,
+  steps_turtle_from_csv,
+} from './pkg/wellfare_core.js';
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+let _wasmReady = false;
+let _fileText  = '';
+let _fileName  = '';
+let _lastOutput = '';
+let _lastExt   = '.ttl';
+
+// ── WASM init ────────────────────────────────────────────────────────────────
+
+async function initWasm() {
+  try {
+    await init();
+    _wasmReady = true;
+    setStatus('WASM ready — wellfare-core loaded', 'ok');
+    setTimeout(() => document.getElementById('status').style.display = 'none', 2000);
+  } catch (e) {
+    setStatus('WASM failed to load: ' + e.message, 'err');
+  }
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+
+function setStatus(msg, cls = 'info') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = cls;
+  el.style.display = 'block';
+}
+
+function setMetrics(quads, parseMs, inputKb, outputKb) {
+  document.getElementById('m-quads').textContent  = quads.toLocaleString();
+  document.getElementById('m-parse').textContent  = parseMs.toFixed(1);
+  document.getElementById('m-input').textContent  = inputKb.toFixed(1);
+  document.getElementById('m-output').textContent = outputKb.toFixed(1);
+  const ratio = outputKb > 0 ? (inputKb / outputKb).toFixed(2) + 'x' : '—';
+  document.getElementById('m-ratio').textContent  = ratio;
+}
+
+// ── Format auto-detection ────────────────────────────────────────────────────
+
+function detectFormat(name, text) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['ttl', 'n3'].includes(ext)) return 'turtle';
+  if (ext === 'nt')   return 'ntriples';
+  if (ext === 'nq')   return 'nquads';
+  if (['jsonld', 'json'].includes(ext)) return 'jsonld';
+  if (ext === 'csv') {
+    const header = text.slice(0, 200).toLowerCase();
+    if (header.includes('weight') || header.includes('kg'))  return 'csv-weight';
+    if (header.includes('sleep') || header.includes('duration')) return 'csv-sleep';
+    if (header.includes('heart') || header.includes('bpm'))  return 'csv-heart';
+    if (header.includes('steps') || header.includes('step')) return 'csv-steps';
+    return 'csv-weight'; // default
+  }
+  // Sniff content
+  const sniff = text.trimStart();
+  if (sniff.startsWith('@') || sniff.startsWith('<') || sniff.includes(' a ')) return 'turtle';
+  return 'turtle';
+}
+
+// ── Conversion ───────────────────────────────────────────────────────────────
+
+const DEFAULT_CONSTRUCT = 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }';
+
+async function convert() {
+  if (!_wasmReady || !_fileText) return;
+  setStatus('Converting…', 'info');
+
+  const inputFmt  = document.getElementById('input-format').value;
+  const outputFmt = document.getElementById('output-format').value;
+  const fmt = inputFmt === 'auto' ? detectFormat(_fileName, _fileText) : inputFmt;
+  const inputKb = new TextEncoder().encode(_fileText).length / 1024;
+  const t0 = performance.now();
+
+  let turtle = '';
+  try {
+    // ── Step 1: normalise input to Turtle ────────────────────────────────────
+    if (fmt === 'turtle' || fmt === 'ntriples' || fmt === 'nquads') {
+      turtle = _fileText; // load_turtle accepts Turtle / N-Triples / N-Quads
+    } else if (fmt === 'csv-weight') {
+      turtle = weight_turtle_from_csv(_fileText);
+    } else if (fmt === 'csv-sleep') {
+      turtle = sleep_turtle_from_csv(_fileText);
+    } else if (fmt === 'csv-heart') {
+      turtle = heart_rate_turtle_from_csv(_fileText);
+    } else if (fmt === 'csv-steps') {
+      turtle = steps_turtle_from_csv(_fileText);
+    } else if (fmt === 'jsonld') {
+      setStatus('JSON-LD input: pass through as-is (SPARQL query may not apply)', 'info');
+      turtle = _fileText;
+    } else {
+      turtle = _fileText;
+    }
+
+    // ── Step 2: load into WasmHealthStore ────────────────────────────────────
+    const store = new WasmHealthStore();
+    store.load_turtle(turtle);
+
+    // ── Step 3: query / export ───────────────────────────────────────────────
+    let output = '';
+    if (outputFmt === 'sparql') {
+      const q = document.getElementById('sparql-query').value.trim() || DEFAULT_CONSTRUCT;
+      output = store.query(q);
+    } else {
+      output = store.query(DEFAULT_CONSTRUCT);
+    }
+
+    const parseMs = performance.now() - t0;
+    const outputKb = new TextEncoder().encode(output).length / 1024;
+
+    // Count quads (lines ending with ' .')
+    const quads = (output.match(/\s\.\s*$/gm) || []).length;
+
+    _lastOutput = output;
+    _lastExt = '.ttl';
+
+    document.getElementById('output-area').value = output;
+    document.getElementById('output-fmt-label').textContent = '— Turtle/N-Quads';
+    document.getElementById('download-btn').disabled = false;
+    document.getElementById('copy-btn').disabled = false;
+
+    setMetrics(quads, parseMs, inputKb, outputKb);
+    setStatus(`Converted ${quads} quads in ${parseMs.toFixed(0)} ms`, 'ok');
+
+    // ── Step 4: optional SHACL validation ───────────────────────────────────
+    if (document.getElementById('validate-shacl').checked) {
+      try {
+        const report = JSON.parse(validate_health_turtle(turtle));
+        renderShaclReport(report);
+      } catch (e) {
+        document.getElementById('shacl-wrap').style.display = 'none';
+      }
+    }
+
+  } catch (e) {
+    setStatus('Conversion error: ' + e.message, 'err');
+    console.error('[OC1]', e);
+  }
+}
+
+function renderShaclReport(report) {
+  const wrap = document.getElementById('shacl-wrap');
+  const el   = document.getElementById('shacl-report');
+  wrap.style.display = 'block';
+  if (report.valid) {
+    el.innerHTML = `<div class="shacl-ok">✓ Valid — ${report.checked} shapes checked, 0 violations</div>`;
+  } else {
+    const viols = (report.violations || []).map(v =>
+      `<div class="shacl-item shacl-err">✗ ${v}</div>`
+    ).join('');
+    el.innerHTML = `<div class="shacl-err" style="margin-bottom:.5rem">
+      ${report.violations?.length ?? '?'} violation(s) found
+    </div>${viols}`;
+  }
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+
+function loadFile(file) {
+  if (!file) return;
+  _fileName = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _fileText = e.target.result;
+    document.getElementById('file-info').textContent =
+      `${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+
+    // Auto-select format
+    const detected = detectFormat(file.name, _fileText);
+    const sel = document.getElementById('input-format');
+    const opt = [...sel.options].find(o => o.value === detected);
+    if (opt) sel.value = detected;
+
+    document.getElementById('convert-btn').disabled = !_wasmReady;
+    setStatus('File loaded — click Convert', 'info');
+  };
+  reader.readAsText(file);
+}
+
+// ── Event wiring ──────────────────────────────────────────────────────────────
+
+document.getElementById('file-input').addEventListener('change', e => {
+  loadFile(e.target.files[0]);
+});
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('over');
+  loadFile(e.dataTransfer.files[0]);
+});
+
+document.getElementById('output-format').addEventListener('change', e => {
+  document.getElementById('sparql-wrap').style.display =
+    e.target.value === 'sparql' ? 'block' : 'none';
+});
+
+document.getElementById('convert-btn').addEventListener('click', convert);
+
+document.getElementById('download-btn').addEventListener('click', () => {
+  if (!_lastOutput) return;
+  const blob = new Blob([_lastOutput], { type: 'text/plain' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: _fileName.replace(/\.[^.]+$/, '') + _lastExt,
+  });
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(_lastOutput).then(() =>
+    setStatus('Copied to clipboard', 'ok'));
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+
+setStatus('Loading wellfare-core WASM…', 'info');
+initWasm();
+</script>
+
+</body>
+</html>

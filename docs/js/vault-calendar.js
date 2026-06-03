@@ -120,6 +120,23 @@ function isPersonalPriorityActive() {
   return _personalPriorityActive;
 }
 
+// CBOR5 — CBOR-LD export: encode all personal calendar events into QualiaStore.
+// Requires initCalendar(aesKey) to have been called.
+// Returns total count of quints inserted.
+async function exportCalendarToCborLdQuins() {
+  if (!window.vaultCborLd || !window.vaultWasm?.getQualiaStore()) return 0;
+  let count = 0;
+  try {
+    const events = await getAllCalendarEvents();
+    for (const ev of events) {
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_CALENDAR, ev);
+    }
+  } catch (e) {
+    console.warn('[CBOR5/cal] exportCalendarToCborLdQuins failed:', e.message);
+  }
+  return count;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 window.vaultCalendar = {
@@ -128,4 +145,5 @@ window.vaultCalendar = {
   checkBoundaryConflict,
   logBoundaryConflict,
   setPersonalPriority, isPersonalPriorityActive,
+  exportCalendarToCborLdQuins,
 };

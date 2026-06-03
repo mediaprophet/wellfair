@@ -158,3 +158,39 @@ async function saveRelationship(contactId, peerDid, agreementJsonLd, ourSig, the
 
   return { relationship: relRecord, agreement: agRecord };
 }
+
+// CBOR5 — CBOR-LD export: encode contacts, relationships, and agreements into QualiaStore.
+// Requires initDirectory(aesKey) to have been called (throws otherwise).
+// Returns total count of quints inserted.
+async function exportDirectoryToCborLdQuins() {
+  if (!window.vaultCborLd || !window.vaultWasm?.getQualiaStore()) return 0;
+  let count = 0;
+  try {
+    const contacts = await getAllContacts(); // decrypts via _decRecord
+    for (const c of contacts) {
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_CONTACTS, c);
+    }
+    // Relationships and agreements — decrypt each individually
+    const [rels, agrs] = await Promise.all([
+      _dbGetAll(_ST_RELS),
+      _dbGetAll(_ST_AGREEMENTS),
+    ]);
+    for (const r of rels) {
+      try {
+        const dec = await _decRecord(r);
+        count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_RELS, dec);
+      } catch (_) {}
+    }
+    for (const a of agrs) {
+      try {
+        const dec = await _decRecord(a);
+        // Only encode non-sensitive fields (omit raw ODRL JSON and signatures)
+        const safe = { id: dec.id, contactId: dec.contactId, created_at: dec.created_at };
+        count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_AGREEMENTS, safe);
+      } catch (_) {}
+    }
+  } catch (e) {
+    console.warn('[CBOR5/dir] exportDirectoryToCborLdQuins failed:', e.message);
+  }
+  return count;
+}

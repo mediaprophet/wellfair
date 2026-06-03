@@ -185,6 +185,26 @@ function toggleMedPanel() {
   if (chevron) chevron.textContent = open ? '▸' : '▾';
 }
 
+// CBOR5 — CBOR-LD export: encode all medication and adherence records into QualiaStore.
+// Medications are stored as plain JSON in wf-meds (no per-record AES-GCM encryption).
+// Returns total count of quints inserted.
+async function exportMedsToCborLdQuins() {
+  if (!window.vaultCborLd || !window.vaultWasm?.getQualiaStore()) return 0;
+  let count = 0;
+  try {
+    const [meds, log] = await Promise.all([_getAllMeds(), _dbGetAll(_ST_MED_LOG)]);
+    for (const med of meds) {
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_MEDS, med);
+    }
+    for (const entry of log) {
+      count += await window.vaultCborLd.insertRecordToQualiaStore(_ST_MED_LOG, entry);
+    }
+  } catch (e) {
+    console.warn('[CBOR5/meds] exportMedsToCborLdQuins failed:', e.message);
+  }
+  return count;
+}
+
 async function initMedReminders() {
   await _refreshMedPanel();
   _refreshInteractionPanel(); // fire-and-forget
