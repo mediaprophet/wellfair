@@ -63,5 +63,49 @@ You must architect the app to handle Tri-Party interactions where a human's Duty
 ## 10. Handoff & Continuity
 You are stepping into Phase 76 of an overarching ecosystem build. The backend (`qualiaDB`) is ready. Your sole focus is building the primary mobile agent (`wellfair`) that interfaces with it. Adhere strictly to the Principal-Agent protocol. Do not compromise the user's data for convenience.
 
+## 11. Agent Orchestration Model (QualiaDB-Centric)
+
+**Wellfair** serves as the **Primary Fiduciary Agent** (the human-facing conductor) for the natural person (Principal). All storage, semantic operations, validation, and orchestration logic must be handled exclusively by the **QualiaDB Engine** — there are no secondary databases.
+
+### Core Principles
+- **Principal-Agent Duty of Care**: Every agent action, proposal, or decision is subject to Rights Ontology enforcement.
+- **QualiaDB as Single Source of Truth**: The shared blackboard, agent state, proposals, provenance, and evaluation results all live as **Super-Quins** in `.q42` ledgers (or in-memory mapped blocks).
+- **Sentinel VM as Orchestrator**: Leverage QualiaDB’s built-in **Sentinel VM** (N3Logic + SHACL + defeasible logic compiler) for coordination instead of external orchestration layers.
+
+### Orchestration Architecture
+
+1. **Wellfair Primary Agent (Conductor)**
+   - Mobile/desktop interface that interprets user intent and delegates to specialized agents.
+   - Routes all data operations through QualiaDB Engine APIs (WASM / native bindings).
+   - Surfaces decisions, explanations, and provenance to the user.
+
+2. **Shared Blackboard**
+   - Implemented directly as a QualiaDB graph instance.
+   - Agents read/write proposals as typed Super-Quins with full cryptographic provenance and 5th Vector metadata (for duress/sanctuary handling).
+
+3. **Competitive + Complementary Sub-Agents**
+   - Domain-specialized bots (Health, Legal, Financial, Project, Social, etc.) operate in parallel.
+   - **Competition Phase**: Multiple agents independently generate proposals and post them to the shared QualiaDB graph.
+   - **Evaluation Phase**: Sentinel VM applies:
+     - SHACL shapes for structural/policy validation.
+     - N3Logic rules for scoring (alignment, risk, cost, temporal impact, etc.).
+     - Defeasible logic for handling conflicting or provisional assertions.
+   - **Synthesis Phase**: N3 implication rules merge complementary elements from top-ranked proposals.
+   - **Swarm Mode** (when hardware permits): QualiaDB’s Fractal Sharding spins up isolated worker cells for deeper parallel exploration.
+
+4. **Sentinel Capabilities**
+   - Continuous monitoring for Rights Ontology violations, logical inconsistencies, privacy leaks, or duress signals.
+   - Automatic triggering of Sanctuary Mode or Nym-routed communications when needed.
+   - O(1) termination guarantees on complex rule evaluation.
+
+5. **User-in-the-Loop & Provenance**
+   - Critical decisions are presented with traceable reasoning chains (via QualiaDB provenance DAGs).
+   - All agent outputs are cryptographically signed and linked to the Principal’s identity.
+
+### Integration with QualiaDB Features
+- Use **GPU Sieves** for fast retrieval during evaluation rounds.
+- Leverage **SuperBlock** demand-paging for handling large collaborative project graphs.
+- Enforce **Intentional Computing** rules natively via the Sentinel VM.
+
 ---
 *You are building peace infrastructure for the natural person. Act accordingly.*
