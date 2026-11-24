@@ -1,9 +1,0 @@
-pandas
-rdflib
-python-dateutil
-pytz
-streamlit
-plotly
-pyyaml
-tqdm
-pypdf

@@ -1,0 +1,41 @@
+%YAML 1.2
+---
+"@context":
+  q42: "https://qualia.io/ontology/q42#"
+  qap: "https://qualia.io/ontology/qap#"
+  hro: "https://qualia.io/ontology/human-rights#"
+  qdp: "https://webcivics.github.io/QDP/ontdev/QDP#"
+"@id": "urn:qualia:qap:wellfair:0.0.41"
+"@type": "qap:ApplicationPackage"
+schema_version: "yaml-ld-q42/v2"
+qap_id: "wellfair"
+qap_kind: "CoreApplication"
+display_name: "Webizen WellFair — Personal Sanctuary, Telehealth rPPG & Human-Rights Protection"
+version: "0.0.41"
+abi_version: "1.0"
+license: "CC-BY-NC-ND-4.0 (PermissiveCommons-1.0)"
+author_did: "did:webizen:person:timothy-holborn"
+qdp_domain: "wellfair.webizen.org"
+did_git: "did:git:github.com/WebizenAI/wellfair"
+computational_hierarchy_7_layer:
+  L0: "L0Continuum"
+  L1: "L1RigidArticulatedPgaXpbdSkl2"
+  L2: "L2SoftBodyFluid"
+  L3: "L3MolecularChemical"
+  L4: "L4CellularBiological"
+  L5: "L5EcologicalGeomorphic"
+  L6: "L6QuantumPhysics"
+sentinel_capability_claims:
+  max_sensitivity_clearance: "0x02"
+  required_ontologies:
+    - "qualia://ontologies/wellfair-clinical-n3.q42"
+    - "qualia://ontologies/human-reference-atlas-10d.q42"
+  required_host_capabilities:
+    - "SanctuaryStaging.stage_import"
+    - "Biophysical.estimate_rppg_hrv"
+    - "Pharmacokinetics.solve_rk4"
+    - "QdpDomainMail.resolve_delivery"
+vibe_entrypoints:
+  main_module: "vibe/main.vibe"
+  entrypoint_fn: "on_qap_activate"
+qecp_signature_hex: "ed25519_ml_dsa_87_qap_wellfair_0_0_41_sig"

@@ -1,0 +1,13 @@
+[package]
+name = "wellfair-core-q42"
+version = "0.0.41"
+edition = "2021"
+authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
+license = "CC-BY-NC-ND-4.0"
+description = "WellFair Core Q42 Engine — Chrominance/POS Camera rPPG & Liveness PAD, Voice Prosody, RK4 Pharmacokinetic PK/PD ODE Solver, 7-Layer 10D v2 HRA Living Anatomy, Dual-PIN Duress Sanctuary Vault, N3/Deontic/Paraconsistent Clinical Rules, Zero-Trust Nym Wallet, Delegated-Agent Chat-Graph, and .qap Container + Live .vibe Runtime"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+poet-aether-ui = { workspace = true }
+vibe = { workspace = true }

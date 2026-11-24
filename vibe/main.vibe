@@ -1,0 +1,16 @@
+requires [
+  capability("capability.invoke"),
+  capability("Biophysical.estimate_rppg_hrv"),
+  capability("SanctuaryStaging.stage_import")
+];
+
+effect fn on_qap_activate() {
+  let rppg = capability.invoke("Biophysical.estimate_rppg_hrv", { mode: "boot" });
+  let staging = capability.invoke("SanctuaryStaging.stage_import", { uri: "sanctuary://intake/uncategorized" });
+  return {
+    qap_id: "wellfair",
+    mode: "live_vibe_zero_compile",
+    rppg: rppg,
+    staging: staging
+  };
+}

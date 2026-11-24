@@ -18,6 +18,9 @@ __pycache__/
 .pytest_cache/
 
 # Rust build output
+target/
+/target
+dist/
 wellfare-core/target/
 
 # OS metadata

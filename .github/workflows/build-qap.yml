@@ -1,0 +1,28 @@
+name: Build Webizen WellFair .qap Package
+
+on:
+  push:
+    branches: ["main", "0.0.41-*"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-wellfair-qap:
+    name: Compile & Verify wellfair.qap
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Webizen WellFair
+        uses: actions/checkout@v4
+
+      - name: Compile wellfair.qap via qap-compiler
+        uses: WebCivics/qap-compiler@main
+        with:
+          workspace-dir: "."
+          output-qap: "dist/wellfair.qap"
+          principal-did: "did:webizen:person:alex-mercer"
+          compatibility-mode: "minor-update"
+          artifact-name: "wellfair-qap-package"

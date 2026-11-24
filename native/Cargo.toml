@@ -1,0 +1,22 @@
+[package]
+name = "wellfair-native"
+version = "0.0.41"
+edition = "2021"
+authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
+license = "CC-BY-NC-ND-4.0"
+description = "Webizen WellFair — Standalone Native Desktop & Mobile Companion Launcher and CLI"
+
+[dependencies]
+wellfair-core-q42 = { path = "../crates/wellfair-core-q42" }
+wellfair-aether-ui = { path = "../crates/wellfair-aether-ui" }
+poet-aether-ui = { workspace = true }
+aether = { workspace = true, optional = true }
+aether-native = { workspace = true, optional = true }
+
+[features]
+default = []
+native-graphical = ["dep:aether", "dep:aether-native"]
+
+[[bin]]
+name = "wellfair"
+path = "src/main.rs"

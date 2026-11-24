@@ -1,0 +1,32 @@
+[workspace]
+members = [
+    "crates/wellfair-core-q42",
+    "crates/wellfair-aether-ui",
+    "native",
+]
+resolver = "2"
+
+[workspace.dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+aether = { path = "../Aether/packages/aether", default-features = false, features = ["macro", "html", "signals", "hooks"] }
+aether-native = { path = "../Aether/packages/native", default-features = false, features = ["vello-cpu-softbuffer", "system-fonts", "data-uri", "clipboard", "accessibility"] }
+poet-aether-ui = { path = "../poet/crates/poet-aether-ui" }
+vibe = { path = "../qualiaDB/crates/vibe" }
+
+[patch.crates-io]
+blitz-traits = { path = "../Aether/vendor/blitz/blitz-traits" }
+blitz-dom = { path = "../Aether/vendor/blitz/blitz-dom" }
+
+[patch."https://github.com/mediaprophet/etalon.git"]
+etalon = { path = "../etalon/etalon" }
+etalon-render = { path = "../etalon/crates/etalon-render" }
+etalon-vibe = { path = "../etalon/crates/etalon-vibe" }
+etalon-nquin = { path = "../etalon/crates/etalon-nquin" }
+etalon-resources = { path = "../etalon/crates/etalon-resources" }
+etalon-sense-core = { path = "../etalon/crates/etalon-sense-core" }
+etalon-signal = { path = "../etalon/crates/etalon-signal" }
+etalon-wgsl-forge = { path = "../etalon/crates/etalon-wgsl-forge" }
+
+[patch."https://github.com/mediaprophet/vibe-script.git"]
+vibescript-abi = { path = "../qualiaDB/crates/vibescript-abi" }
