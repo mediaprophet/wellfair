@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Compile wellfair.qap via qap-compiler
-        uses: WebCivics/qap-compiler@main
+        uses: mediaprophet/qap-compiler@main
         with:
           workspace-dir: "."
           output-qap: "dist/wellfair.qap"
