@@ -26,3 +26,21 @@ jobs:
           principal-did: "did:webizen:person:alex-mercer"
           compatibility-mode: "minor-update"
           artifact-name: "wellfair-qap-package"
+
+      - name: Checkout qap-compiler for Debian profile checks
+        uses: actions/checkout@v4
+        with:
+          repository: mediaprophet/qap-compiler
+          path: .qap-compiler
+
+      - name: Verify six Debian native profiles
+        run: |
+          cargo build --release --manifest-path .qap-compiler/Cargo.toml -p qapc-cli \
+            --target-dir .qap-compiler/target-debian-profiles
+          QAPC=.qap-compiler/target-debian-profiles/release/qapc
+          for p in host desktop subsystem mobile iot-headless iot-display; do
+            echo "::group::qapc check-env --profile $p"
+            "$QAPC" check-env . exact --profile "$p"
+            echo "::endgroup::"
+          done
+

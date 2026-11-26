@@ -30,3 +30,54 @@ etalon-wgsl-forge = { path = "../etalon/crates/etalon-wgsl-forge" }
 
 [patch."https://github.com/mediaprophet/vibe-script.git"]
 vibescript-abi = { path = "../qualiaDB/crates/vibescript-abi" }
+
+# Canonical Webizen Debian native Cargo profiles (PLAN-WEBIZEN-DEBIAN-NATIVE-PROFILES-2026-11-26).
+[profile.webizen-host]
+inherits = "release"
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+incremental = false
+
+[profile.webizen-desktop]
+inherits = "release"
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+incremental = false
+
+[profile.webizen-subsystem]
+inherits = "release"
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+incremental = false
+
+[profile.webizen-mobile]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = "symbols"
+incremental = false
+
+[profile.webizen-iot-headless]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+incremental = false
+
+[profile.webizen-iot-display]
+inherits = "release"
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+incremental = false
+
